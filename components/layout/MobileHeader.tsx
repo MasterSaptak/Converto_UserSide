@@ -1,5 +1,4 @@
 import { NotificationBell } from './NotificationBell';
-import { User } from 'lucide-react';
 import Link from 'next/link';
 import { ProfileDropdown } from './ProfileDropdown';
 

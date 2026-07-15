@@ -33,7 +33,7 @@ export function WalletSummary() {
         <div className="col-span-full border-2 border-dashed border-foreground/30 p-8 flex flex-col items-center justify-center text-center bg-card">
           <WalletIcon className="w-12 h-12 mb-4 opacity-20" />
           <p className="font-bold text-sm uppercase tracking-widest opacity-60">No Wallet Accounts Found</p>
-          <p className="text-xs opacity-50 mt-1 max-w-sm">You haven't activated any wallet currencies yet. Click "Add Wallet" to get started.</p>
+          <p className="text-xs opacity-50 mt-1 max-w-sm">You haven&apos;t activated any wallet currencies yet. Click &quot;Add Wallet&quot; to get started.</p>
         </div>
       ) : (
         // Real Data

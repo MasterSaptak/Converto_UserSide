@@ -3,12 +3,19 @@
 import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useServiceRequests } from "@/hooks/useServiceRequests";
 
 export function RequestStatusTracker() {
+  const { requests } = useServiceRequests();
+
+  const pendingCount = requests.filter(r => ['Submitted', 'Pending', 'Action Required'].includes(r.status)).length;
+  const processingCount = requests.filter(r => ['Processing', 'Purchased', 'Booked', 'Shipping', 'Waiting Payment', 'Payment Confirmed', 'Assigned', 'Accepted', 'Waiting Customer', 'Waiting Vendor'].includes(r.status)).length;
+  const completedCount = requests.filter(r => ['Completed'].includes(r.status)).length;
+
   const statusCounts = [
-    { label: 'Pending', count: 3, color: 'text-orange-600' },
-    { label: 'Processing', count: 1, color: 'text-blue-600' },
-    { label: 'Completed', count: 12, color: 'text-emerald-600' }
+    { label: 'Pending', count: pendingCount, color: 'text-orange-600' },
+    { label: 'Processing', count: processingCount, color: 'text-blue-600' },
+    { label: 'Completed', count: completedCount, color: 'text-emerald-600' }
   ];
 
   return (

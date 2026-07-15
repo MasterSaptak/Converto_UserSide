@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
 export interface WalletTransaction {
@@ -17,7 +17,6 @@ export interface WalletTransaction {
 
 export function useWalletTransactions() {
   const { user } = useAuth()
-  const supabase = createClient()
   
   const [transactions, setTransactions] = useState<WalletTransaction[]>([])
   const [isLoading, setIsLoading] = useState(true)

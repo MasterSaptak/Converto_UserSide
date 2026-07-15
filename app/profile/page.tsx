@@ -114,8 +114,9 @@ export default function ProfilePage() {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
       setAvatarFile(null); // Clear file
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to update profile' });
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
     } finally {
       setIsSaving(false);
     }

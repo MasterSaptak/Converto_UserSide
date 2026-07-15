@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useInstallPWA } from '@/hooks/useInstallPWA';
-import { User, Settings, LogOut, Loader2, Sun, Moon, Download, X, Share, Plus, SquareArrowOutUp } from 'lucide-react';
+import { User, Settings, LogOut, Loader2, Sun, Moon, Download, X, Plus, SquareArrowUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +16,7 @@ export function ProfileDropdown() {
   const { user, profile, signOut } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const { canInstall, isInstalled, isIOS, install, showIOSInstructions, setShowIOSInstructions } = useInstallPWA();
+  const { canInstall, isInstalled, install, showIOSInstructions, setShowIOSInstructions } = useInstallPWA();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -159,7 +159,7 @@ export function ProfileDropdown() {
                   <div className="flex flex-col gap-1">
                     <span className="font-bold uppercase text-xs tracking-wider">Tap the Share button</span>
                     <span className="text-[10px] opacity-60 font-bold uppercase tracking-wider flex items-center gap-1">
-                      Look for <SquareArrowOutUp className="w-3 h-3 inline" /> at the bottom of Safari
+                      Look for <SquareArrowUp className="w-3 h-3 inline" /> at the bottom of Safari
                     </span>
                   </div>
                 </div>

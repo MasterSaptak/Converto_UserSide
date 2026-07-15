@@ -42,7 +42,7 @@ export default function BuyForMePage() {
     const numQuantity = parseInt(quantity, 10) || 1;
     const numCost = parseFloat(estimatedCost) || 0;
 
-    const { data, error: submitError } = await submitServiceRequest({
+    const { error: submitError } = await submitServiceRequest({
       serviceSlug: 'buy_for_me',
       amount: numCost,
       currency: 'USD', // Assumed base currency for estimates

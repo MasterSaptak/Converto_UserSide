@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Eye, EyeOff, ArrowRight, Loader2, UserPlus, Mail } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2, Mail } from 'lucide-react';
 
 export default function SignupPage() {
-  const router = useRouter();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,7 +65,7 @@ export default function SignupPage() {
               </div>
               <div className="text-center flex flex-col gap-2">
                 <p className="text-sm font-bold font-mono">
-                  We've sent a verification link to:
+                  We&apos;ve sent a verification link to:
                 </p>
                 <p className="text-sm font-bold font-mono text-primary bg-secondary px-3 py-2 border-2 border-foreground">
                   {email}

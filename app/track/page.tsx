@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CheckCircle2, Search, ArrowRight, Clock, XCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft } from "lucide-react";
 import { useServiceRequests } from '@/hooks/useServiceRequests';
 import { useAuth } from '@/hooks/useAuth';
 import type { ServiceRequest } from '@/types/database';
@@ -41,6 +41,7 @@ export default function TrackOrderPage() {
 
   const getRequestTitle = (req: ServiceRequest) => {
     const s = req.service?.slug;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = req.metadata as any;
     if (s === 'exchange') {
       return `Exchange ${m.from_currency} to ${m.to_currency}`;

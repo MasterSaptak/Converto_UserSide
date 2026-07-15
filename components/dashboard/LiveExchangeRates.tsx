@@ -55,7 +55,7 @@ export function LiveExchangeRates() {
                     const newBase = e.target.value;
                     setBaseCurrency(newBase);
                     // Ensure the new base isn't in the target list, and maybe add the old base to targets
-                    let newTargets = targetCurrencies.filter(c => c !== newBase);
+                    const newTargets = targetCurrencies.filter(c => c !== newBase);
                     if (!newTargets.includes(baseCurrency) && baseCurrency !== newBase) {
                       newTargets.push(baseCurrency);
                     }

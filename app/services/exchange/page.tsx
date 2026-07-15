@@ -43,7 +43,7 @@ export default function CurrencyExchangePage() {
     setLoading(true);
     setError('');
 
-    const { data, error: submitError } = await submitServiceRequest({
+    const { error: submitError } = await submitServiceRequest({
       serviceSlug: 'exchange',
       amount: numAmount,
       currency: fromCurrency,
