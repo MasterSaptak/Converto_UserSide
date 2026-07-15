@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,7 @@ export function Sidebar() {
     <aside className="hidden md:block w-[240px] lg:w-[280px] border-r-2 border-foreground bg-secondary shrink-0 relative">
       <div className="h-screen sticky top-0 flex flex-col p-8 lg:p-10">
         <Link href="/" className="flex items-center gap-3 mb-12 group">
-          <img src="/Logo.png" alt="Converto Logo" className="w-12 h-12 border-2 border-foreground bg-white p-1 object-contain transition-transform group-hover:scale-105 shrink-0" />
+          <Image src="/Logo.png" alt="Converto Logo" width={48} height={48} className="w-12 h-12 border-2 border-foreground bg-white p-1 object-contain transition-transform group-hover:scale-105 shrink-0" />
           <div className="flex flex-col">
             <h2 className="text-2xl font-bold uppercase tracking-widest font-heading group-hover:text-primary transition-colors leading-none">Converto</h2>
             <span className="text-[8px] uppercase tracking-widest font-bold opacity-60 mt-1">The Ultimate Payment Engine</span>

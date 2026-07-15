@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Bell, Check, Trash2, Settings, Loader2 } from 'lucide-react';
+import { Bell, Check, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationCategory, NotificationFilter } from '@/lib/notifications/types';
@@ -162,7 +162,7 @@ export function NotificationBell() {
               <div className="p-12 text-center flex flex-col items-center justify-center opacity-60">
                 <Bell className="w-8 h-8 mb-3 opacity-50" />
                 <div className="text-xs font-bold uppercase">No notifications yet</div>
-                <div className="text-[10px] font-medium mt-1">You're all caught up.</div>
+                <div className="text-[10px] font-medium mt-1">You&apos;re all caught up.</div>
               </div>
             )}
           </div>

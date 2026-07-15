@@ -16,7 +16,7 @@ import {
 } from './types';
 
 export function useSharedNotifications(
-  supabase: SupabaseClient<any>,
+  supabase: SupabaseClient,
   config: UseNotificationsConfig
 ): UseNotificationsReturn {
   const { mode, limit = 50 } = config;
@@ -67,9 +67,9 @@ export function useSharedNotifications(
       if (fetchError) throw fetchError;
       setNotifications((data as Notification[]) || []);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch notifications:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
