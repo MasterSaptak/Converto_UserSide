@@ -5,8 +5,11 @@ import { RequestStatusTracker } from "@/components/dashboard/RequestStatusTracke
 import { PromoCarousel } from "@/components/dashboard/PromoCarousel";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { LiveExchangeRates } from "@/components/dashboard/LiveExchangeRates";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
+import { useWalletTransactions } from "@/hooks/useWalletTransactions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -17,7 +20,14 @@ function getGreeting() {
 
 export default function DashboardPage() {
   const { user, profile } = useAuth();
+  const { accounts, isLoading: isWalletLoading } = useWallet();
+  const { transactions, isLoading: isTxnLoading } = useWalletTransactions();
+  
   const displayName = profile?.username || profile?.full_name || user?.email?.split('@')[0] || 'User';
+
+  // Calculate total balance roughly in a primary currency (assuming all are roughly equivalent or just showing the primary one)
+  // For a real app, you'd convert all to a base currency. We'll just show the main wallet's balance or USD.
+  const mainWallet = accounts.find(a => a.currency_code === 'USD') || accounts[0];
 
   return (
     <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
@@ -35,7 +45,15 @@ export default function DashboardPage() {
            
            <div className="flex flex-col md:items-end">
              <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-1 md:mb-2">Total Balance</span>
-             <div className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading">$12,450.00</div>
+             <div className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading">
+                {isWalletLoading ? (
+                  <Skeleton className="w-32 h-10" />
+                ) : mainWallet ? (
+                  `${mainWallet.available_balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${mainWallet.currency_code}`
+                ) : (
+                  '0.00'
+                )}
+             </div>
            </div>
         </div>
       </header>
@@ -59,39 +77,43 @@ export default function DashboardPage() {
           <div className="border-2 border-foreground bg-card flex flex-col h-full">
             <div className="p-4 md:p-6 border-b-2 border-foreground flex justify-between items-center bg-secondary">
               <span className="font-bold uppercase text-xs tracking-widest">Recent Activity</span>
-              <Link href="/history" className="text-[10px] font-bold uppercase hover:text-primary transition-colors">View All</Link>
+              <Link href="/history" className="text-[10px] font-bold uppercase hover:text-primary transition-colors flex items-center gap-1">
+                View All <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
             <div className="flex flex-col p-4 md:p-6 gap-4 flex-1">
-               <div className="flex justify-between items-start pb-4 border-b-2 border-dashed border-muted">
-                 <div>
-                   <div className="font-bold uppercase text-xs mb-1">Currency Exchange</div>
-                   <div className="text-[10px] font-bold opacity-60 uppercase">Req #8921 • USD to EUR</div>
+               {isTxnLoading ? (
+                 <div className="space-y-4">
+                   <Skeleton className="w-full h-12" />
+                   <Skeleton className="w-full h-12" />
                  </div>
-                 <div className="text-right">
-                   <div className="font-bold font-heading text-sm">$1,200.00</div>
-                   <div className="text-[10px] font-bold text-emerald-600 uppercase">Completed</div>
+               ) : transactions.length === 0 ? (
+                 <div className="text-center opacity-50 text-xs font-bold uppercase py-8 tracking-widest">
+                   No recent activity
                  </div>
-               </div>
-               <div className="flex justify-between items-start pb-4 border-b-2 border-dashed border-muted">
-                 <div>
-                   <div className="font-bold uppercase text-xs mb-1">Buy For Me</div>
-                   <div className="text-[10px] font-bold opacity-60 uppercase">Req #8922 • Apple Store UK</div>
-                 </div>
-                 <div className="text-right">
-                   <div className="font-bold font-heading text-sm">£899.00</div>
-                   <div className="text-[10px] font-bold text-blue-600 uppercase">Processing</div>
-                 </div>
-               </div>
-               <div className="flex justify-between items-start">
-                 <div>
-                   <div className="font-bold uppercase text-xs mb-1">Ticket Booking</div>
-                   <div className="text-[10px] font-bold opacity-60 uppercase">Req #8923 • Paris to London</div>
-                 </div>
-                 <div className="text-right">
-                   <div className="font-bold font-heading text-sm">€120.00</div>
-                   <div className="text-[10px] font-bold text-orange-600 uppercase">Pending</div>
-                 </div>
-               </div>
+               ) : (
+                 transactions.slice(0, 4).map((txn) => (
+                   <div key={txn.id} className="flex justify-between items-start pb-4 border-b-2 border-dashed border-muted last:border-0 last:pb-0">
+                     <div>
+                       <div className="font-bold uppercase text-xs mb-1">{txn.type}</div>
+                       <div className="text-[10px] font-bold opacity-60 uppercase">
+                         {new Date(txn.created_at).toLocaleDateString()}
+                       </div>
+                     </div>
+                     <div className="text-right">
+                       <div className={`font-bold font-heading text-sm ${txn.amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                         {txn.amount > 0 ? '+' : ''}{txn.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {txn.wallet_account?.currency_code}
+                       </div>
+                       <div className={`text-[10px] font-bold uppercase mt-1 ${
+                         txn.status === 'completed' ? 'text-emerald-600' : 
+                         txn.status === 'failed' ? 'text-red-600' : 'text-blue-600'
+                       }`}>
+                         {txn.status}
+                       </div>
+                     </div>
+                   </div>
+                 ))
+               )}
             </div>
           </div>
         </div>

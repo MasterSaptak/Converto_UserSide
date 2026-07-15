@@ -1,15 +1,11 @@
 'use client';
 
 import { Download, Search, Filter } from "lucide-react";
+import { useWalletTransactions } from "@/hooks/useWalletTransactions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HistoryPage() {
-  const transactions = [
-    { id: "TXN-8921", date: "12 Oct 2024", type: "Currency Exchange", amount: "$1,200.00", status: "Completed", color: "text-emerald-600" },
-    { id: "TXN-8922", date: "12 Oct 2024", type: "Buy For Me", amount: "£899.00", status: "Processing", color: "text-blue-600" },
-    { id: "TXN-8923", date: "10 Oct 2024", type: "Ticket Booking", amount: "€120.00", status: "Completed", color: "text-emerald-600" },
-    { id: "TXN-8924", date: "05 Oct 2024", type: "Education Payment", amount: "$4,500.00", status: "Completed", color: "text-emerald-600" },
-    { id: "TXN-8925", date: "01 Oct 2024", type: "Global Transfer", amount: "$300.00", status: "Failed", color: "text-red-600" },
-  ];
+  const { transactions, isLoading } = useWalletTransactions();
 
   return (
     <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
@@ -36,57 +32,82 @@ export default function HistoryPage() {
           <input type="text" placeholder="Search by ID, Type, or Date..." className="flex-1 bg-transparent outline-none font-bold text-sm uppercase tracking-widest placeholder:opacity-40" />
         </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-              <tr className="border-b-2 border-foreground text-[10px] font-bold uppercase tracking-widest opacity-60">
-                <th className="p-4 pb-2">Transaction ID</th>
-                <th className="p-4 pb-2">Date</th>
-                <th className="p-4 pb-2">Type</th>
-                <th className="p-4 pb-2 text-right">Amount</th>
-                <th className="p-4 pb-2 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((txn, i) => (
-                <tr key={i} className="border-b-2 border-dashed border-muted hover:bg-secondary/30 transition-colors cursor-pointer">
-                  <td className="p-4 font-mono text-sm font-bold">{txn.id}</td>
-                  <td className="p-4 text-xs font-bold uppercase tracking-widest opacity-80">{txn.date}</td>
-                  <td className="p-4 text-sm font-bold uppercase tracking-widest">{txn.type}</td>
-                  <td className="p-4 font-mono text-sm font-bold text-right">{txn.amount}</td>
-                  <td className={`p-4 text-xs font-bold uppercase tracking-widest text-right ${txn.color}`}>
-                    {txn.status}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {isLoading ? (
+          <div className="p-8 space-y-4">
+            <Skeleton className="w-full h-12" />
+            <Skeleton className="w-full h-12" />
+            <Skeleton className="w-full h-12" />
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="p-12 text-center text-foreground/50 font-bold uppercase tracking-widest text-sm">
+            No transactions found.
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="border-b-2 border-foreground text-[10px] font-bold uppercase tracking-widest opacity-60">
+                    <th className="p-4 pb-2">Transaction ID</th>
+                    <th className="p-4 pb-2">Date</th>
+                    <th className="p-4 pb-2">Type</th>
+                    <th className="p-4 pb-2 text-right">Amount</th>
+                    <th className="p-4 pb-2 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((txn) => (
+                    <tr key={txn.id} className="border-b-2 border-dashed border-muted hover:bg-secondary/30 transition-colors cursor-pointer">
+                      <td className="p-4 font-mono text-sm font-bold">{txn.id.split('-')[0]}...</td>
+                      <td className="p-4 text-xs font-bold uppercase tracking-widest opacity-80">
+                        {new Date(txn.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-sm font-bold uppercase tracking-widest">{txn.type}</td>
+                      <td className={`p-4 font-mono text-sm font-bold text-right ${txn.amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {txn.amount > 0 ? '+' : ''}{txn.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {txn.wallet_account?.currency_code}
+                      </td>
+                      <td className={`p-4 text-xs font-bold uppercase tracking-widest text-right ${
+                        txn.status === 'completed' ? 'text-emerald-600' : 
+                        txn.status === 'failed' ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {txn.status}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Mobile Cards View */}
-        <div className="md:hidden flex flex-col">
-          {transactions.map((txn, i) => (
-            <div key={i} className="flex flex-col gap-2 p-4 border-b-2 border-dashed border-muted hover:bg-secondary/30 transition-colors cursor-pointer">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-sm font-bold uppercase tracking-widest">{txn.type}</div>
-                  <div className="font-mono text-[10px] font-bold opacity-60 mt-1">{txn.id}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-sm font-bold">{txn.amount}</div>
-                  <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${txn.color}`}>
-                    {txn.status}
+            {/* Mobile Cards View */}
+            <div className="md:hidden flex flex-col">
+              {transactions.map((txn) => (
+                <div key={txn.id} className="flex flex-col gap-2 p-4 border-b-2 border-dashed border-muted hover:bg-secondary/30 transition-colors cursor-pointer">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-sm font-bold uppercase tracking-widest">{txn.type}</div>
+                      <div className="font-mono text-[10px] font-bold opacity-60 mt-1">{txn.id.split('-')[0]}...</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-mono text-sm font-bold ${txn.amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {txn.amount > 0 ? '+' : ''}{txn.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {txn.wallet_account?.currency_code}
+                      </div>
+                      <div className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${
+                        txn.status === 'completed' ? 'text-emerald-600' : 
+                        txn.status === 'failed' ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {txn.status}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 border-t border-muted/30 pt-2 mt-1">
+                    {new Date(txn.created_at).toLocaleDateString()}
                   </div>
                 </div>
-              </div>
-              <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 border-t border-muted/30 pt-2 mt-1">
-                {txn.date}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-
+          </>
+        )}
       </div>
     </div>
   );
