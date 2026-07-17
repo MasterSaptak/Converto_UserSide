@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const mainWallet = accounts.find(a => a.currency_code === 'USD') || accounts[0];
 
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
+    <div className="flex-1 flex flex-col gap-6 md:gap-10 animate-in fade-in duration-500 pb-10">
       
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b-2 border-foreground pb-4 md:pb-6 relative">
@@ -39,13 +39,13 @@ export default function DashboardPage() {
              <ShieldCheck className="w-4 h-4 text-emerald-600" />
              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-600">Verified Account</span>
            </div>
-           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading uppercase leading-[0.9] tracking-tight">{getGreeting()}, <br className="hidden md:block"/>{displayName}</h1>
+           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold font-heading uppercase leading-[0.9] tracking-tight">{getGreeting()}, <br className="hidden md:block"/>{displayName}</h1>
         </div>
         <div className="flex flex-col md:items-end mt-2 md:mt-0 gap-4">
            
            <div className="flex flex-col md:items-end">
              <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-1 md:mb-2">Total Balance</span>
-             <div className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading">
+             <div className="text-2xl md:text-4xl lg:text-5xl font-bold font-heading">
                 {isWalletLoading ? (
                   <Skeleton className="w-32 h-10" />
                 ) : mainWallet ? (

@@ -76,7 +76,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] md:w-[420px] bg-card border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)] z-50 flex flex-col max-h-[600px]">
+        <div className="fixed md:absolute inset-x-2 md:inset-x-auto top-auto md:right-0 mt-2 md:w-[420px] bg-card border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)] z-50 flex flex-col max-h-[70vh] md:max-h-[600px]">
           
           {/* Header */}
           <div className="p-3 border-b-2 border-foreground bg-secondary font-bold uppercase text-xs flex justify-between items-center">

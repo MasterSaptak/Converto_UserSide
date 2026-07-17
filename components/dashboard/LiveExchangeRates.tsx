@@ -36,15 +36,15 @@ export function LiveExchangeRates() {
   const canAddMore = ALL_CURRENCIES.filter(c => c !== baseCurrency && !targetCurrencies.includes(c)).length > 0;
 
   return (
-    <section className="bg-primary text-primary-foreground border-2 border-foreground p-5 sm:p-6 md:p-8 relative overflow-hidden">
+    <section className="bg-primary text-primary-foreground border-2 border-foreground p-4 sm:p-6 md:p-8 relative overflow-hidden">
       <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
       
-      <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6 xl:gap-8">
+      <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-8">
         
         {/* Header & Base Currency Selector */}
         <div className="flex justify-between items-start shrink-0">
           <div>
-            <div className="font-bold uppercase text-xl md:text-2xl lg:text-3xl font-heading mb-2 tracking-wider">Live Exchange Rates</div>
+            <div className="font-bold uppercase text-base sm:text-xl md:text-2xl lg:text-3xl font-heading mb-2 tracking-wider">Live Exchange Rates</div>
             
             <div className="flex items-center gap-2">
               <span className="text-[10px] sm:text-[11px] uppercase tracking-widest opacity-80 font-bold block">Base:</span>
@@ -81,9 +81,9 @@ export function LiveExchangeRates() {
           </button>
         </div>
 
-        {/* Rates Scrollable Container */}
-        <div className="flex-1 w-full overflow-x-auto pb-4 xl:pb-0 hide-scrollbar pt-2">
-          <div className="flex gap-6 lg:gap-8 font-heading font-bold text-2xl sm:text-3xl w-max xl:w-full xl:justify-end">
+        {/* Rates Container */}
+        <div className="flex-1 w-full pt-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-6 gap-y-3 lg:gap-8 font-heading font-bold text-xl sm:text-3xl sm:justify-end">
             
             {targetCurrencies.map((target) => {
               // Math: (1 / baseInUSD) * targetInUSD

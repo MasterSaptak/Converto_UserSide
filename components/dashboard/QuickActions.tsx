@@ -20,13 +20,13 @@ export function QuickActions() {
         <div className="w-1.5 h-1.5 bg-primary"></div>
         Quick Actions
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 pb-4">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4 pb-4">
         {ACTIONS.map((action) => (
           <Link 
             key={action.href} 
             href={action.href} 
             className={cn(
-              "group relative border-[3px] p-2 sm:p-4 flex flex-col items-center justify-center text-center transition-all hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] aspect-[4/3] overflow-hidden",
+              "group relative border-[3px] p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] aspect-square sm:aspect-[4/3] overflow-hidden",
               // Light Mode: Light metallic bg, sharp black text
               "bg-gradient-to-br from-zinc-100 via-white to-zinc-200 text-zinc-950 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
               // Dark Mode: Dark metallic bg, neon text

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useInstallPWA } from '@/hooks/useInstallPWA';
-import { User, Settings, LogOut, Loader2, Sun, Moon, Download, X, Plus, SquareArrowUp } from 'lucide-react';
+import { User, Settings, LogOut, Loader2, Sun, Moon, Download, X, Plus, SquareArrowUp, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,47 @@ export function ProfileDropdown() {
     router.push('/login');
   };
 
+  const handleUpdateApp = async () => {
+    try {
+      // Sign out first to clear Supabase cookies/session properly
+      await signOut();
+      
+      // Clear all local storage
+      localStorage.clear();
+      // Clear all session storage
+      sessionStorage.clear();
+      
+      // Clear all service worker caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+
+      // Unregister service workers so they don't break on missing cache
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      }
+
+      // Force clear all cookies to prevent middleware from thinking we are still logged in
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      }
+      
+      // Redirect to login which will also trigger a full page load
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error clearing app data:', error);
+      window.location.href = '/login';
+    }
+  };
+
   const displayName = profile?.username || profile?.full_name || user?.email?.split('@')[0] || 'User';
   const emailDisplay = user?.email || '';
   const avatarUrl = profile?.avatar_url;
@@ -54,7 +95,7 @@ export function ProfileDropdown() {
         </button>
 
         {isOpen && (
-          <div className="absolute top-[120%] right-0 w-72 border-2 border-foreground bg-card shadow-[6px_6px_0px_var(--color-foreground)] z-50 flex flex-col pointer-events-auto">
+          <div className="fixed md:absolute inset-x-2 md:inset-x-auto top-auto md:top-[120%] md:right-0 md:w-72 border-2 border-foreground bg-card shadow-[6px_6px_0px_var(--color-foreground)] z-50 flex flex-col pointer-events-auto">
             {/* Header */}
             <div className="p-4 border-b-2 border-foreground bg-secondary flex items-center gap-3">
               <div className="h-10 w-10 border-2 border-foreground bg-background shrink-0 flex items-center justify-center overflow-hidden rounded-full">
@@ -104,6 +145,15 @@ export function ProfileDropdown() {
                 <div className="w-10 h-5 border-2 border-foreground bg-secondary relative overflow-hidden">
                   <div className={`absolute top-0.5 w-3 h-3 bg-primary transition-all duration-300 ${theme === 'dark' ? 'left-5' : 'left-0.5'}`}></div>
                 </div>
+              </button>
+
+              {/* Update App Button */}
+              <button 
+                onClick={handleUpdateApp}
+                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest w-full text-left"
+              >
+                <RefreshCw className="w-4 h-4 opacity-70" />
+                Update App
               </button>
 
               {/* Install App Button */}

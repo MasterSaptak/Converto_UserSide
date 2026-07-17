@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export function LiveFooter() {
+export function LiveFooter({ compact = false }: { compact?: boolean }) {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -37,6 +37,21 @@ export function LiveFooter() {
   const hours = Math.floor(Math.abs(offset) / 60).toString().padStart(2, '0');
   const minutes = (Math.abs(offset) % 60).toString().padStart(2, '0');
   const utcOffset = `UTC${sign}${hours}:${minutes}`;
+
+  if (compact) {
+    return (
+      <div className="mt-4 pt-4 border-t-2 border-foreground/20 flex flex-col gap-2 text-[8px] uppercase font-bold tracking-widest select-none">
+        <div className="flex flex-col gap-0.5">
+          <span className="opacity-80">© SAPTECH 2026</span>
+          <span className="opacity-50">DESIGNED AND DEVELOPED BY SAPTECH</span>
+        </div>
+        <div className="flex flex-col gap-0.5 opacity-60">
+          <span>LOCAL // {timeStr}</span>
+          <span>{dateStr} • {utcOffset}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <footer className="py-8 flex justify-between border-t-2 border-foreground text-[10px] uppercase font-bold tracking-widest select-none">

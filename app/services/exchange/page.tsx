@@ -1,274 +1,310 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { ArrowDown, Loader2, CheckCircle } from "lucide-react";
-import { submitServiceRequest } from '@/hooks/useServiceRequests';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useState } from "react"
+import { ArrowRight, ArrowLeft, ArrowRightLeft, CreditCard, CheckCircle2 } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
-export default function CurrencyExchangePage() {
-  const { user } = useAuth();
-  const router = useRouter();
+type Step = 1 | 2 | 3
+type PayoutMethod = "bank_transfer" | "crypto_wallet" | "mobile_money" | "cash_pickup"
 
-  const [fromCurrency, setFromCurrency] = useState('USD');
-  const [toCurrency, setToCurrency] = useState('EUR');
-  const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('wallet');
-  const [referenceNumber, setReferenceNumber] = useState('');
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+export default function ExchangeServicePage() {
+  const router = useRouter()
+  const [step, setStep] = useState<Step>(1)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Simple estimated rate (will be replaced by real rates later)
-  const estimatedRate = fromCurrency === 'USD' && toCurrency === 'EUR' ? 0.92
-    : fromCurrency === 'USD' && toCurrency === 'GBP' ? 0.79
-    : fromCurrency === 'EUR' && toCurrency === 'USD' ? 1.09
-    : fromCurrency === 'GBP' && toCurrency === 'USD' ? 1.27
-    : 1;
+  // Form State
+  const [fromCurrency, setFromCurrency] = useState("USD")
+  const [toCurrency, setToCurrency] = useState("EUR")
+  const [amount, setAmount] = useState<string>("1000")
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("bank_transfer")
+  const [payoutDetails, setPayoutDetails] = useState({
+    accountName: "",
+    accountNumber: "",
+    bankName: ""
+  })
 
-  const numAmount = parseFloat(amount) || 0;
-  const estimatedReceive = (numAmount * estimatedRate).toFixed(2);
+  // Simulated Live Rate (In a real app, fetch from API)
+  const exchangeRate = 0.92
+  const serviceFee = 15.00
+  const exchangedAmount = parseFloat(amount || "0") * exchangeRate
+  const totalCost = parseFloat(amount || "0") + serviceFee
+
+  const handleNext = () => {
+    if (step < 3) setStep((s) => (s + 1) as Step)
+  }
+
+  const handleBack = () => {
+    if (step > 1) setStep((s) => (s - 1) as Step)
+  }
 
   const handleSubmit = async () => {
-    if (!user) {
-      router.push('/login');
-      return;
+    setIsLoading(true)
+    try {
+      // Note: Assuming we are communicating with Converto_ServerSide running on port 3000
+      const response = await fetch("http://localhost:3000/api/exchange", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from_currency: fromCurrency,
+          to_currency: toCurrency,
+          amount: parseFloat(amount),
+          payout_method: payoutMethod,
+          payout_details: payoutDetails
+        })
+      })
+
+      if (!response.ok) {
+        console.error("API Error")
+      }
+
+      // Success
+      router.push("/track") // Redirect to order tracking or success page
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
     }
-    if (!amount || numAmount <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    const { error: submitError } = await submitServiceRequest({
-      serviceSlug: 'exchange',
-      amount: numAmount,
-      currency: fromCurrency,
-      metadata: {
-        from_currency: fromCurrency,
-        to_currency: toCurrency,
-        estimated_rate: estimatedRate,
-        estimated_receive: parseFloat(estimatedReceive),
-        payment_method: paymentMethod,
-        reference_number: referenceNumber || undefined,
-      },
-      notes: notes || undefined,
-    });
-
-    if (submitError) {
-      setError(submitError);
-      setLoading(false);
-      return;
-    }
-
-    setSuccess(true);
-    setLoading(false);
-
-    // Redirect to track after a short delay
-    setTimeout(() => {
-      router.push('/track');
-    }, 2000);
-  };
-
-  if (success) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500 py-20">
-        <div className="w-20 h-20 bg-emerald-400 border-2 border-foreground flex items-center justify-center shadow-[4px_4px_0px_var(--color-foreground)]">
-          <CheckCircle className="w-10 h-10" />
-        </div>
-        <h2 className="text-3xl font-bold font-heading uppercase tracking-tight">Request Submitted!</h2>
-        <p className="text-sm font-bold uppercase tracking-widest opacity-60">
-          Your exchange request has been received. Redirecting to tracker...
-        </p>
-      </div>
-    );
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
-      <header className="border-b-2 border-foreground pb-6">
-        <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Services</span>
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Currency Exchange</h1>
-      </header>
+    <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full animate-in fade-in duration-500 pb-10">
       
-      <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-        
-        {/* Form */}
-        <div className="flex flex-col gap-6">
-          <div className="border-2 border-foreground bg-white p-6">
-            <h2 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-foreground pb-2">Exchange Details</h2>
-            
-            {error && (
-              <div className="border-2 border-red-600 bg-red-50 p-4 text-xs font-bold uppercase tracking-wider text-red-600 mb-4">
-                {error}
-              </div>
-            )}
+      <header className="mb-8">
+        <Link href="/services" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:underline mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to Services
+        </Link>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 border-2 border-foreground bg-[#FF90E8] flex items-center justify-center shadow-[4px_4px_0px_var(--color-foreground)]">
+            <ArrowRightLeft className="w-8 h-8 text-zinc-950" />
+          </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl font-black font-heading uppercase leading-[0.9] tracking-tight">Currency Exchange</h1>
+            <p className="text-sm font-bold uppercase tracking-widest opacity-60 mt-2">Fast, secure global transfers</p>
+          </div>
+        </div>
+      </header>
 
-            <div className="flex flex-col gap-6">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Send Currency</label>
+      {/* Progress Bar */}
+      <div className="flex items-center mb-8 bg-card border-2 border-foreground p-2">
+        <div className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-widest ${step >= 1 ? 'bg-foreground text-background' : 'opacity-40'}`}>1. Calculator</div>
+        <div className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-widest ${step >= 2 ? 'bg-foreground text-background' : 'opacity-40'}`}>2. Payout Details</div>
+        <div className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-widest ${step >= 3 ? 'bg-foreground text-background' : 'opacity-40'}`}>3. Review</div>
+      </div>
+
+      <div className="bg-card border-2 border-foreground shadow-[8px_8px_0px_var(--color-foreground)] relative">
+        
+        {/* Step 1: Calculator */}
+        {step === 1 && (
+          <div className="p-6 md:p-10 animate-in slide-in-from-right-4 duration-300">
+            <h2 className="text-2xl font-black uppercase tracking-widest border-b-4 border-foreground pb-4 mb-8">Exchange Details</h2>
+            
+            <div className="grid md:grid-cols-[1fr_auto_1fr] gap-6 items-end mb-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">You Send</label>
+                <div className="flex border-2 border-foreground focus-within:ring-2 ring-primary">
+                  <input 
+                    type="number" 
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full bg-transparent p-4 font-mono text-2xl font-black outline-none"
+                  />
                   <select 
                     value={fromCurrency}
                     onChange={(e) => setFromCurrency(e.target.value)}
-                    className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary"
+                    className="bg-muted border-l-2 border-foreground p-4 font-black uppercase outline-none"
                   >
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="GBP">GBP - British Pound</option>
-                    <option value="NGN">NGN - Nigerian Naira</option>
-                    <option value="INR">INR - Indian Rupee</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
                   </select>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Amount</label>
-                  <input 
-                    type="number" 
-                    placeholder="1000.00" 
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" 
-                  />
-                </div>
               </div>
 
-              <div className="flex justify-center -my-2 relative z-10">
-                <div className="w-8 h-8 bg-primary text-primary-foreground border-2 border-foreground flex items-center justify-center rounded-full">
-                  <ArrowDown className="w-4 h-4" />
-                </div>
+              <div className="hidden md:flex mb-4 w-12 h-12 bg-foreground text-background items-center justify-center rounded-full">
+                <ArrowRight className="w-6 h-6" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Receive Currency</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Recipient Gets</label>
+                <div className="flex border-2 border-foreground bg-muted opacity-80 cursor-not-allowed">
+                  <div className="w-full p-4 font-mono text-2xl font-black text-foreground/70 flex items-center">
+                    {exchangedAmount.toFixed(2)}
+                  </div>
                   <select 
                     value={toCurrency}
                     onChange={(e) => setToCurrency(e.target.value)}
-                    className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary"
+                    className="bg-transparent border-l-2 border-foreground p-4 font-black uppercase outline-none cursor-pointer hover:bg-background"
                   >
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="GBP">GBP - British Pound</option>
-                    <option value="NGN">NGN - Nigerian Naira</option>
-                    <option value="INR">INR - Indian Rupee</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
                   </select>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Amount (Est.)</label>
-                  <input 
-                    type="text" 
-                    value={numAmount > 0 ? estimatedReceive : ''} 
-                    readOnly 
-                    placeholder="0.00"
-                    className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none bg-secondary/50 font-mono opacity-80 w-full" 
-                  />
-                </div>
               </div>
-
-              <div className="flex flex-col gap-2 pt-4">
-                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Payment Method</label>
-                <select 
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary"
-                >
-                  <option value="wallet">Wallet Balance</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="card">Card Payment</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload Payment Screenshot (If Bank Transfer)</label>
-                <div className="border-2 border-dashed border-foreground p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-secondary/50 transition-colors">
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Click to browse or drag & drop</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Reference Number</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. TXN-123456" 
-                  value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
-                  className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary font-mono" 
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Notes (Optional)</label>
-                <textarea 
-                  rows={3} 
-                  placeholder="Any special instructions..." 
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary resize-none"
-                ></textarea>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* Summary Sidebar */}
-        <div className="flex flex-col gap-6">
-          <div className="border-2 border-foreground bg-primary text-primary-foreground p-6 sticky top-24">
-            <h2 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-white/20 pb-2">Exchange Summary</h2>
-            
-            <div className="flex flex-col gap-4 font-mono text-sm mb-8">
-               <div className="flex justify-between items-center">
-                 <span className="uppercase opacity-80">Send Amount</span>
-                 <span className="font-bold">{numAmount > 0 ? numAmount.toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} {fromCurrency}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="uppercase opacity-80">Live Rate</span>
-                 <span className="font-bold">1 {fromCurrency} = {estimatedRate} {toCurrency}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="uppercase opacity-80">Service Fee</span>
-                 <span className="font-bold text-emerald-300">0.00 {fromCurrency}</span>
-               </div>
-               <div className="border-t-2 border-dashed border-white/30 my-2"></div>
-               <div className="flex justify-between items-center text-lg">
-                 <span className="uppercase opacity-80">You Get</span>
-                 <span className="font-bold">{numAmount > 0 ? parseFloat(estimatedReceive).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} {toCurrency}</span>
-               </div>
             </div>
 
-            <div className="flex flex-col gap-2 mb-8 text-[10px] uppercase font-bold tracking-widest opacity-80">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                Est. Delivery: Instant
+            <div className="bg-muted p-6 border-2 border-foreground font-mono space-y-2 mb-10">
+              <div className="flex justify-between text-sm">
+                <span className="font-bold opacity-60">Exchange Rate</span>
+                <span className="font-black">1 {fromCurrency} = {exchangeRate} {toCurrency}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                Secure Transaction
+              <div className="flex justify-between text-sm">
+                <span className="font-bold opacity-60">Service Fee</span>
+                <span className="font-black">{serviceFee.toFixed(2)} {fromCurrency}</span>
+              </div>
+              <div className="flex justify-between text-lg pt-4 border-t-2 border-foreground mt-2">
+                <span className="font-black uppercase tracking-widest">Total to Pay</span>
+                <span className="font-black">{totalCost.toFixed(2)} {fromCurrency}</span>
               </div>
             </div>
 
             <button 
-              onClick={handleSubmit}
-              disabled={loading || !amount || numAmount <= 0}
-              className="w-full border-2 border-foreground bg-white text-foreground p-4 font-bold uppercase tracking-widest text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
+              onClick={handleNext}
+              className="w-full bg-primary text-primary-foreground font-black uppercase tracking-widest py-5 border-2 border-transparent hover:border-foreground hover:bg-background hover:text-foreground transition-colors flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit Request'
-              )}
+              Continue to Payout Details <ArrowRight className="w-5 h-5" />
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Step 2: Payout Details */}
+        {step === 2 && (
+          <div className="p-6 md:p-10 animate-in slide-in-from-right-4 duration-300">
+            <h2 className="text-2xl font-black uppercase tracking-widest border-b-4 border-foreground pb-4 mb-8">Payout Method</h2>
+            
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {[
+                { id: 'bank_transfer', label: 'Bank Transfer', icon: CreditCard },
+                { id: 'crypto_wallet', label: 'Crypto Wallet', icon: ArrowRightLeft },
+              ].map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setPayoutMethod(method.id as PayoutMethod)}
+                  className={`p-4 border-2 flex flex-col items-center gap-3 transition-colors ${payoutMethod === method.id ? 'border-foreground bg-foreground text-background shadow-[4px_4px_0px_var(--color-primary)]' : 'border-foreground/20 hover:border-foreground bg-card'}`}
+                >
+                  <method.icon className="w-8 h-8" />
+                  <span className="font-black uppercase tracking-widest text-[10px]">{method.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-4 mb-10">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Account Name</label>
+                <input 
+                  type="text"
+                  value={payoutDetails.accountName}
+                  onChange={(e) => setPayoutDetails({...payoutDetails, accountName: e.target.value})}
+                  className="w-full bg-transparent p-4 border-2 border-foreground font-bold outline-none focus:ring-2 ring-primary"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Bank Name</label>
+                  <input 
+                    type="text"
+                    value={payoutDetails.bankName}
+                    onChange={(e) => setPayoutDetails({...payoutDetails, bankName: e.target.value})}
+                    className="w-full bg-transparent p-4 border-2 border-foreground font-bold outline-none focus:ring-2 ring-primary"
+                    placeholder="Chase Bank"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Account Number / IBAN</label>
+                  <input 
+                    type="text"
+                    value={payoutDetails.accountNumber}
+                    onChange={(e) => setPayoutDetails({...payoutDetails, accountNumber: e.target.value})}
+                    className="w-full bg-transparent p-4 border-2 border-foreground font-bold outline-none focus:ring-2 ring-primary"
+                    placeholder="US123456789"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={handleBack}
+                className="w-1/3 bg-muted text-foreground font-black uppercase tracking-widest py-5 border-2 border-foreground hover:bg-foreground hover:text-background transition-colors"
+              >
+                Back
+              </button>
+              <button 
+                onClick={handleNext}
+                className="w-2/3 bg-primary text-primary-foreground font-black uppercase tracking-widest py-5 border-2 border-transparent hover:border-foreground hover:bg-background hover:text-foreground transition-colors flex items-center justify-center gap-2"
+              >
+                Review Order <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Review */}
+        {step === 3 && (
+          <div className="p-6 md:p-10 animate-in slide-in-from-right-4 duration-300">
+            <h2 className="text-2xl font-black uppercase tracking-widest border-b-4 border-foreground pb-4 mb-8">Review & Submit</h2>
+            
+            <div className="grid md:grid-cols-2 gap-8 mb-10">
+              <div className="space-y-6">
+                <div className="brutal-card bg-[#00E5FF] p-6 border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-2">You Send</span>
+                  <div className="font-mono text-3xl font-black">{totalCost.toFixed(2)} {fromCurrency}</div>
+                  <div className="text-xs font-bold mt-2">Includes {serviceFee} fee</div>
+                </div>
+                <div className="brutal-card bg-[#00FF66] p-6 border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-2">Recipient Gets</span>
+                  <div className="font-mono text-3xl font-black">{exchangedAmount.toFixed(2)} {toCurrency}</div>
+                  <div className="text-xs font-bold mt-2">Rate: {exchangeRate}</div>
+                </div>
+              </div>
+
+              <div className="border-2 border-foreground p-6 bg-card space-y-4">
+                <h3 className="font-black uppercase tracking-widest text-sm border-b-2 border-foreground/20 pb-2">Payout Information</h3>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Method</span>
+                  <p className="font-bold capitalize">{payoutMethod.replace('_', ' ')}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Recipient</span>
+                  <p className="font-bold">{payoutDetails.accountName}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Bank</span>
+                  <p className="font-bold">{payoutDetails.bankName}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Account Number</span>
+                  <p className="font-bold font-mono">{payoutDetails.accountNumber}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={handleBack}
+                disabled={isLoading}
+                className="w-1/3 bg-muted text-foreground font-black uppercase tracking-widest py-5 border-2 border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+              >
+                Back
+              </button>
+              <button 
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="w-2/3 bg-foreground text-background font-black uppercase tracking-widest py-5 border-2 border-transparent hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isLoading ? "Processing..." : (
+                  <>Confirm & Submit <CheckCircle2 className="w-5 h-5" /></>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
-  );
+  )
 }

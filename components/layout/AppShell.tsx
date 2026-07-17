@@ -56,13 +56,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex relative min-h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-0 relative">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 relative">
         <DesktopHeader />
         <MobileHeader />
-        <main className="flex-1 flex flex-col p-4 md:p-12 md:pt-24 overflow-y-auto">
+        <main className="flex-1 flex flex-col px-4 py-5 md:p-12 md:pt-24 overflow-y-auto pb-24 md:pb-12">
           {children}
         </main>
-        <div className="px-4 md:px-12 bg-background">
+        <div className="hidden md:block px-4 md:px-12 bg-background">
           <LiveFooter />
         </div>
         <BottomNav />

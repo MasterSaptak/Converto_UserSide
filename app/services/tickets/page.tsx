@@ -1,348 +1,339 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client"
 
-import { useState } from 'react';
-import { cn } from "@/lib/utils";
-import { Train, Plane, Bus, Loader2, CheckCircle } from "lucide-react";
-import { submitServiceRequest } from '@/hooks/useServiceRequests';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users } from 'lucide-react'
+
+type TicketType = 'flight' | 'hotel' | 'bus' | 'event'
 
 export default function TicketBookingPage() {
-  const { user } = useAuth();
-  const router = useRouter();
+  const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [activeTab, setActiveTab] = useState('flight');
-  
-  // Flight state
-  const [tripType, setTripType] = useState('one_way');
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-  const [departureDate, setDepartureDate] = useState('');
-  const [returnDate, setReturnDate] = useState('');
-  const [adults, setAdults] = useState('1');
-  const [children, setChildren] = useState('0');
-  const [infants, setInfants] = useState('0');
-  const [cabinClass, setCabinClass] = useState('Economy');
-  
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    ticketType: 'flight' as TicketType,
+    departureCity: '',
+    destinationCity: '',
+    travelStartDate: '',
+    travelEndDate: '',
+    eventName: '',
+    specialRequests: '',
+    passengers: [
+      { firstName: '', lastName: '', passportOrIdNumber: '', dob: '' }
+    ]
+  })
 
-  const handleSubmit = async () => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+  const updateForm = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
 
-    if (!origin || !destination || !departureDate) {
-      setError('Origin, destination, and departure date are required.');
-      return;
-    }
+  const updatePassenger = (index: number, field: string, value: string) => {
+    setFormData(prev => {
+      const newPassengers = [...prev.passengers]
+      newPassengers[index] = { ...newPassengers[index], [field]: value }
+      return { ...prev, passengers: newPassengers }
+    })
+  }
 
-    setLoading(true);
-    setError('');
+  const addPassenger = () => {
+    setFormData(prev => ({
+      ...prev,
+      passengers: [...prev.passengers, { firstName: '', lastName: '', passportOrIdNumber: '', dob: '' }]
+    }))
+  }
 
-    const metadata: Record<string, unknown> = {
-      transport_type: activeTab,
-      origin,
-      destination,
-      departure_date: departureDate,
-      passengers: {
-        adults: parseInt(adults) || 1,
-        children: parseInt(children) || 0,
-        infants: parseInt(infants) || 0,
+  const removePassenger = (index: number) => {
+    if (formData.passengers.length === 1) return;
+    setFormData(prev => {
+      const newPassengers = [...prev.passengers]
+      newPassengers.splice(index, 1)
+      return { ...prev, passengers: newPassengers }
+    })
+  }
+
+  const handleNext = () => setStep(s => s + 1)
+  const handlePrev = () => setStep(s => s - 1)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Send to Server App API
+      const res = await fetch('http://localhost:3000/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to submit request')
       }
-    };
 
-    if (activeTab === 'flight') {
-      metadata.trip_type = tripType;
-      metadata.cabin_class = cabinClass;
-      if (tripType === 'round_trip') {
-        metadata.return_date = returnDate;
-      }
+      router.push('/dashboard?service=ticket_booking&status=success')
+    } catch (err: any) {
+      setError(err.message)
+      setLoading(false)
     }
-
-    const { error: submitError } = await submitServiceRequest({
-      serviceSlug: 'ticket',
-      metadata,
-    });
-
-    if (submitError) {
-      setError(submitError);
-      setLoading(false);
-      return;
-    }
-
-    setSuccess(true);
-    setLoading(false);
-
-    // Redirect to track after a short delay
-    setTimeout(() => {
-      router.push('/track');
-    }, 2000);
-  };
-
-  if (success) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500 py-20">
-        <div className="w-20 h-20 bg-emerald-400 border-2 border-foreground flex items-center justify-center shadow-[4px_4px_0px_var(--color-foreground)]">
-          <CheckCircle className="w-10 h-10" />
-        </div>
-        <h2 className="text-3xl font-bold font-heading uppercase tracking-tight">Request Submitted!</h2>
-        <p className="text-sm font-bold uppercase tracking-widest opacity-60">
-          Your ticket request has been received. Redirecting to tracker...
-        </p>
-      </div>
-    );
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
-      <header className="border-b-2 border-foreground pb-6">
-        <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Services</span>
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Ticket Booking</h1>
-      </header>
+    <div className="max-w-3xl mx-auto py-10 px-4 animate-in fade-in duration-500">
       
-      <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-        
-        {/* Form Container */}
-        <div className="flex flex-col gap-6">
-          
-          {error && (
-            <div className="border-2 border-red-600 bg-red-50 p-4 text-xs font-bold uppercase tracking-wider text-red-600">
-              {error}
-            </div>
-          )}
+      <div className="mb-10 text-center">
+        <div className="inline-flex w-16 h-16 border-2 border-foreground bg-primary items-center justify-center mb-6 shadow-[4px_4px_0px_var(--color-foreground)]">
+          <Ticket className="w-8 h-8 text-primary-foreground" />
+        </div>
+        <h1 className="text-4xl font-black uppercase tracking-tighter">Ticket Booking</h1>
+        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-2">Flights, Hotels, Events & More</p>
+      </div>
 
-          {/* Tabs */}
-          <div className="flex border-2 border-foreground bg-white">
-            <button 
-              onClick={() => setActiveTab('flight')}
-              className={cn("flex-1 p-4 flex items-center justify-center gap-2 font-bold uppercase tracking-widest text-xs transition-colors", activeTab === 'flight' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}
-            >
-              <Plane className="w-4 h-4" /> Flight
-            </button>
-            <button 
-              onClick={() => setActiveTab('train')}
-              className={cn("flex-1 p-4 flex items-center justify-center gap-2 border-l-2 border-foreground font-bold uppercase tracking-widest text-xs transition-colors", activeTab === 'train' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}
-            >
-              <Train className="w-4 h-4" /> Train
-            </button>
-            <button 
-              onClick={() => setActiveTab('bus')}
-              className={cn("flex-1 p-4 flex items-center justify-center gap-2 border-l-2 border-foreground font-bold uppercase tracking-widest text-xs transition-colors", activeTab === 'bus' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}
-            >
-              <Bus className="w-4 h-4" /> Bus
-            </button>
+      <div className="flex gap-2 mb-8">
+        {[1, 2, 3].map(i => (
+          <div key={i} className={`h-2 flex-1 border-2 border-foreground ${step >= i ? 'bg-primary' : 'bg-transparent'}`} />
+        ))}
+      </div>
+
+      <form onSubmit={handleSubmit} className="brutal-card bg-white p-6 md:p-8 space-y-8">
+        {error && (
+          <div className="bg-red-100 border-2 border-red-500 text-red-700 p-4 font-bold text-sm">
+            {error}
           </div>
+        )}
 
-          <div className="border-2 border-foreground bg-white p-6">
-            {activeTab === 'flight' && (
-              <div className="flex flex-col gap-6 animate-in fade-in">
-                <h2 className="font-bold uppercase tracking-widest text-sm mb-2 border-b-2 border-foreground pb-2">Flight Details</h2>
+        {/* STEP 1: Ticket Type & Details */}
+        <div className={step === 1 ? 'block' : 'hidden'}>
+          <h2 className="text-2xl font-black uppercase tracking-tight mb-6">1. Travel Details</h2>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[
+                { id: 'flight', label: 'Flight', icon: Plane },
+                { id: 'hotel', label: 'Hotel', icon: Hotel },
+                { id: 'bus', label: 'Bus', icon: Bus },
+                { id: 'event', label: 'Event', icon: CalendarDays }
+              ].map(type => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => updateForm('ticketType', type.id)}
+                  className={`p-4 border-2 flex flex-col items-center justify-center gap-2 transition-all ${
+                    formData.ticketType === type.id 
+                      ? 'border-black bg-primary text-primary-foreground shadow-[4px_4px_0px_var(--color-foreground)] -translate-y-1' 
+                      : 'border-black/20 bg-slate-50 opacity-60 hover:opacity-100 hover:border-black'
+                  }`}
+                >
+                  <type.icon className="w-6 h-6" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{type.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {formData.ticketType === 'event' ? (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Event Name / Link</label>
+                <input 
+                  type="text"
+                  value={formData.eventName}
+                  onChange={(e) => updateForm('eventName', e.target.value)}
+                  placeholder="E.g., Tomorrowland 2026 or link to event"
+                  className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                />
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {formData.ticketType !== 'hotel' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">From (City/Airport)</label>
+                    <input 
+                      type="text"
+                      value={formData.departureCity}
+                      onChange={(e) => updateForm('departureCity', e.target.value)}
+                      placeholder="E.g., New York (JFK)"
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                )}
                 
-                <div className="flex gap-4 mb-2">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="tripType" 
-                      checked={tripType === 'one_way'} 
-                      onChange={() => setTripType('one_way')}
-                      className="accent-primary" 
-                    /> One Way
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="tripType" 
-                      checked={tripType === 'round_trip'} 
-                      onChange={() => setTripType('round_trip')}
-                      className="accent-primary" 
-                    /> Round Trip
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Origin</label>
-                    <input 
-                      type="text" 
-                      placeholder="City or Airport" 
-                      value={origin}
-                      onChange={(e) => setOrigin(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary w-full" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Destination</label>
-                    <input 
-                      type="text" 
-                      placeholder="City or Airport" 
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary w-full" 
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Departure Date</label>
-                    <input 
-                      type="date" 
-                      value={departureDate}
-                      onChange={(e) => setDepartureDate(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Return Date</label>
-                    <input 
-                      type="date" 
-                      value={returnDate}
-                      onChange={(e) => setReturnDate(e.target.value)}
-                      disabled={tripType === 'one_way'}
-                      className={cn(
-                        "border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full",
-                        tripType === 'one_way' && "opacity-50 cursor-not-allowed"
-                      )} 
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Adults</label>
-                    <input 
-                      type="number" 
-                      min="1" 
-                      value={adults}
-                      onChange={(e) => setAdults(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Children</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      value={children}
-                      onChange={(e) => setChildren(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Infants</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      value={infants}
-                      onChange={(e) => setInfants(e.target.value)}
-                      className="border-2 border-foreground p-3 md:p-4 text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" 
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Cabin Class</label>
-                  <select 
-                    value={cabinClass}
-                    onChange={(e) => setCabinClass(e.target.value)}
-                    className="border-2 border-foreground p-3 md:p-4 bg-secondary text-sm font-bold uppercase outline-none focus:border-primary w-full min-h-[48px]"
-                  >
-                    <option value="Economy">Economy</option>
-                    <option value="Premium Economy">Premium Economy</option>
-                    <option value="Business">Business</option>
-                    <option value="First Class">First Class</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Passport / Visa Upload</label>
-                  <div className="border-2 border-dashed border-foreground p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-secondary/50 transition-colors">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload required travel documents</span>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">To (City/Airport/Hotel)</label>
+                  <input 
+                    type="text"
+                    value={formData.destinationCity}
+                    onChange={(e) => updateForm('destinationCity', e.target.value)}
+                    placeholder="E.g., London (LHR)"
+                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                  />
                 </div>
               </div>
             )}
 
-            {activeTab === 'train' && (
-              <div className="flex flex-col gap-6 animate-in fade-in">
-                <h2 className="font-bold uppercase tracking-widest text-sm mb-2 border-b-2 border-foreground pb-2">Train Details</h2>
-                {/* Simplified form for train */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Origin Station</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. London Euston" 
-                      value={origin}
-                      onChange={(e) => setOrigin(e.target.value)}
-                      className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Destination Station</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Manchester Piccadilly" 
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary" 
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Journey Date</label>
-                    <input 
-                      type="date" 
-                      value={departureDate}
-                      onChange={(e) => setDepartureDate(e.target.value)}
-                      className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary font-mono" 
-                    />
-                </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure / Check-in</label>
+                <input 
+                  type="date"
+                  value={formData.travelStartDate}
+                  onChange={(e) => updateForm('travelStartDate', e.target.value)}
+                  className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                />
               </div>
-            )}
-
-            {activeTab === 'bus' && (
-              <div className="flex flex-col gap-6 animate-in fade-in">
-                <h2 className="font-bold uppercase tracking-widest text-sm mb-2 border-b-2 border-foreground pb-2">Bus Details</h2>
-                <div className="flex flex-col gap-2 text-center py-8 opacity-60">
-                   <span className="font-bold uppercase tracking-widest text-xs">Bus service integration coming soon</span>
-                </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return / Check-out (Optional)</label>
+                <input 
+                  type="date"
+                  value={formData.travelEndDate}
+                  onChange={(e) => updateForm('travelEndDate', e.target.value)}
+                  className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                />
               </div>
-            )}
+            </div>
+            
+            <button 
+              type="button"
+              onClick={handleNext}
+              className="w-full brutal-button bg-black text-white flex items-center justify-center gap-2"
+            >
+              Next Step <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {/* Summary Sidebar */}
-        <div className="flex flex-col gap-6 relative">
-          <div className="border-2 border-foreground bg-primary text-primary-foreground p-6 sticky top-24 z-10 lg:static lg:z-auto">
-            <h2 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-white/20 pb-2">Booking Summary</h2>
-            
-            <div className="flex flex-col gap-4 text-xs font-bold uppercase mb-8">
-               <p className="opacity-80">Submit your travel requirements and our agents will find the best available options for you.</p>
-               <p className="opacity-80">You will receive an itinerary and quotation for approval before finalizing the booking.</p>
-            </div>
+        {/* STEP 2: Passengers */}
+        <div className={step === 2 ? 'block' : 'hidden'}>
+          <h2 className="text-2xl font-black uppercase tracking-tight mb-6">2. Passenger Details</h2>
+          
+          <div className="space-y-8 mb-6">
+            {formData.passengers.map((passenger, index) => (
+              <div key={index} className="bg-slate-50 border-2 border-black p-4 relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-primary border-2 border-black text-primary-foreground font-black flex items-center justify-center">
+                  {index + 1}
+                </div>
+                
+                {index > 0 && (
+                  <button 
+                    type="button" 
+                    onClick={() => removePassenger(index)}
+                    className="absolute -top-3 -right-3 px-2 py-1 bg-red-500 border-2 border-black text-white text-[10px] font-black uppercase"
+                  >
+                    Remove
+                  </button>
+                )}
+
+                <div className="grid md:grid-cols-2 gap-4 mt-2">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">First Name</label>
+                    <input 
+                      type="text"
+                      value={passenger.firstName}
+                      onChange={(e) => updatePassenger(index, 'firstName', e.target.value)}
+                      required
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Last Name</label>
+                    <input 
+                      type="text"
+                      value={passenger.lastName}
+                      onChange={(e) => updatePassenger(index, 'lastName', e.target.value)}
+                      required
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Passport / ID Number</label>
+                    <input 
+                      type="text"
+                      value={passenger.passportOrIdNumber}
+                      onChange={(e) => updatePassenger(index, 'passportOrIdNumber', e.target.value)}
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Date of Birth</label>
+                    <input 
+                      type="date"
+                      value={passenger.dob}
+                      onChange={(e) => updatePassenger(index, 'dob', e.target.value)}
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
 
             <button 
-              onClick={handleSubmit}
-              disabled={loading || activeTab === 'bus'}
-              className="w-full min-h-[48px] border-2 border-foreground bg-white text-foreground p-4 font-bold uppercase tracking-widest text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
+              type="button" 
+              onClick={addPassenger}
+              className="w-full p-4 border-2 border-dashed border-black hover:bg-slate-100 transition-colors font-black uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              <Users className="w-5 h-5" /> Add Another Passenger
+            </button>
+          </div>
+
+          <div className="flex gap-4">
+            <button type="button" onClick={handlePrev} className="p-4 border-2 border-black hover:bg-slate-100 transition-colors font-black uppercase tracking-widest flex items-center justify-center">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button 
+              type="button" 
+              onClick={handleNext}
+              className="flex-1 brutal-button bg-black text-white flex items-center justify-center gap-2"
+            >
+              Review & Submit <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* STEP 3: Review */}
+        <div className={step === 3 ? 'block' : 'hidden'}>
+          <h2 className="text-2xl font-black uppercase tracking-tight mb-6">3. Special Requests</h2>
+          
+          <div className="space-y-4 mb-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Any preferences or special instructions?</label>
+              <textarea 
+                value={formData.specialRequests}
+                onChange={(e) => updateForm('specialRequests', e.target.value)}
+                placeholder="E.g., Window seat preferred, vegetarian meal, ground floor hotel room..."
+                rows={4}
+                className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="bg-primary/10 border-2 border-primary p-4 mb-6">
+            <h4 className="font-black uppercase tracking-widest text-xs mb-2">Next Steps</h4>
+            <p className="text-sm font-bold opacity-80">
+              Once submitted, our team will source the best options and generate a final price quote. You&apos;ll be notified when the quote is ready for your approval and payment.
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <button type="button" onClick={handlePrev} className="p-4 border-2 border-black hover:bg-slate-100 transition-colors font-black uppercase tracking-widest flex items-center justify-center">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="flex-1 brutal-button bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Submitting...
-                </>
+                <>Submitting <Loader2 className="w-5 h-5 animate-spin" /></>
               ) : (
-                'Submit Request'
+                <>Request Quote <ArrowRight className="w-5 h-5" /></>
               )}
             </button>
           </div>
         </div>
 
-      </div>
+      </form>
     </div>
-  );
+  )
 }

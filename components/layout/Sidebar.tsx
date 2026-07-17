@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { LiveFooter } from "./LiveFooter";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
@@ -14,21 +15,20 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Profile" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   
-  return (
-    <aside className="hidden md:block w-[240px] lg:w-[280px] border-r-2 border-foreground bg-secondary shrink-0 relative">
-      <div className="h-screen sticky top-0 flex flex-col p-8 lg:p-10">
-        <Link href="/" className="flex items-center gap-3 mb-12 group">
-          <Image src="/Logo.png" alt="Converto Logo" width={48} height={48} className="w-12 h-12 border-2 border-foreground bg-white p-1 object-contain transition-transform group-hover:scale-105 shrink-0" />
-          <div className="flex flex-col">
-            <h2 className="text-2xl font-bold uppercase tracking-widest font-heading group-hover:text-primary transition-colors leading-none">Converto</h2>
-            <span className="text-[8px] uppercase tracking-widest font-bold opacity-60 mt-1">The Ultimate Payment Engine</span>
+  const content = (
+    <div className="h-full sticky top-0 flex flex-col p-6 lg:p-8 overflow-y-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <Link href="/" className="flex flex-col items-center mb-8 group -mx-6 lg:-mx-8 -mt-6 lg:-mt-8 p-5 border-b-2 border-foreground bg-card">
+          <div className="w-full max-w-[200px] h-28 border-2 border-foreground bg-white overflow-hidden flex items-center justify-center mb-3">
+            <Image src="/Logo.png" alt="Converto Logo" width={200} height={200} className="w-full h-full object-cover scale-[1.45] transition-transform duration-300 group-hover:scale-[1.55]" priority />
           </div>
+          <h2 className="text-2xl font-bold uppercase tracking-widest font-heading group-hover:text-primary transition-colors leading-none mt-3">Converto</h2>
+          <span className="text-[8px] uppercase tracking-widest font-bold opacity-60 mt-1">The Ultimate Payment Engine</span>
         </Link>
         
-        <nav className="flex flex-col gap-5 mb-10">
+        <nav className="flex flex-col gap-4 mb-6">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'));
             return (
@@ -47,8 +47,8 @@ export function Sidebar() {
         </nav>
 
         {/* Added Sidebar Features */}
-        <div className="flex flex-col gap-6 mt-4">
-          <div className="border-2 border-foreground bg-card p-4 relative overflow-hidden group">
+        <div className="flex flex-col gap-4 mt-2">
+          <div className="border-2 border-foreground bg-card p-3 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
             <span className="text-[10px] font-bold uppercase tracking-widest block mb-2 opacity-80">Daily Limit</span>
             <div className="flex items-end justify-between mb-2">
@@ -65,14 +65,22 @@ export function Sidebar() {
           </Link>
         </div>
 
-        <div className="mt-auto pt-6">
+        <div className="mt-auto pt-4">
           <span className="text-[10px] uppercase tracking-widest opacity-60 block mb-1">System</span>
           <div className="font-bold text-sm flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
             ONLINE
           </div>
+          {mobile && <LiveFooter compact />}
         </div>
       </div>
+  );
+
+  if (mobile) return content;
+
+  return (
+    <aside className="hidden md:block w-[240px] lg:w-[280px] border-r-2 border-foreground bg-secondary shrink-0 relative">
+      {content}
     </aside>
   );
 }

@@ -1,48 +1,86 @@
 import Link from "next/link";
-import { ArrowRightLeft, ShoppingBag, Train, GraduationCap, Globe, Package, HeadphonesIcon } from "lucide-react";
+import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
-const SERVICES = [
-  { href: "/services/exchange", label: "Currency Exchange", description: "Best rates for global transfers", icon: ArrowRightLeft, color: "bg-[#FF90E8]", text: "text-[#FF90E8]" },
-  { href: "/services/buy-for-me", label: "Buy For Me", description: "Shop internationally with ease", icon: ShoppingBag, color: "bg-[#FFC900]", text: "text-[#FFC900]" },
-  { href: "/services/tickets", label: "Ticket Booking", description: "Flights, trains, and buses", icon: Train, color: "bg-[#00E5FF]", text: "text-[#00E5FF]" },
-  { href: "/services/education", label: "Education Payments", description: "Pay tuition & application fees", icon: GraduationCap, color: "bg-[#94A3B8]", text: "text-[#94A3B8]" },
-  { href: "/services/global-payments", label: "Global Payments", description: "B2B and personal transfers", icon: Globe, color: "bg-[#00FF66]", text: "text-[#00FF66]" },
-  { href: "/track", label: "Order Tracking", description: "Real-time status updates", icon: Package, color: "bg-[#FF5C00]", text: "text-[#FF5C00]" },
-  { href: "/support", label: "Live Support", description: "24/7 dedicated assistance", icon: HeadphonesIcon, color: "bg-[#B28DFF]", text: "text-[#B28DFF]" },
+// Map slugs to icons
+const getIconForSlug = (slug: string) => {
+  switch (slug) {
+    case 'exchange': return ArrowRightLeft;
+    case 'buy_for_me': return ShoppingBag;
+    case 'tickets': case 'ticket_booking': return Ticket;
+    case 'education': return GraduationCap;
+    case 'global_payments': return Globe;
+    case 'support': return HeadphonesIcon;
+    case 'track': return Package;
+    default: return Settings2;
+  }
+}
+
+// Hardcoded fallback services — always shown if DB is empty or not seeded
+const FALLBACK_SERVICES = [
+  { id: 'exchange', slug: 'exchange', name: 'Money Exchange', description: 'Convert currencies at competitive rates', route: '/services/exchange', color: '#FF90E8', sort_order: 1, is_active: true },
+  { id: 'buy_for_me', slug: 'buy_for_me', name: 'Buy For Me', description: 'We purchase items on your behalf worldwide', route: '/services/buy-for-me', color: '#FFC900', sort_order: 2, is_active: true },
+  { id: 'tickets', slug: 'tickets', name: 'Ticket Booking', description: 'Book flights, trains, and bus tickets', route: '/services/tickets', color: '#00E5FF', sort_order: 3, is_active: true },
+  { id: 'education', slug: 'education', name: 'Educational Payment', description: 'Pay tuition and university fees globally', route: '/services/education', color: '#94A3B8', sort_order: 4, is_active: true },
+  { id: 'global_payments', slug: 'global_payments', name: 'Money Transfer', description: 'Send money across borders instantly', route: '/services/global-payments', color: '#00FF66', sort_order: 5, is_active: true },
+  { id: 'track', slug: 'track', name: 'Order Tracking', description: 'Real-time status updates on all orders', route: '/track', color: '#FF5C00', sort_order: 6, is_active: true },
 ];
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  // Try to load from DB first
+  const { data: dbServices } = await supabase
+    .from('services')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  // Use DB services if they exist, otherwise use hardcoded fallbacks
+  const services = (dbServices && dbServices.length > 0) ? dbServices : FALLBACK_SERVICES;
+
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
-      <header className="border-b-2 border-foreground pb-6">
+    <div className="flex-1 flex flex-col gap-6 md:gap-10 animate-in fade-in duration-500 pb-10">
+      <header className="border-b-2 border-foreground pb-4 md:pb-6">
         <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Our Offerings</span>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Services</h1>
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Services</h1>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {SERVICES.map((service) => (
-          <Link key={service.href} href={service.href} className="group bg-card border-2 border-foreground p-6 flex flex-col transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_var(--color-foreground)] overflow-hidden relative min-h-[160px]">
-            {/* Colorful hover backdrop */}
-            <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-[0.15] transition-opacity pointer-events-none duration-500", service.color)}></div>
-            
-            <div className="flex items-center gap-4 mb-4 relative z-10">
-              <div className={cn("w-12 h-12 border-2 border-foreground flex items-center justify-center transition-transform group-hover:scale-110 shadow-[2px_2px_0px_var(--color-foreground)]", service.color)}>
-                <service.icon className="w-6 h-6 text-zinc-950" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {services.map((service) => {
+          const Icon = getIconForSlug(service.slug);
+          
+          return (
+            <Link key={service.id} href={service.route || `/services/${service.slug}`} className="group bg-card border-2 border-foreground p-5 md:p-6 flex flex-col transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_var(--color-foreground)] overflow-hidden relative min-h-[140px] md:min-h-[160px]">
+              {/* Colorful hover backdrop */}
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-[0.15] transition-opacity pointer-events-none duration-500"
+                style={{ backgroundColor: service.color || undefined }}
+              />
+              
+              <div className="flex items-center gap-4 mb-3 md:mb-4 relative z-10">
+                <div 
+                  className="w-10 h-10 md:w-12 md:h-12 border-2 border-foreground flex items-center justify-center transition-transform group-hover:scale-110 shadow-[2px_2px_0px_var(--color-foreground)]"
+                  style={{ backgroundColor: service.color || '#E2E8F0' }}
+                >
+                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-zinc-950" />
+                </div>
+                <h2 className="font-bold uppercase tracking-widest text-xs sm:text-sm leading-tight group-hover:text-primary transition-colors">{service.name}</h2>
               </div>
-              <h2 className="font-bold uppercase tracking-widest text-sm leading-tight group-hover:text-primary transition-colors">{service.label}</h2>
-            </div>
-            
-            <p className="text-xs uppercase font-bold opacity-60 tracking-wider flex-1 relative z-10">
-              {service.description}
-            </p>
-            
-            <div className="mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest relative z-10">
-              <span className="group-hover:underline text-foreground">Select Service</span>
-              <div className={cn("w-2 h-2 rounded-full", service.color)}></div>
-            </div>
-          </Link>
-        ))}
+              
+              <p className="text-[10px] sm:text-xs uppercase font-bold opacity-60 tracking-wider flex-1 relative z-10">
+                {service.description || "Core platform module"}
+              </p>
+              
+              <div className="mt-4 md:mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest relative z-10">
+                <span className="group-hover:underline text-foreground">Select Service</span>
+                <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: service.color || '#E2E8F0' }}
+                />
+              </div>
+            </Link>
+          )
+        })}
       </div>
     </div>
   );
