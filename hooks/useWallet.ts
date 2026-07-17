@@ -38,9 +38,9 @@ export function useWallet() {
         if (fetchError) throw fetchError
 
         setAccounts(data || [])
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching wallet:', err)
-        setError(err.message)
+        setError(err instanceof Error ? err.message : String(err))
       } finally {
         setIsLoading(false)
       }
@@ -67,7 +67,7 @@ export function useWallet() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, supabase])
+  }, [user])
 
   return { accounts, isLoading, error }
 }

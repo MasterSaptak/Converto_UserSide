@@ -26,7 +26,7 @@ const QUICK_ACTIONS = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  const renderNavItem = (item: any) => {
+  const renderNavItem = (item: { href: string; label: string; icon: React.ElementType }) => {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'));
     return (
       <Link key={item.href} href={item.href} className={cn(
@@ -49,14 +49,12 @@ export function BottomNav() {
         {/* Quick Action Glowing Button */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-5">
           <Sheet>
-            <SheetTrigger asChild>
-              <div className="relative group cursor-pointer">
-                {/* Glowing Ping Effect */}
-                <div className="absolute inset-0 bg-primary rounded-full animate-ping opacity-40"></div>
-                {/* Main Button */}
-                <button className="relative z-10 flex items-center justify-center w-14 h-14 bg-primary border-2 border-foreground rounded-full shadow-[2px_2px_0px_var(--color-foreground)] transition-all group-active:translate-y-0.5 group-active:translate-x-0.5 group-active:shadow-none">
-                  <Zap className="w-6 h-6 text-primary-foreground fill-primary-foreground group-hover:scale-110 transition-transform" />
-                </button>
+            <SheetTrigger className="relative group cursor-pointer border-none bg-transparent p-0 block">
+              {/* Glowing Ping Effect */}
+              <div className="absolute inset-0 bg-primary rounded-full animate-ping opacity-40"></div>
+              {/* Main Button */}
+              <div className="relative z-10 flex items-center justify-center w-14 h-14 bg-primary border-2 border-foreground rounded-full shadow-[2px_2px_0px_var(--color-foreground)] transition-all group-active:translate-y-0.5 group-active:translate-x-0.5 group-active:shadow-none">
+                <Zap className="w-6 h-6 text-primary-foreground fill-primary-foreground group-hover:scale-110 transition-transform" />
               </div>
             </SheetTrigger>
             
@@ -66,14 +64,20 @@ export function BottomNav() {
               </SheetHeader>
               <div className="grid grid-cols-2 gap-4">
                 {QUICK_ACTIONS.map((action, idx) => (
-                  <SheetClose asChild key={idx}>
-                    <Link href={action.href} className={cn(
-                      "flex flex-col items-center justify-center gap-3 p-4 border-2 border-foreground bg-card shadow-[4px_4px_0px_var(--color-foreground)] hover:translate-y-1 hover:translate-x-1 hover:shadow-none active:translate-y-1 active:translate-x-1 active:shadow-none transition-all",
-                      action.color
-                    )}>
-                      <action.icon className="w-7 h-7 stroke-[2.5px]" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">{action.label}</span>
-                    </Link>
+                  <SheetClose 
+                    key={idx}
+                    render={
+                      <Link 
+                        href={action.href} 
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-3 p-4 border-2 border-foreground bg-card shadow-[4px_4px_0px_var(--color-foreground)] hover:translate-y-1 hover:translate-x-1 hover:shadow-none active:translate-y-1 active:translate-x-1 active:shadow-none transition-all",
+                          action.color
+                        )} 
+                      />
+                    }
+                  >
+                    <action.icon className="w-7 h-7 stroke-[2.5px]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{action.label}</span>
                   </SheetClose>
                 ))}
               </div>

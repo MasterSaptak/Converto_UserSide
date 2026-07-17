@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useServiceRequests } from "@/hooks/useServiceRequests";
+import { motion } from "motion/react";
+import { staggerContainer, scaleIn } from "@/lib/animations";
 
 export function RequestStatusTracker() {
   const { requests } = useServiceRequests();
@@ -26,16 +28,22 @@ export function RequestStatusTracker() {
           View All <ArrowUpRight className="w-3 h-3" />
         </Link>
       </div>
-      <div className="grid grid-cols-3 gap-2 flex-1">
+      <motion.div 
+        className="grid grid-cols-3 gap-2 flex-1"
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-10px" }}
+      >
         {statusCounts.map((status, index) => (
-          <div key={status.label} className={cn("flex flex-col justify-center items-center text-center", index !== statusCounts.length - 1 ? "border-r-2 border-dashed border-muted" : "")}>
+          <motion.div key={status.label} variants={scaleIn} className={cn("flex flex-col justify-center items-center text-center", index !== statusCounts.length - 1 ? "border-r-2 border-dashed border-muted" : "")}>
             <span className={cn("text-3xl md:text-5xl font-heading font-bold mb-2", status.color)}>
               {status.count}
             </span>
             <span className="text-[9px] md:text-[10px] uppercase font-bold opacity-60 tracking-wider">{status.label}</span>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

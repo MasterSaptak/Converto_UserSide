@@ -45,9 +45,9 @@ export function useWalletTransactions() {
         if (fetchError) throw fetchError
 
         setTransactions(data || [])
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching transactions:', err)
-        setError(err.message)
+        setError(err instanceof Error ? err.message : String(err))
       } finally {
         setIsLoading(false)
       }
@@ -74,7 +74,7 @@ export function useWalletTransactions() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, supabase])
+  }, [user])
 
   return { transactions, isLoading, error }
 }

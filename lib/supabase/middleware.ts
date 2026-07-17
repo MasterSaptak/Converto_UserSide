@@ -32,9 +32,7 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  await supabase.auth.getUser()
 
   // Disable server-side redirects since auth is fully handled client-side via AppShell
   /*

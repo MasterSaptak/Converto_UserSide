@@ -1,6 +1,8 @@
 'use client';
 
 import Link from "next/link";
+import { motion } from "motion/react";
+import { staggerContainer, fadeUp } from "@/lib/animations";
 import { RequestStatusTracker } from "@/components/dashboard/RequestStatusTracker";
 import { PromoCarousel } from "@/components/dashboard/PromoCarousel";
 import { QuickActions } from "@/components/dashboard/QuickActions";
@@ -30,10 +32,15 @@ export default function DashboardPage() {
   const mainWallet = accounts.find(a => a.currency_code === 'USD') || accounts[0];
 
   return (
-    <div className="flex-1 flex flex-col gap-6 md:gap-10 animate-in fade-in duration-500 pb-10">
+    <motion.div 
+      className="flex-1 flex flex-col gap-6 md:gap-10 pb-10"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
       
       {/* Header Section */}
-      <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b-2 border-foreground pb-4 md:pb-6 relative">
+      <motion.header variants={fadeUp} className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b-2 border-foreground pb-4 md:pb-6 relative">
         <div>
            <div className="flex items-center gap-2 mb-2">
              <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -56,17 +63,23 @@ export default function DashboardPage() {
              </div>
            </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Live Exchange Rates */}
-      <LiveExchangeRates />
+      <motion.div variants={fadeUp}>
+        <LiveExchangeRates />
+      </motion.div>
 
-      <PromoCarousel />
+      <motion.div variants={fadeUp}>
+        <PromoCarousel />
+      </motion.div>
 
-      <QuickActions />
+      <motion.div variants={fadeUp}>
+        <QuickActions />
+      </motion.div>
 
       {/* Two Column Layout */}
-      <section className="grid lg:grid-cols-[1fr_350px] gap-8">
+      <motion.section variants={fadeUp} className="grid lg:grid-cols-[1fr_350px] gap-8">
         
         <div className="flex flex-col gap-8">
           <RequestStatusTracker />
@@ -118,7 +131,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }

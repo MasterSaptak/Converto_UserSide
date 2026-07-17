@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
 // Map slugs to icons
