@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LiveFooter } from "./LiveFooter";
-import { LayoutDashboard, Grid, MapPin, Clock, Users, UserCheck, CreditCard, ShieldCheck, HeadphonesIcon, User } from "lucide-react";
+import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
