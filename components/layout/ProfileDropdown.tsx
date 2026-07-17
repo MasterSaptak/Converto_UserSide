@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useInstallPWA } from '@/hooks/useInstallPWA';
-import { User, Settings, LogOut, Loader2, Sun, Moon, Download, X, Plus, SquareArrowUp, RefreshCw } from 'lucide-react';
+import { User, LogOut, Loader2, Sun, Moon, Download, X, Plus, SquareArrowUp, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 

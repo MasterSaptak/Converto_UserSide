@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Ticket, Globe, Train } from "lucide-react";
+import { Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Globe, Train } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { MobileSidebar } from "./MobileSidebar";
 

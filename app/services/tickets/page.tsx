@@ -40,6 +40,7 @@ function TicketBookingForm() {
       }
     }
     fetchUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const [formData, setFormData] = useState({
