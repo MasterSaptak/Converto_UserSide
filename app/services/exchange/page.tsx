@@ -14,7 +14,7 @@ export default function ExchangeServicePage() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Form State
-  const [fromCurrency, setFromCurrency] = useState("USD")
+  const [fromCurrency, setFromCurrency] = useState("BDT")
   const [toCurrency, setToCurrency] = useState("EUR")
   const [amount, setAmount] = useState<string>("1000")
   const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("bank_transfer")
@@ -119,6 +119,9 @@ export default function ExchangeServicePage() {
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="GBP">GBP</option>
+                    <option value="BDT">BDT</option>
+                    <option value="INR">INR</option>
+                    <option value="CNY">CNY</option>
                   </select>
                 </div>
               </div>
@@ -141,6 +144,9 @@ export default function ExchangeServicePage() {
                     <option value="EUR">EUR</option>
                     <option value="USD">USD</option>
                     <option value="GBP">GBP</option>
+                    <option value="BDT">BDT</option>
+                    <option value="INR">INR</option>
+                    <option value="CNY">CNY</option>
                   </select>
                 </div>
               </div>

@@ -16,8 +16,8 @@ const BASE_RATES: Record<string, number> = {
 const ALL_CURRENCIES = Object.keys(BASE_RATES);
 
 export function LiveExchangeRates() {
-  const [baseCurrency, setBaseCurrency] = useState('USD');
-  const [targetCurrencies, setTargetCurrencies] = useState<string[]>(['EUR', 'INR', 'BDT', 'CNY']);
+  const [baseCurrency, setBaseCurrency] = useState('BDT');
+  const [targetCurrencies, setTargetCurrencies] = useState<string[]>(['USD', 'EUR', 'INR', 'CNY']);
   const [isEditing, setIsEditing] = useState(false);
 
   const removeCurrency = (currency: string) => {

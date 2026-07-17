@@ -136,10 +136,13 @@ export default function GlobalPaymentsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t-2 border-dashed border-muted pt-4 mt-2">
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Transfer Currency</label>
-                  <select className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary">
+                  <select defaultValue="BDT - Bangladeshi Taka" className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary">
                     <option>USD - US Dollar</option>
                     <option>EUR - Euro</option>
                     <option>GBP - British Pound</option>
+                    <option>BDT - Bangladeshi Taka</option>
+                    <option>INR - Indian Rupee</option>
+                    <option>CNY - Chinese Yuan</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
