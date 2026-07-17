@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2 } from "lucide-react";
+import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2, Train, Bus, Plane, Hotel, CalendarDays } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // Map slugs to icons
@@ -8,6 +8,11 @@ const getIconForSlug = (slug: string) => {
     case 'exchange': return ArrowRightLeft;
     case 'buy_for_me': return ShoppingBag;
     case 'tickets': case 'ticket_booking': return Ticket;
+    case 'train_booking': return Train;
+    case 'bus_booking': return Bus;
+    case 'flight_booking': return Plane;
+    case 'hotel_booking': return Hotel;
+    case 'event_booking': return CalendarDays;
     case 'education': return GraduationCap;
     case 'global_payments': return Globe;
     case 'support': return HeadphonesIcon;
@@ -20,10 +25,8 @@ const getIconForSlug = (slug: string) => {
 const FALLBACK_SERVICES = [
   { id: 'exchange', slug: 'exchange', name: 'Money Exchange', description: 'Convert currencies at competitive rates', route: '/services/exchange', color: '#FF90E8', sort_order: 1, is_active: true },
   { id: 'buy_for_me', slug: 'buy_for_me', name: 'Buy For Me', description: 'We purchase items on your behalf worldwide', route: '/services/buy-for-me', color: '#FFC900', sort_order: 2, is_active: true },
-  { id: 'tickets', slug: 'tickets', name: 'Ticket Booking', description: 'Book flights, trains, and bus tickets', route: '/services/tickets', color: '#00E5FF', sort_order: 3, is_active: true },
   { id: 'education', slug: 'education', name: 'Educational Payment', description: 'Pay tuition and university fees globally', route: '/services/education', color: '#94A3B8', sort_order: 4, is_active: true },
-  { id: 'global_payments', slug: 'global_payments', name: 'Money Transfer', description: 'Send money across borders instantly', route: '/services/global-payments', color: '#00FF66', sort_order: 5, is_active: true },
-  { id: 'track', slug: 'track', name: 'Order Tracking', description: 'Real-time status updates on all orders', route: '/track', color: '#FF5C00', sort_order: 6, is_active: true },
+  { id: 'global_payments', slug: 'global_payments', name: 'Money Transfer', description: 'Send money across borders instantly', route: '/services/global-payments', color: '#00FF66', sort_order: 5, is_active: true }
 ];
 
 export default async function ServicesPage() {
@@ -35,7 +38,22 @@ export default async function ServicesPage() {
     .order('sort_order', { ascending: true });
 
   // Use DB services if they exist, otherwise use hardcoded fallbacks
-  const services = (dbServices && dbServices.length > 0) ? dbServices : FALLBACK_SERVICES;
+  // Filter out the old generic ticket services so we can expand them
+  // Also filter out 'track' as it's accessible via the main navigation menu
+  let baseServices = (dbServices && dbServices.length > 0) 
+    ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track')
+    : FALLBACK_SERVICES;
+
+  // Manually inject the expanded ticket services
+  const expandedTicketServices = [
+    { id: 'train_booking', slug: 'train_booking', name: 'Train Tickets', description: 'Book railway tickets easily', route: '/services/tickets?type=train', color: '#00E5FF', sort_order: 3.1, is_active: true },
+    { id: 'bus_booking', slug: 'bus_booking', name: 'Bus Tickets', description: 'Intercity bus travel booking', route: '/services/tickets?type=bus', color: '#FF90E8', sort_order: 3.2, is_active: true },
+    { id: 'flight_booking', slug: 'flight_booking', name: 'Plane Tickets', description: 'Domestic & international flights', route: '/services/tickets?type=flight', color: '#FFC900', sort_order: 3.3, is_active: true },
+    { id: 'hotel_booking', slug: 'hotel_booking', name: 'Hotel Booking', description: 'Book your perfect stay anywhere', route: '/services/tickets?type=hotel', color: '#00FF66', sort_order: 3.4, is_active: true },
+    { id: 'event_booking', slug: 'event_booking', name: 'Event Booking', description: 'Secure passes to major events', route: '/services/tickets?type=event', color: '#FF5C00', sort_order: 3.5, is_active: true },
+  ];
+
+  const services = [...baseServices, ...expandedTicketServices].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   return (
     <div className="flex-1 flex flex-col gap-6 md:gap-10 animate-in fade-in duration-500 pb-10">

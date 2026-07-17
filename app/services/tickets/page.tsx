@@ -1,28 +1,60 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users } from 'lucide-react'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users, Train } from 'lucide-react'
+import { createBrowserClient } from '@supabase/ssr'
 
-type TicketType = 'flight' | 'hotel' | 'bus' | 'event'
+type TicketType = 'flight' | 'hotel' | 'bus' | 'event' | 'train'
+type Category = 'travel' | 'hotel' | 'event'
 
-export default function TicketBookingPage() {
+function TicketBookingForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlType = searchParams.get('type')
+  const initialType = (urlType as TicketType) || 'flight'
+  const hasTypeParam = !!urlType
+  
+  const initialCategory: Category = 
+    initialType === 'hotel' ? 'hotel' : 
+    initialType === 'event' ? 'event' : 'travel'
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedPassengers, setSavedPassengers] = useState<any[]>([])
+  
+  const [category, setCategory] = useState<Category>(initialCategory)
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.user_metadata?.saved_passengers) {
+        setSavedPassengers(user.user_metadata.saved_passengers)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const [formData, setFormData] = useState({
-    ticketType: 'flight' as TicketType,
+    ticketType: initialType,
     departureCity: '',
     destinationCity: '',
     travelStartDate: '',
     travelEndDate: '',
     eventName: '',
+    coachClass: '',
+    seatPreference: '',
+    trainChoice: '',
     specialRequests: '',
     passengers: [
-      { firstName: '', lastName: '', passportOrIdNumber: '', dob: '' }
+      { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: '', nidOrAadhar: '', mealPreference: false, mealType: '' }
     ]
   })
 
@@ -38,10 +70,32 @@ export default function TicketBookingPage() {
     })
   }
 
+  const loadSavedPassenger = (index: number, savedPassengerIndex: string) => {
+    if (savedPassengerIndex === "") return;
+    const p = savedPassengers[parseInt(savedPassengerIndex)];
+    if (p) {
+      setFormData(prev => {
+        const newPassengers = [...prev.passengers]
+        newPassengers[index] = { 
+          ...newPassengers[index], 
+          firstName: p.firstName || '',
+          lastName: p.lastName || '',
+          passportOrIdNumber: p.passportOrIdNumber || '',
+          dob: p.dob || '',
+          nationality: p.nationality || '',
+          nidOrAadhar: p.nidOrAadhar || '',
+          mealPreference: p.mealPreference || false,
+          mealType: p.mealType || ''
+        }
+        return { ...prev, passengers: newPassengers }
+      })
+    }
+  }
+
   const addPassenger = () => {
     setFormData(prev => ({
       ...prev,
-      passengers: [...prev.passengers, { firstName: '', lastName: '', passportOrIdNumber: '', dob: '' }]
+      passengers: [...prev.passengers, { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: '', nidOrAadhar: '', mealPreference: false, mealType: '' }]
     }))
   }
 
@@ -63,7 +117,28 @@ export default function TicketBookingPage() {
     setError(null)
     
     try {
-      // Send to Server App API
+      // 1. Save passengers to user_metadata automatically
+      const passengersToSave = formData.passengers
+      if (passengersToSave.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const newSaved = [...savedPassengers]
+          
+          passengersToSave.forEach(pData => {
+            // Only add if not already in saved list (basic check by name + dob)
+            if (!newSaved.some(s => s.firstName === pData.firstName && s.lastName === pData.lastName && s.dob === pData.dob)) {
+              newSaved.push(pData)
+            }
+          })
+
+          await supabase.auth.updateUser({
+            data: { saved_passengers: newSaved }
+          })
+          setSavedPassengers(newSaved)
+        }
+      }
+
+      // 2. Send request to Server App API
       const res = await fetch('http://localhost:3000/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,8 +164,16 @@ export default function TicketBookingPage() {
         <div className="inline-flex w-16 h-16 border-2 border-foreground bg-primary items-center justify-center mb-6 shadow-[4px_4px_0px_var(--color-foreground)]">
           <Ticket className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h1 className="text-4xl font-black uppercase tracking-tighter">Ticket Booking</h1>
-        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-2">Flights, Hotels, Events & More</p>
+        <h1 className="text-4xl font-black uppercase tracking-tighter">
+          {formData.ticketType} Booking
+        </h1>
+        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-2">
+          {formData.ticketType === 'train' ? 'Railway Tickets' : 
+           formData.ticketType === 'flight' ? 'Domestic & International Flights' : 
+           formData.ticketType === 'bus' ? 'Intercity Bus Travel' : 
+           formData.ticketType === 'hotel' ? 'Book your perfect stay' : 
+           formData.ticketType === 'event' ? 'Secure passes to major events' : 'Flights, Hotels, Events & More'}
+        </p>
       </div>
 
       <div className="flex gap-2 mb-8">
@@ -111,28 +194,62 @@ export default function TicketBookingPage() {
           <h2 className="text-2xl font-black uppercase tracking-tight mb-6">1. Travel Details</h2>
           
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {[
-                { id: 'flight', label: 'Flight', icon: Plane },
-                { id: 'hotel', label: 'Hotel', icon: Hotel },
-                { id: 'bus', label: 'Bus', icon: Bus },
-                { id: 'event', label: 'Event', icon: CalendarDays }
-              ].map(type => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => updateForm('ticketType', type.id)}
-                  className={`p-4 border-2 flex flex-col items-center justify-center gap-2 transition-all ${
-                    formData.ticketType === type.id 
-                      ? 'border-black bg-primary text-primary-foreground shadow-[4px_4px_0px_var(--color-foreground)] -translate-y-1' 
-                      : 'border-black/20 bg-slate-50 opacity-60 hover:opacity-100 hover:border-black'
-                  }`}
-                >
-                  <type.icon className="w-6 h-6" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{type.label}</span>
-                </button>
-              ))}
-            </div>
+            {!hasTypeParam && (
+              <>
+                {/* Top Level Category Tabs */}
+                <div className="flex gap-2 mb-6">
+                  {[
+                    { id: 'travel', label: 'Travel', icon: Plane },
+                    { id: 'hotel', label: 'Hotel', icon: Hotel },
+                    { id: 'event', label: 'Event', icon: CalendarDays }
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setCategory(cat.id as Category)
+                        if (cat.id === 'travel') updateForm('ticketType', 'flight')
+                        else if (cat.id === 'hotel') updateForm('ticketType', 'hotel')
+                        else if (cat.id === 'event') updateForm('ticketType', 'event')
+                      }}
+                      className={`flex-1 p-3 border-2 flex items-center justify-center gap-2 transition-all ${
+                        category === cat.id
+                          ? 'border-black bg-primary text-primary-foreground shadow-[4px_4px_0px_var(--color-foreground)] -translate-y-1' 
+                          : 'border-black/20 bg-slate-50 opacity-60 hover:opacity-100 hover:border-black'
+                      }`}
+                    >
+                      <cat.icon className="w-5 h-5 hidden sm:block" />
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-tabs for Travel */}
+                {category === 'travel' && (
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    {[
+                      { id: 'flight', label: 'Flight', icon: Plane },
+                      { id: 'train', label: 'Train', icon: Train },
+                      { id: 'bus', label: 'Bus', icon: Bus }
+                    ].map(type => (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => updateForm('ticketType', type.id)}
+                        className={`p-4 border-2 flex flex-col items-center justify-center gap-2 transition-all ${
+                          formData.ticketType === type.id 
+                            ? 'border-black bg-black text-white shadow-[4px_4px_0px_var(--color-primary)] -translate-y-1' 
+                            : 'border-black/20 bg-slate-50 opacity-60 hover:opacity-100 hover:border-black'
+                        }`}
+                      >
+                        <type.icon className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{type.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
 
             {formData.ticketType === 'event' ? (
               <div className="space-y-2">
@@ -144,6 +261,65 @@ export default function TicketBookingPage() {
                   placeholder="E.g., Tomorrowland 2026 or link to event"
                   className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                 />
+              </div>
+            ) : formData.ticketType === 'train' ? (
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">From Station</label>
+                    <input 
+                      type="text"
+                      value={formData.departureCity}
+                      onChange={(e) => updateForm('departureCity', e.target.value)}
+                      placeholder="E.g., NDLS - New Delhi"
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">To Station</label>
+                    <input 
+                      type="text"
+                      value={formData.destinationCity}
+                      onChange={(e) => updateForm('destinationCity', e.target.value)}
+                      placeholder="E.g., HWH - Howrah"
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Coach Class</label>
+                    <input 
+                      type="text"
+                      value={formData.coachClass}
+                      onChange={(e) => updateForm('coachClass', e.target.value)}
+                      placeholder="E.g., 3AC, 2AC, Sleeper"
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Seat Position Preference</label>
+                    <input 
+                      type="text"
+                      value={formData.seatPreference}
+                      onChange={(e) => updateForm('seatPreference', e.target.value)}
+                      placeholder="E.g., Lower Berth, Side Lower"
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Train Choice Preference (Name / Number)</label>
+                  <input 
+                    type="text"
+                    value={formData.trainChoice}
+                    onChange={(e) => updateForm('trainChoice', e.target.value)}
+                    placeholder="E.g., 12301 Rajdhani Express"
+                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                  />
+                </div>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
@@ -206,7 +382,9 @@ export default function TicketBookingPage() {
 
         {/* STEP 2: Passengers */}
         <div className={step === 2 ? 'block' : 'hidden'}>
-          <h2 className="text-2xl font-black uppercase tracking-tight mb-6">2. Passenger Details</h2>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-black uppercase tracking-tight">2. Passenger Details</h2>
+          </div>
           
           <div className="space-y-8 mb-6">
             {formData.passengers.map((passenger, index) => (
@@ -223,6 +401,24 @@ export default function TicketBookingPage() {
                   >
                     Remove
                   </button>
+                )}
+
+                {savedPassengers.length > 0 && (
+                  <div className="mb-6 mt-4 p-4 border-2 border-dashed border-primary bg-primary/5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">Quick Fill from Saved Passengers</label>
+                    <select 
+                      className="w-full p-2 border-2 border-black font-bold outline-none cursor-pointer"
+                      onChange={(e) => loadSavedPassenger(index, e.target.value)}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select a saved passenger...</option>
+                      {savedPassengers.map((p, pIdx) => (
+                        <option key={pIdx} value={pIdx}>
+                          {p.firstName} {p.lastName} {p.passportOrIdNumber ? `(${p.passportOrIdNumber})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
 
                 <div className="grid md:grid-cols-2 gap-4 mt-2">
@@ -246,12 +442,15 @@ export default function TicketBookingPage() {
                       className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Passport / ID Number</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Nationality</label>
                     <input 
                       type="text"
-                      value={passenger.passportOrIdNumber}
-                      onChange={(e) => updatePassenger(index, 'passportOrIdNumber', e.target.value)}
+                      value={passenger.nationality}
+                      onChange={(e) => updatePassenger(index, 'nationality', e.target.value)}
+                      placeholder="E.g., Indian"
+                      required
                       className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                     />
                   </div>
@@ -261,8 +460,71 @@ export default function TicketBookingPage() {
                       type="date"
                       value={passenger.dob}
                       onChange={(e) => updatePassenger(index, 'dob', e.target.value)}
+                      required
                       className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Passport Number</label>
+                    <input 
+                      type="text"
+                      value={passenger.passportOrIdNumber}
+                      onChange={(e) => updatePassenger(index, 'passportOrIdNumber', e.target.value)}
+                      placeholder="Optional for domestic travel"
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">NID / AADHAR Number</label>
+                    <input 
+                      type="text"
+                      value={passenger.nidOrAadhar}
+                      onChange={(e) => updatePassenger(index, 'nidOrAadhar', e.target.value)}
+                      required
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2 bg-white p-4 border-2 border-black">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={passenger.mealPreference}
+                        onChange={(e) => {
+                          updatePassenger(index, 'mealPreference', e.target.checked);
+                          if (!e.target.checked) updatePassenger(index, 'mealType', '');
+                        }}
+                        className="w-5 h-5 accent-primary"
+                      />
+                      <span className="text-sm font-bold">Meal Preference Required?</span>
+                    </label>
+
+                    {passenger.mealPreference && (
+                      <div className="mt-4 flex gap-4 pl-7">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio"
+                            name={`mealType-${index}`}
+                            checked={passenger.mealType === 'veg'}
+                            onChange={() => updatePassenger(index, 'mealType', 'veg')}
+                            className="w-4 h-4 accent-primary"
+                          />
+                          <span className="text-sm font-bold">Veg</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio"
+                            name={`mealType-${index}`}
+                            checked={passenger.mealType === 'nonveg'}
+                            onChange={() => updatePassenger(index, 'mealType', 'nonveg')}
+                            className="w-4 h-4 accent-primary"
+                          />
+                          <span className="text-sm font-bold">Non-Veg</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -335,5 +597,13 @@ export default function TicketBookingPage() {
 
       </form>
     </div>
+  )
+}
+
+export default function TicketBookingPage() {
+  return (
+    <Suspense fallback={<div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+      <TicketBookingForm />
+    </Suspense>
   )
 }
