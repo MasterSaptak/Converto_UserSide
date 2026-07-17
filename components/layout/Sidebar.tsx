@@ -5,14 +5,28 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LiveFooter } from "./LiveFooter";
+import { LayoutDashboard, Grid, MapPin, Clock, Users, UserCheck, CreditCard, ShieldCheck, HeadphonesIcon, User } from "lucide-react";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/services", label: "Services" },
-  { href: "/track", label: "Track Order" },
-  { href: "/history", label: "History" },
-  { href: "/support", label: "Support" },
-  { href: "/profile", label: "Profile" },
+const DESKTOP_NAV_ITEMS = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/services", label: "Services", icon: Grid },
+  { href: "/track", label: "Track Order", icon: MapPin },
+  { href: "/history", label: "Transaction History", icon: Clock },
+  { href: "/profile?tab=passengers", label: "Saved Passengers", icon: Users },
+  { href: "/profile?tab=beneficiaries", label: "Beneficiaries", icon: UserCheck },
+  { href: "/profile?tab=payments", label: "Payment Methods", icon: CreditCard },
+  { href: "/profile?tab=security", label: "Security & 2FA", icon: ShieldCheck },
+  { href: "/support", label: "Support", icon: HeadphonesIcon },
+  { href: "/profile", label: "My Profile", icon: User },
+];
+
+const MOBILE_NAV_ITEMS = [
+  { href: "/history", label: "Transaction History", icon: Clock },
+  { href: "/profile?tab=passengers", label: "Saved Passengers", icon: Users },
+  { href: "/profile?tab=beneficiaries", label: "Beneficiaries", icon: UserCheck },
+  { href: "/profile?tab=payments", label: "Payment Methods", icon: CreditCard },
+  { href: "/profile?tab=security", label: "Security & 2FA", icon: ShieldCheck },
+  { href: "/profile", label: "My Profile", icon: User },
 ];
 
 export function Sidebar({ mobile = false }: { mobile?: boolean }) {
@@ -29,18 +43,19 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         </Link>
         
         <nav className="flex flex-col gap-4 mb-6">
-          {NAV_ITEMS.map((item) => {
+          {(mobile ? MOBILE_NAV_ITEMS : DESKTOP_NAV_ITEMS).map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'));
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "text-xs font-bold uppercase border-b-2 pb-1.5 w-fit transition-colors",
+                  "flex items-center gap-3 text-xs font-bold uppercase border-b-2 pb-1.5 w-fit transition-colors group/nav",
                   isActive ? "border-primary text-primary" : "border-transparent text-foreground hover:border-foreground"
                 )}
               >
-                {item.label}
+                {item.icon && <item.icon className={cn("w-4 h-4", isActive ? "stroke-[2.5px]" : "stroke-2 opacity-70 group-hover/nav:opacity-100")} />}
+                <span>{item.label}</span>
               </Link>
             )
           })}

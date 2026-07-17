@@ -124,14 +124,7 @@ export function ProfileDropdown() {
                 <User className="w-4 h-4 opacity-70" />
                 Profile
               </Link>
-              <Link 
-                href="#" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
-              >
-                <Settings className="w-4 h-4 opacity-70" />
-                Settings
-              </Link>
+
 
               {/* Dark/Light Mode Toggle */}
               <button 

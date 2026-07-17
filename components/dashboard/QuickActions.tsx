@@ -9,7 +9,7 @@ import { staggerContainer, fadeUpItem } from "@/lib/animations";
 const ACTIONS = [
   { href: "/services/exchange", label: "Money Exchange", icon: ArrowRightLeft, borderColor: "border-[#FF90E8]", darkTextColor: "dark:text-[#FF90E8]" },
   { href: "/services/buy-for-me", label: "Buy For Me", icon: ShoppingBag, borderColor: "border-[#FFC900]", darkTextColor: "dark:text-[#FFC900]" },
-  { href: "/services/tickets", label: "Ticket Booking", icon: Train, borderColor: "border-[#00E5FF]", darkTextColor: "dark:text-[#00E5FF]" },
+  { href: "/services/tickets?type=flight", label: "Ticket Booking", icon: Train, borderColor: "border-[#00E5FF]", darkTextColor: "dark:text-[#00E5FF]" },
   { href: "/services/education", label: "Educational Payment", icon: GraduationCap, borderColor: "border-[#94A3B8]", darkTextColor: "dark:text-[#E2E8F0]" },
   { href: "/services/global-payments", label: "Money Transfer", icon: Globe, borderColor: "border-[#00FF66]", darkTextColor: "dark:text-[#00FF66]" },
   { href: "/track", label: "Track", icon: Package, borderColor: "border-[#FF5C00]", darkTextColor: "dark:text-[#FF5C00]" },

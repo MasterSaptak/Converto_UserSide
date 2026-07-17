@@ -62,7 +62,7 @@ function TicketBookingForm() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const updatePassenger = (index: number, field: string, value: string) => {
+  const updatePassenger = (index: number, field: string, value: string | boolean) => {
     setFormData(prev => {
       const newPassengers = [...prev.passengers]
       newPassengers[index] = { ...newPassengers[index], [field]: value }

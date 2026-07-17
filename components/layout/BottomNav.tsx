@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Ticket, Globe } from "lucide-react";
+import { LayoutDashboard, Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Ticket, Globe, Train } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { MobileSidebar } from "./MobileSidebar";
 
 const LEFT_NAV_ITEMS = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/services", label: "Services", icon: Grid },
 ];
 
@@ -19,7 +19,7 @@ const RIGHT_NAV_ITEMS = [
 const QUICK_ACTIONS = [
   { href: "/services/exchange", label: "New Transfer", icon: ArrowRightLeft, color: "bg-primary text-primary-foreground" },
   { href: "/services/buy-for-me", label: "Buy For Me", icon: ShoppingBag, color: "bg-yellow-400 text-black" },
-  { href: "/services/tickets", label: "Ticket Booking", icon: Ticket, color: "bg-cyan-400 text-black" },
+  { href: "/services/tickets?type=train", label: "Train Booking", icon: Train, color: "bg-cyan-400 text-black" },
   { href: "/services/global-payments", label: "Global Payments", icon: Globe, color: "bg-emerald-400 text-black" },
 ];
 
@@ -43,6 +43,7 @@ export function BottomNav() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 border-t-2 border-foreground bg-secondary z-50">
       <nav className="flex justify-between items-center h-[64px] px-2 max-w-md mx-auto relative">
         <div className="flex w-full justify-around pr-8">
+          <MobileSidebar />
           {LEFT_NAV_ITEMS.map(renderNavItem)}
         </div>
         
@@ -66,6 +67,7 @@ export function BottomNav() {
                 {QUICK_ACTIONS.map((action, idx) => (
                   <SheetClose 
                     key={idx}
+                    nativeButton={false}
                     render={
                       <Link 
                         href={action.href} 
