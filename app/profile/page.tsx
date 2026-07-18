@@ -401,7 +401,7 @@ export default function ProfilePage() {
               <CreditCard className="w-6 h-6 shrink-0" />
               <div className="font-bold uppercase text-sm tracking-widest mt-1">Payment Methods</div>
             </Link>
-            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
+            <Link href="/profile/security" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
               <ShieldCheck className="w-6 h-6 shrink-0" />
               <div className="font-bold uppercase text-sm tracking-widest mt-1">Security & 2FA</div>
             </Link>
