@@ -66,7 +66,7 @@ export default function SignupPage() {
         <div className="absolute top-0 left-0 w-full h-2 bg-primary" />
         <div className="absolute bottom-0 left-0 w-full h-2 bg-primary" />
         <div className="w-full max-w-[460px]">
-          <div className="border-2 border-foreground bg-white shadow-[8px_8px_0px_var(--color-foreground)]">
+          <div className="border-2 border-foreground bg-white dark:bg-zinc-900 shadow-[8px_8px_0px_var(--color-foreground)]">
             <div className="bg-emerald-50 border-b-2 border-emerald-800 p-6 md:p-8">
               <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-800 block mb-2">Success</span>
               <h1 className="text-3xl md:text-4xl font-bold font-heading uppercase tracking-tight leading-[0.9] text-emerald-800">
@@ -123,7 +123,7 @@ export default function SignupPage() {
           <span className="text-xl font-bold uppercase tracking-widest font-heading">Converto</span>
         </div>
 
-        <div className="border-2 border-foreground bg-white shadow-[8px_8px_0px_var(--color-foreground)]">
+        <div className="border-2 border-foreground bg-white dark:bg-zinc-900 shadow-[8px_8px_0px_var(--color-foreground)]">
           {/* Header */}
           <div className="bg-secondary border-b-2 border-foreground p-6 md:p-8">
             <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 block mb-2">Registration</span>
@@ -230,7 +230,7 @@ export default function SignupPage() {
 
             <div className="relative flex items-center py-2">
               <div className="flex-grow border-t-2 border-dashed border-muted"></div>
-              <span className="flex-shrink-0 px-4 text-[10px] uppercase font-bold tracking-widest opacity-40 bg-white">Or</span>
+              <span className="flex-shrink-0 px-4 text-[10px] uppercase font-bold tracking-widest opacity-40 bg-white dark:bg-zinc-900">Or</span>
               <div className="flex-grow border-t-2 border-dashed border-muted"></div>
             </div>
 
@@ -238,7 +238,7 @@ export default function SignupPage() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full border-2 border-foreground bg-white text-foreground px-6 py-4 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              className="w-full border-2 border-foreground bg-white dark:bg-zinc-800 text-foreground px-6 py-4 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
