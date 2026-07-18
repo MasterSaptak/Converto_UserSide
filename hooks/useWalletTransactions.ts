@@ -45,9 +45,9 @@ export function useWalletTransactions() {
         if (fetchError) throw fetchError
 
         setTransactions(data || [])
-      } catch (err) {
-        console.error('Error fetching transactions:', err)
-        setError(err instanceof Error ? err.message : String(err))
+      } catch (err: any) {
+        console.error('Error fetching transactions:', err?.message || err)
+        setError(err?.message || (err instanceof Error ? err.message : JSON.stringify(err)))
       } finally {
         setIsLoading(false)
       }

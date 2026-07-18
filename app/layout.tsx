@@ -10,13 +10,34 @@ const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], varia
 const oswald = Oswald({ subsets: ["latin"], variable: "--font-heading" });
 
 export const metadata: Metadata = {
-  title: "Converto | Financial Dashboard",
+  title: "Converto",
   description: "Global Financial, Payment, Shopping, and Booking Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Converto",
+  },
+  openGraph: {
+    title: "Converto",
+    description: "Global Financial, Payment, Shopping, and Booking Platform",
+    url: "https://converto.saptech.online",
+    siteName: "Converto",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1024,
+        height: 1024,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Converto",
+    description: "Global Financial, Payment, Shopping, and Booking Platform",
+    images: ["/opengraph-image.png"],
   },
 };
 
