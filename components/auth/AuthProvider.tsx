@@ -87,13 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     async function getInitialSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) console.error("Session error:", error);
+        
+        if (mounted) {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user);
+          }
         }
-        setLoading(false);
+      } catch (err) {
+        console.error("Unexpected session error:", err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -101,13 +110,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user);
-        } else {
-          setProfile(null);
+        try {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user);
+          } else {
+            setProfile(null);
+          }
+        } catch (err) {
+          console.error("Auth state change error:", err);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LiveFooter } from "./LiveFooter";
 import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
+import { useWalletTransactions } from "@/hooks/useWalletTransactions";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +24,17 @@ const MOBILE_NAV_ITEMS = [
 
 export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
+  const { transactions } = useWalletTransactions();
+
+  // Calculate daily limit based on today's outbound transactions
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const usedDailyLimit = transactions
+    .filter(t => new Date(t.created_at) >= today && t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  
+  const maxDailyLimit = 10000;
+  const limitPercentage = Math.min((usedDailyLimit / maxDailyLimit) * 100, 100);
 
   const content = (
     <div className="h-full sticky top-0 flex flex-col p-6 lg:p-8 overflow-y-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -59,11 +71,11 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
           <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
           <span className="text-[10px] font-bold uppercase tracking-widest block mb-2 opacity-80">Daily Limit</span>
           <div className="flex items-end justify-between mb-2">
-            <span className="text-lg font-heading font-bold">$4,500</span>
-            <span className="text-[10px] font-bold opacity-60">/ $10k</span>
+            <span className="text-lg font-heading font-bold">${usedDailyLimit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
+            <span className="text-[10px] font-bold opacity-60">/ ${maxDailyLimit.toLocaleString()}</span>
           </div>
           <div className="w-full h-2 bg-secondary border-2 border-foreground overflow-hidden">
-            <div className="h-full bg-primary w-[45%]"></div>
+            <div className="h-full bg-primary" style={{ width: `${limitPercentage}%` }}></div>
           </div>
         </div>
 

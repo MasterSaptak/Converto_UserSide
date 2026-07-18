@@ -49,8 +49,9 @@ export function useWallet() {
     fetchWallet()
 
     // Subscribe to real-time changes
+    const channelName = `wallet-changes-${Math.random().toString(36).substring(7)}`
     const channel = supabase
-      .channel('wallet-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
