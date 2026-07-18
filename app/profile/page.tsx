@@ -1,14 +1,30 @@
 'use client';
 
-import { ShieldCheck, User, Users, UserCheck, CreditCard, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X } from "lucide-react";
+import { ShieldCheck, User, Users, UserCheck, CreditCard, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X, Medal, Trophy, Award, Gem, Shield, Crown, MapPin, Mail, Phone, Calendar, Hash, Globe } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useRewards } from "@/hooks/useRewards";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { REWARD_TIERS } from "@/lib/currencies";
+
+const TIER_STYLES: Record<string, { icon: any, bg: string, text: string }> = {
+  'Bronze': { icon: Medal, bg: 'bg-[#CD7F32]', text: 'text-white' },
+  'Silver': { icon: Medal, bg: 'bg-[#C0C0C0]', text: 'text-black' },
+  'Gold': { icon: Trophy, bg: 'bg-[#FFD700]', text: 'text-black' },
+  'Platinum': { icon: Award, bg: 'bg-[#E5E4E2]', text: 'text-black' },
+  'Diamond': { icon: Gem, bg: 'bg-[#b9f2ff]', text: 'text-black' },
+  'Ruby': { icon: Gem, bg: 'bg-[#E0115F]', text: 'text-white' },
+  'Sapphire': { icon: Gem, bg: 'bg-[#0F52BA]', text: 'text-white' },
+  'Emerald': { icon: Gem, bg: 'bg-[#50C878]', text: 'text-black' },
+  'Titanium': { icon: Shield, bg: 'bg-[#878681]', text: 'text-white' },
+  'Black Card': { icon: Crown, bg: 'bg-black', text: 'text-white' },
+}
 
 export default function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth();
+  const { rewards, tierInfo, isLoading: isRewardsLoading } = useRewards();
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -29,7 +45,7 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize form data when profile loads or edit mode starts
+  // Initialize form data
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -73,7 +89,6 @@ export default function ProfilePage() {
     try {
       let finalAvatarUrl = formData.avatar_url;
 
-      // 1. Upload avatar if file is selected
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
         const filePath = `${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -91,7 +106,6 @@ export default function ProfilePage() {
         finalAvatarUrl = publicUrl;
       }
 
-      // 2. Update profile table
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -108,314 +122,339 @@ export default function ProfilePage() {
 
       if (updateError) throw updateError;
 
-      // 3. Refresh Context
       await refreshProfile();
       
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: 'Profile saved!' });
       setIsEditing(false);
-      setAvatarFile(null); // Clear file
+      setAvatarFile(null);
     } catch (err: unknown) {
       const error = err as Error;
-      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+      setMessage({ type: 'error', text: error.message || 'Update failed' });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // formatting joining date
   const getFormattedJoinDate = () => {
     if (!user?.created_at) return '—';
     const d = new Date(user.created_at);
-    
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
-    // Guess timezone abbrev
-    const tzMatch = d.toString().match(/\(([A-Za-z\s].*)\)/);
-    const tz = tzMatch ? tzMatch[1] : '';
-
-    return `${dayName} / ${dateStr} / ${timeStr} ${tz}`;
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
   const displayName = profile?.username || profile?.full_name || user?.email?.split('@')[0] || 'User';
   const displayAvatar = avatarFile ? URL.createObjectURL(avatarFile) : (profile?.avatar_url || formData.avatar_url);
 
+  const currentTierStyle = TIER_STYLES[tierInfo.current.name] || { icon: Trophy, bg: 'bg-primary', text: 'text-primary-foreground' };
+  const CurrentTierIcon = currentTierStyle.icon;
+
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
+    <div className="flex-1 flex flex-col gap-4 animate-in fade-in duration-500 pb-28 md:pb-10 px-4 md:px-6 overflow-hidden md:overflow-visible w-full max-w-4xl mx-auto min-w-0">
       
+      {/* Toast Message */}
       {message && (
-        <div className={`fixed top-4 right-4 z-50 p-4 border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)] animate-in slide-in-from-top-10 flex items-center gap-3 font-bold text-sm ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-          {message.type === 'success' ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+        <div className={`fixed top-4 right-4 z-50 p-3 rounded-xl border-2 border-foreground shadow-[2px_2px_0px_var(--color-foreground)] animate-in slide-in-from-top-4 flex items-center gap-2 font-bold text-xs ${message.type === 'success' ? 'bg-emerald-100 text-emerald-900' : 'bg-red-100 text-red-900'}`}>
+          {message.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
           {message.text}
-          <button onClick={() => setMessage(null)} className="ml-4 opacity-50 hover:opacity-100">
-            <X className="w-4 h-4" />
-          </button>
+          <button onClick={() => setMessage(null)} className="ml-2 opacity-50 hover:opacity-100"><X className="w-3 h-3" /></button>
         </div>
       )}
 
-      <header className="border-b-2 border-foreground pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Account</span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Profile</h1>
+      {/* Header */}
+      <header className="flex items-center justify-between gap-4 bg-white border-2 border-foreground p-3 md:p-4 rounded-2xl shadow-[4px_4px_0px_var(--color-foreground)]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-secondary border-2 border-foreground rounded-full flex items-center justify-center">
+            <User className="w-5 h-5 opacity-50" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold font-heading uppercase leading-none tracking-tight">Account Profile</h1>
+            <span className="text-[9px] uppercase font-bold tracking-widest opacity-60">Manage your details & rewards</span>
+          </div>
         </div>
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)}
-            className="border-2 border-foreground bg-primary text-primary-foreground px-6 py-3 min-h-[48px] font-bold uppercase tracking-widest text-xs hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all w-full md:w-auto mt-2 md:mt-0"
+            className="border-2 border-foreground rounded-xl bg-primary text-primary-foreground px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:scale-105 hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all shrink-0"
           >
-            Edit Profile
+            Edit
           </button>
         )}
       </header>
       
-      <div className="grid lg:grid-cols-[350px_1fr] gap-8 items-start">
+      {/* Main Grid Container - Added min-w-0 to prevent blowouts */}
+      <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start w-full min-w-0">
         
-        {/* Profile Card / Edit Form container */}
-        <div className="border-2 border-foreground bg-white p-6 md:p-8 relative">
+        {/* Left Column: Profile Card */}
+        <div className="border-2 border-foreground rounded-2xl bg-white p-4 relative shadow-[4px_4px_0px_var(--color-foreground)] min-w-0">
           
-          <div className="absolute top-4 right-4 flex items-center gap-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-800 px-2 py-1 z-10">
-            <ShieldCheck className="w-3 h-3" />
-            <span className="text-[9px] font-bold uppercase tracking-widest">Verified</span>
+          <div className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-800 rounded-full px-2 py-0.5 z-10">
+            <ShieldCheck className="w-2.5 h-2.5" />
+            <span className="text-[8px] font-bold uppercase tracking-widest">Verified</span>
           </div>
 
-          {user?.app_metadata?.provider === 'google' && (
-            <div className="absolute top-4 left-4 flex items-center gap-1 bg-white text-foreground border-2 border-foreground px-2 py-1 z-10">
-              <svg viewBox="0 0 24 24" className="w-3 h-3">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-              <span className="text-[9px] font-bold uppercase tracking-widest">Logged in by Google</span>
-            </div>
-          )}
-
           {!isEditing ? (
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 mt-10 border-2 border-foreground bg-secondary mb-6 flex items-center justify-center rounded-full overflow-hidden shrink-0">
+            <div className="flex flex-col items-center text-center mt-2">
+              <div className="w-16 h-16 border-2 border-foreground bg-secondary mb-3 flex items-center justify-center rounded-full overflow-hidden shrink-0 group hover:scale-110 transition-transform">
                 {profile?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-10 h-10 opacity-40" />
+                  <User className="w-8 h-8 opacity-40" />
                 )}
               </div>
               
-              <h2 className="text-2xl font-bold font-heading uppercase mb-1">{displayName}</h2>
-              <div className="text-[10px] uppercase font-bold tracking-widest opacity-60 mb-6 flex flex-col gap-1 items-center">
-                <span>{profile?.full_name || 'No Full Name'}</span>
-                <span>{profile?.country || 'Unknown Location'}</span>
+              <h2 className="text-xl font-bold font-heading uppercase truncate w-full px-2">{displayName}</h2>
+              <div className="text-[9px] uppercase font-bold tracking-widest opacity-60 mb-4 flex items-center gap-1">
+                <MapPin className="w-2.5 h-2.5" /> {profile?.country || 'No Location'}
               </div>
               
-              <div className="w-full border-t-2 border-dashed border-muted pt-6 flex flex-col gap-4 text-left">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[9px] uppercase font-bold tracking-widest opacity-60">User ID</span>
-                    <button onClick={copyToClipboard} className="flex items-center gap-1 text-[9px] uppercase font-bold text-primary hover:underline">
-                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      {copied ? 'Copied' : 'Copy'}
-                    </button>
+              <div className="w-full border-t-2 border-dashed border-muted pt-3 flex flex-col gap-1.5 text-left">
+                {/* Details List */}
+                <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors group/item min-w-0">
+                  <Hash className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">User ID</span>
+                    <span className="text-[10px] font-mono font-bold truncate block">{user?.id || '—'}</span>
                   </div>
-                  <span className="text-xs font-bold font-mono truncate block bg-secondary px-2 py-1 border-2 border-foreground/10">{user?.id || '—'}</span>
+                  <button onClick={copyToClipboard} className="opacity-0 group-hover/item:opacity-100 hover:text-primary transition-opacity shrink-0 p-1">
+                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                  </button>
                 </div>
 
-                <div>
-                  <span className="text-[9px] uppercase font-bold tracking-widest opacity-60 block mb-1">Email Address</span>
-                  <span className="text-xs font-bold font-mono">{user?.email || '—'}</span>
+                <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors min-w-0">
+                  <Mail className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Email</span>
+                    <span className="text-[10px] font-mono font-bold truncate block">{user?.email || '—'}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold tracking-widest opacity-60 block mb-1">Phone Number</span>
-                  <span className="text-xs font-bold font-mono">{profile?.phone || '—'}</span>
+
+                <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors min-w-0">
+                  <Phone className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Phone</span>
+                    <span className="text-[10px] font-mono font-bold truncate block">{profile?.phone || '—'}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold tracking-widest opacity-60 block mb-1">Currency & Timezone</span>
-                  <span className="text-xs font-bold font-mono">{profile?.preferred_currency || 'USD'} • {profile?.timezone || 'UTC'}</span>
+
+                <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors min-w-0">
+                  <Globe className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Region Settings</span>
+                    <span className="text-[10px] font-mono font-bold truncate block">{profile?.preferred_currency || 'USD'} • {profile?.timezone || 'UTC'}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold tracking-widest opacity-60 block mb-1">Joined</span>
-                  <span className="text-xs font-bold font-mono uppercase">{getFormattedJoinDate()}</span>
+
+                <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors min-w-0">
+                  <Calendar className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Joined</span>
+                    <span className="text-[10px] font-mono font-bold truncate block">{getFormattedJoinDate()}</span>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSave} className="flex flex-col gap-5">
-              <h3 className="font-bold font-heading uppercase text-xl mb-2">Edit Profile</h3>
+            <form onSubmit={handleSave} className="flex flex-col gap-3">
+              <h3 className="font-bold uppercase text-[10px] tracking-[0.2em] mb-1">Edit Profile</h3>
               
-              {/* Avatar Edit */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Profile Avatar</span>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 border-2 border-foreground bg-secondary flex items-center justify-center rounded-full overflow-hidden shrink-0">
-                    {displayAvatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={displayAvatar} alt="Avatar Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-6 h-6 opacity-40" />
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 flex-1">
-                    <button 
-                      type="button" 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-xs font-bold uppercase tracking-widest border-2 border-foreground px-3 py-2 flex items-center justify-center gap-2 hover:bg-secondary transition-colors"
-                    >
-                      <Upload className="w-4 h-4" /> Upload Image
-                    </button>
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      className="hidden" 
-                    />
-                    <div className="flex items-center border-2 border-foreground bg-background px-2">
-                      <LinkIcon className="w-4 h-4 opacity-40 shrink-0" />
-                      <input 
-                        type="url"
-                        placeholder="Or Image URL..."
-                        value={formData.avatar_url}
-                        onChange={(e) => {
-                          setFormData({...formData, avatar_url: e.target.value});
-                          setAvatarFile(null); // Clear file if URL is typed
-                        }}
-                        className="w-full bg-transparent px-2 py-2 text-xs font-mono font-bold placeholder:opacity-30 focus:outline-none"
-                      />
-                    </div>
+              {/* Avatar Edit Compact */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 border-2 border-foreground bg-secondary flex items-center justify-center rounded-full overflow-hidden shrink-0">
+                  {displayAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={displayAvatar} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 opacity-40" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[9px] font-bold uppercase tracking-widest border-2 border-foreground px-2 py-1 flex items-center justify-center gap-1 hover:bg-secondary transition-colors">
+                    <Upload className="w-3 h-3" /> Upload
+                  </button>
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                  <div className="flex items-center border-2 border-foreground bg-background px-1.5 overflow-hidden">
+                    <LinkIcon className="w-3 h-3 opacity-40 shrink-0" />
+                    <input type="url" placeholder="Image URL..." value={formData.avatar_url} onChange={(e) => { setFormData({...formData, avatar_url: e.target.value}); setAvatarFile(null); }} className="w-full bg-transparent px-1.5 py-1 text-[9px] font-mono font-bold placeholder:opacity-30 focus:outline-none min-w-0" />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Username</label>
-                  <input 
-                    type="text" 
-                    value={formData.username}
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
-                    className="w-full border-2 border-foreground bg-background px-3 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                  />
+              {/* Form Inputs Compact */}
+              <div className="grid grid-cols-1 gap-2.5 mt-2">
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-[9px] uppercase font-bold tracking-widest opacity-80">Name</label>
+                  <input type="text" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} className="w-full border-2 border-foreground bg-background px-2 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-primary" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                    className="w-full border-2 border-foreground bg-background px-3 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                  />
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-[9px] uppercase font-bold tracking-widest opacity-80">Username</label>
+                  <input type="text" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="w-full border-2 border-foreground bg-background px-2 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-primary" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Email (Read Only)</label>
-                  <input 
-                    type="text" 
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full border-2 border-foreground bg-secondary px-3 py-2 text-sm font-mono font-bold opacity-70 cursor-not-allowed"
-                  />
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-[9px] uppercase font-bold tracking-widest opacity-80">Phone</label>
+                  <input type="text" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full border-2 border-foreground bg-background px-2 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-primary" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Phone Number</label>
-                  <input 
-                    type="text" 
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full border-2 border-foreground bg-background px-3 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Country</label>
-                  <input 
-                    type="text" 
-                    value={formData.country}
-                    onChange={(e) => setFormData({...formData, country: e.target.value})}
-                    placeholder="e.g. United Kingdom"
-                    className="w-full border-2 border-foreground bg-background px-3 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Currency</label>
-                    <select 
-                      value={formData.preferred_currency}
-                      onChange={(e) => setFormData({...formData, preferred_currency: e.target.value})}
-                      className="w-full border-2 border-foreground bg-background px-2 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                    >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="INR">INR (₹)</option>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest opacity-80">Currency</label>
+                    <select value={formData.preferred_currency} onChange={(e) => setFormData({...formData, preferred_currency: e.target.value})} className="w-full border-2 border-foreground bg-background px-1 py-1.5 text-[10px] font-mono font-bold focus:outline-none">
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="INR">INR</option>
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Timezone</label>
-                    <input 
-                      type="text" 
-                      value={formData.timezone}
-                      onChange={(e) => setFormData({...formData, timezone: e.target.value})}
-                      placeholder="e.g. UTC"
-                      className="w-full border-2 border-foreground bg-background px-2 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary"
-                    />
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest opacity-80">Timezone</label>
+                    <input type="text" value={formData.timezone} onChange={(e) => setFormData({...formData, timezone: e.target.value})} className="w-full border-2 border-foreground bg-background px-2 py-1.5 text-[10px] font-mono font-bold focus:outline-none" />
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-4 pt-4 border-t-2 border-dashed border-muted">
-                <button 
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSaving}
-                  className="flex-1 border-2 border-foreground bg-white text-foreground px-4 py-3 font-bold uppercase tracking-widest text-xs hover:bg-secondary transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 border-2 border-foreground bg-primary text-primary-foreground px-4 py-3 font-bold uppercase tracking-widest text-xs hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {isSaving ? 'Saving...' : 'Save Profile'}
+              <div className="flex gap-2 mt-2 pt-3 border-t-2 border-dashed border-muted">
+                <button type="button" onClick={() => setIsEditing(false)} disabled={isSaving} className="flex-1 border-2 border-foreground bg-white text-foreground py-2 font-bold uppercase tracking-widest text-[9px] hover:bg-secondary transition-colors">Cancel</button>
+                <button type="submit" disabled={isSaving} className="flex-1 border-2 border-foreground bg-primary text-primary-foreground py-2 font-bold uppercase tracking-widest text-[9px] hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all flex items-center justify-center gap-1.5">
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Save
                 </button>
               </div>
-
             </form>
           )}
-
         </div>
 
-        {/* Settings & Links */}
-        <div className="flex flex-col gap-6">
-          <h3 className="font-bold uppercase tracking-widest text-xs border-b-2 border-foreground pb-2">Account Settings</h3>
+        {/* Right Column: Rewards & Actions min-w-0 required for flex/grid children */}
+        <div className="flex flex-col gap-4 min-w-0 w-full">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <Users className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Saved Passengers</div>
+          {/* Rewards Module Compact */}
+          <div className="border-2 border-foreground rounded-2xl bg-white p-4 md:p-5 relative overflow-hidden group shadow-[4px_4px_0px_var(--color-foreground)] w-full min-w-0">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 group-hover:scale-[2] transition-transform duration-700 pointer-events-none"></div>
+            
+            {/* Top Row */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 border-2 border-foreground rounded-xl flex items-center justify-center text-xl group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500 shadow-[2px_2px_0px_var(--color-foreground)] ${currentTierStyle.bg} ${currentTierStyle.text}`}>
+                  <CurrentTierIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[9px] font-bold uppercase tracking-widest opacity-60">Current Tier</div>
+                  <div className="text-xl font-heading font-bold leading-none mt-1">{tierInfo.current.name}</div>
+                </div>
+              </div>
+              <div className="sm:text-right">
+                <div className="text-[9px] font-bold uppercase tracking-widest opacity-60">Lifetime Points</div>
+                <div className="text-2xl font-heading font-bold text-primary leading-none mt-1">
+                  {isRewardsLoading ? '...' : (rewards?.lifetime_c_points || 0).toLocaleString()} C
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-2.5 bg-secondary border-2 border-foreground rounded-full overflow-hidden mb-1.5">
+              <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${tierInfo.progress}%` }}></div>
+            </div>
+            {tierInfo.next ? (
+              <div className="text-[9px] uppercase font-bold tracking-widest opacity-60 mb-5">
+                {(tierInfo.next.minPoints - (rewards?.lifetime_c_points || 0)).toLocaleString()} C to {tierInfo.next.name}
+              </div>
+            ) : (
+              <div className="text-[9px] uppercase font-bold tracking-widest opacity-60 mb-5">Maximum Tier Reached</div>
+            )}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-5">
+              <div className="bg-secondary/30 border border-foreground/10 p-2.5 rounded-xl hover:bg-secondary/60 transition-colors min-w-0">
+                <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Available</span>
+                <span className="text-xs font-bold font-mono truncate block">{(rewards?.available_c_points || 0).toLocaleString()} C</span>
+              </div>
+              <div className="bg-secondary/30 border border-foreground/10 p-2.5 rounded-xl hover:bg-secondary/60 transition-colors min-w-0">
+                <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Spent</span>
+                <span className="text-xs font-bold font-mono truncate block">{(rewards?.spent_c_points || 0).toLocaleString()} C</span>
+              </div>
+              <div className="bg-secondary/30 border border-foreground/10 p-2.5 rounded-xl hover:bg-secondary/60 transition-colors min-w-0">
+                <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Streak</span>
+                <span className="text-xs font-bold font-mono truncate block">{rewards?.current_streak || 0} Days</span>
+              </div>
+              <div className="bg-secondary/30 border border-foreground/10 p-2.5 rounded-xl hover:bg-secondary/60 transition-colors min-w-0">
+                <span className="text-[8px] uppercase font-bold tracking-widest opacity-60 block">Txns</span>
+                <span className="text-xs font-bold font-mono truncate block">{rewards?.total_transactions || 0}</span>
+              </div>
+            </div>
+
+            {/* Scrollable Tier Journey */}
+            <div className="border-t-2 border-dashed border-muted pt-4 min-w-0">
+              <div className="text-[9px] font-bold uppercase tracking-widest opacity-60 mb-2.5">Tier Journey</div>
+              
+              {/* Added styled scrollbar classes */}
+              <div className="flex gap-2.5 overflow-x-auto pb-3 snap-x relative z-10 custom-scrollbar min-w-0 w-full">
+                {REWARD_TIERS.map((tier) => {
+                  const isCurrent = tier.name === tierInfo.current.name;
+                  const isPast = (rewards?.lifetime_c_points || 0) >= tier.minPoints && !isCurrent;
+                  const style = TIER_STYLES[tier.name] || { icon: Trophy, bg: 'bg-primary', text: 'text-primary-foreground' };
+                  const Icon = style.icon;
+                  
+                  return (
+                    <div key={tier.name} className={`flex flex-col items-center justify-center min-w-[85px] py-2.5 px-1 rounded-xl border-2 snap-center shrink-0 transition-all ${isCurrent ? 'border-foreground bg-secondary scale-[1.02] shadow-[2px_2px_0px_var(--color-foreground)]' : isPast ? 'border-foreground/30 opacity-70 bg-white' : 'border-foreground/10 bg-secondary/20'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1.5 border-2 ${isPast || isCurrent ? 'border-foreground' : 'border-foreground/20'} ${style.bg} ${style.text}`}>
+                         <Icon className="w-3 h-3" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase truncate w-full text-center px-1">{tier.name}</span>
+                      <span className="text-[8px] font-mono opacity-60">{tier.minPoints.toLocaleString()} C</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Settings Grid Compact */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full min-w-0">
+            <Link href="#" className="border-2 border-foreground rounded-xl bg-white p-3 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all group text-center h-[80px]">
+              <Users className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <div className="font-bold uppercase text-[8px] tracking-widest leading-tight">Saved<br/>Passengers</div>
             </Link>
-            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <UserCheck className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Beneficiaries</div>
+            <Link href="#" className="border-2 border-foreground rounded-xl bg-white p-3 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all group text-center h-[80px]">
+              <UserCheck className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <div className="font-bold uppercase text-[8px] tracking-widest leading-tight">Beneficiaries</div>
             </Link>
-            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <CreditCard className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Payment Methods</div>
+            <Link href="#" className="border-2 border-foreground rounded-xl bg-white p-3 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all group text-center h-[80px]">
+              <CreditCard className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <div className="font-bold uppercase text-[8px] tracking-widest leading-tight">Payment<br/>Methods</div>
             </Link>
-            <Link href="/profile/security" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <ShieldCheck className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Security & 2FA</div>
+            <Link href="/profile/security" className="border-2 border-foreground rounded-xl bg-white p-3 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all group text-center h-[80px]">
+              <ShieldCheck className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <div className="font-bold uppercase text-[8px] tracking-widest leading-tight">Security &<br/>2FA</div>
             </Link>
             <button
               onClick={handleSignOut}
-              className="border-2 border-red-600 bg-red-50 text-red-600 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_currentColor] transition-all text-center sm:text-left xl:col-span-2"
+              className="col-span-2 md:col-span-4 border-2 border-red-600 rounded-xl bg-red-50 text-red-600 p-3 flex flex-row items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-[2px_2px_0px_currentColor] transition-all group h-[45px]"
             >
-              <LogOut className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Sign Out</div>
+              <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <div className="font-bold uppercase text-[9px] tracking-widest">Sign Out</div>
             </button>
           </div>
+          
         </div>
-
       </div>
+      
+      {/* Global styles for custom slim scrollbar inside this component */}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0,0,0,0.4);
+        }
+      `}</style>
     </div>
   );
 }

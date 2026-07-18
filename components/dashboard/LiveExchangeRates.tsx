@@ -4,16 +4,7 @@ import { useState } from 'react';
 import { Settings, Plus, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Mock base rates relative to USD for conversion math
-const BASE_RATES: Record<string, number> = {
-  USD: 1,
-  EUR: 0.92,
-  INR: 83.15,
-  BDT: 109.50,
-  CNY: 7.19,
-};
-
-const ALL_CURRENCIES = Object.keys(BASE_RATES);
+import { BASE_RATES, ALL_CURRENCIES } from '@/lib/currencies';
 
 export function LiveExchangeRates() {
   const [baseCurrency, setBaseCurrency] = useState('BDT');

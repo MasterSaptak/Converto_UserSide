@@ -4,9 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LiveFooter } from "./LiveFooter";
 import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
-import { useWalletTransactions } from "@/hooks/useWalletTransactions";
+import { useRewards } from "@/hooks/useRewards";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -24,17 +23,9 @@ const MOBILE_NAV_ITEMS = [
 
 export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
-  const { transactions } = useWalletTransactions();
+  const { rewards, tierInfo } = useRewards();
 
-  // Calculate daily limit based on today's outbound transactions
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const usedDailyLimit = transactions
-    .filter(t => new Date(t.created_at) >= today && t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  
-  const maxDailyLimit = 10000;
-  const limitPercentage = Math.min((usedDailyLimit / maxDailyLimit) * 100, 100);
+  const lifetimeCPoints = rewards?.lifetime_c_points || 0;
 
   const content = (
     <div className="h-full sticky top-0 flex flex-col p-6 lg:p-8 overflow-y-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -65,19 +56,31 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         })}
       </nav>
 
-      {/* Added Sidebar Features */}
+      {/* Converto Rewards Tier Card */}
       <div className="flex flex-col gap-4 mt-2">
-        <div className="border-2 border-foreground bg-card p-3 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-          <span className="text-[10px] font-bold uppercase tracking-widest block mb-2 opacity-80">Daily Limit</span>
+        <Link href="/profile" className="border-2 border-foreground bg-card p-3 relative overflow-hidden group block hover:bg-secondary/50 transition-colors">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 group-hover:scale-150 transition-transform duration-500"></div>
+          <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 opacity-80">🏆 Converto Rewards</span>
+          
           <div className="flex items-end justify-between mb-2">
-            <span className="text-lg font-heading font-bold">${usedDailyLimit.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
-            <span className="text-[10px] font-bold opacity-60">/ ${maxDailyLimit.toLocaleString()}</span>
+            <span className="text-xl font-heading font-bold text-primary">{lifetimeCPoints.toLocaleString()} C</span>
+            <span className="text-[10px] font-bold opacity-60 uppercase">{tierInfo.current.name} Tier</span>
           </div>
-          <div className="w-full h-2 bg-secondary border-2 border-foreground overflow-hidden">
-            <div className="h-full bg-primary" style={{ width: `${limitPercentage}%` }}></div>
+          
+          <div className="w-full h-2 bg-secondary border-2 border-foreground overflow-hidden mb-2">
+            <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${tierInfo.progress}%` }}></div>
           </div>
-        </div>
+          
+          {tierInfo.next ? (
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">
+              {(tierInfo.next.minPoints - lifetimeCPoints).toLocaleString()} C until {tierInfo.next.name}
+            </span>
+          ) : (
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">
+              Max Tier Reached!
+            </span>
+          )}
+        </Link>
 
         <Link href="/services/exchange" className="w-full bg-primary text-primary-foreground border-2 border-foreground py-3 text-center text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors shadow-[4px_4px_0px_var(--color-foreground)] hover:shadow-none hover:translate-y-1 hover:translate-x-1">
           New Transfer
