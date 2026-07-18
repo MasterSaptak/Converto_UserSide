@@ -125,38 +125,6 @@ export function ProfileDropdown() {
                 Profile
               </Link>
 
-              <Link 
-                href="/profile?tab=passengers" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
-              >
-                <Users className="w-4 h-4 opacity-70" />
-                Saved Passengers
-              </Link>
-              <Link 
-                href="/profile?tab=beneficiaries" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
-              >
-                <UserCheck className="w-4 h-4 opacity-70" />
-                Beneficiaries
-              </Link>
-              <Link 
-                href="/profile?tab=payments" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
-              >
-                <CreditCard className="w-4 h-4 opacity-70" />
-                Payment Methods
-              </Link>
-              <Link 
-                href="/profile?tab=security" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
-              >
-                <ShieldCheck className="w-4 h-4 opacity-70" />
-                Security & 2FA
-              </Link>
 
 
               {/* Dark/Light Mode Toggle */}

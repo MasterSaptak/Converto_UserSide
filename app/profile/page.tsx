@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck, User, MapPin, CreditCard, Settings, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X } from "lucide-react";
+import { ShieldCheck, User, Users, UserCheck, MapPin, CreditCard, Settings, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -378,20 +378,24 @@ export default function ProfilePage() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
             <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
+              <Users className="w-6 h-6 shrink-0" />
+              <div className="font-bold uppercase text-sm tracking-widest mt-1">Saved Passengers</div>
+            </Link>
+            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
+              <UserCheck className="w-6 h-6 shrink-0" />
+              <div className="font-bold uppercase text-sm tracking-widest mt-1">Beneficiaries</div>
+            </Link>
+            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
               <CreditCard className="w-6 h-6 shrink-0" />
               <div className="font-bold uppercase text-sm tracking-widest mt-1">Payment Methods</div>
             </Link>
             <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <MapPin className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Saved Addresses</div>
-            </Link>
-            <Link href="#" className="border-2 border-foreground bg-white p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all text-center sm:text-left">
-              <Settings className="w-6 h-6 shrink-0" />
-              <div className="font-bold uppercase text-sm tracking-widest mt-1">Security & Prefs</div>
+              <ShieldCheck className="w-6 h-6 shrink-0" />
+              <div className="font-bold uppercase text-sm tracking-widest mt-1">Security & 2FA</div>
             </Link>
             <button
               onClick={handleSignOut}
-              className="border-2 border-red-600 bg-red-50 text-red-600 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_currentColor] transition-all text-center sm:text-left"
+              className="border-2 border-red-600 bg-red-50 text-red-600 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_currentColor] transition-all text-center sm:text-left xl:col-span-2"
             >
               <LogOut className="w-6 h-6 shrink-0" />
               <div className="font-bold uppercase text-sm tracking-widest mt-1">Sign Out</div>
