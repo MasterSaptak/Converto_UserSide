@@ -1,56 +1,143 @@
 'use client';
 
+/**
+ * QuickActions — Premium fintech Quick Actions section.
+ * 
+ * Uses the Illustration Design System for scalable, consistent
+ * illustrations with breathing, floating, parallax, glow, and shine
+ * animations.
+ * 
+ * Adding a new service:
+ *   1. Create an illustration component
+ *   2. Register it in IllustrationRegistry
+ *   3. Add one entry to ACTIONS below
+ */
+
 import Link from "next/link";
-import { ArrowRightLeft, ShoppingBag, Train, GraduationCap, Globe, Package } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
-import { staggerContainer, fadeUpItem } from "@/lib/animations";
+import { motion, useReducedMotion } from "motion/react";
+import { IllustrationRegistry, MotionWrapper } from "@/components/illustrations";
+import {
+  entranceContainer,
+  entranceItem,
+  cardHover,
+  cardTap,
+} from "@/lib/motion/quick-actions";
+
+// ─── Action definitions ────────────────────────────────────
 
 const ACTIONS = [
-  { href: "/services/exchange", label: "Money Exchange", icon: ArrowRightLeft, borderColor: "border-[#FF90E8]", darkTextColor: "dark:text-[#FF90E8]" },
-  { href: "/services/buy-for-me", label: "Buy For Me", icon: ShoppingBag, borderColor: "border-[#FFC900]", darkTextColor: "dark:text-[#FFC900]" },
-  { href: "/services/tickets?type=flight", label: "Ticket Booking", icon: Train, borderColor: "border-[#00E5FF]", darkTextColor: "dark:text-[#00E5FF]" },
-  { href: "/services/education", label: "Educational Payment", icon: GraduationCap, borderColor: "border-[#94A3B8]", darkTextColor: "dark:text-[#E2E8F0]" },
-  { href: "/services/global-payments", label: "Money Transfer", icon: Globe, borderColor: "border-[#00FF66]", darkTextColor: "dark:text-[#00FF66]" },
-  { href: "/track", label: "Track", icon: Package, borderColor: "border-[#FF5C00]", darkTextColor: "dark:text-[#FF5C00]" },
+  {
+    href: "/services/exchange",
+    label: "Money Exchange",
+    illustrationKey: "exchange",
+    accent: "#EC4899",
+  },
+  {
+    href: "/services/buy-for-me",
+    label: "Buy For Me",
+    illustrationKey: "buy_for_me",
+    accent: "#F59E0B",
+  },
+  {
+    href: "/services/tickets?type=flight",
+    label: "Ticket Booking",
+    illustrationKey: "ticket_booking",
+    accent: "#06B6D4",
+  },
+  {
+    href: "/services/education",
+    label: "Educational Payment",
+    illustrationKey: "education",
+    accent: "#94A3B8",
+  },
+  {
+    href: "/services/global-payments",
+    label: "Money Transfer",
+    illustrationKey: "global_payments",
+    accent: "#22C55E",
+  },
+  {
+    href: "/track",
+    label: "Track",
+    illustrationKey: "track",
+    accent: "#F97316",
+  },
 ];
 
+// ─── Component ─────────────────────────────────────────────
+
 export function QuickActions() {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <section>
+      {/* Section header */}
       <div className="font-bold uppercase text-[10px] tracking-[0.2em] mb-4 flex items-center gap-2 opacity-80">
-        <div className="w-1.5 h-1.5 bg-primary"></div>
+        <div className="w-1.5 h-1.5 bg-primary" />
         Quick Actions
       </div>
-      <motion.div 
+
+      {/* Cards grid */}
+      <motion.div
         className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4 pb-4"
-        variants={staggerContainer}
+        variants={entranceContainer}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-10px" }}
       >
-        {ACTIONS.map((action) => (
-          <motion.div key={action.href} variants={fadeUpItem} className="h-full">
-            <Link 
-              href={action.href} 
-              className={cn(
-                "group relative border-[3px] p-3 sm:p-4 flex flex-col items-center justify-center text-center transition-all hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] aspect-square sm:aspect-[4/3] overflow-hidden",
-                // Light Mode: Light metallic bg, sharp black text
-                "bg-gradient-to-br from-zinc-100 via-white to-zinc-200 text-zinc-950 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]",
-                // Dark Mode: Dark metallic bg, neon text
-                "dark:bg-gradient-to-br dark:from-zinc-800 dark:via-zinc-900 dark:to-black dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]",
-                action.borderColor,
-                action.darkTextColor
-              )}
+        {ACTIONS.map((action) => {
+          const Illustration = IllustrationRegistry[action.illustrationKey];
+
+          return (
+            <motion.div
+              key={action.href}
+              variants={entranceItem}
+              className="h-full"
+              style={{ perspective: 800 }}
             >
-              {/* Metallic glare effect on hover */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mix-blend-overlay"></div>
-              
-              <action.icon className="w-6 h-6 sm:w-7 sm:h-7 mb-2 sm:mb-3 group-hover:scale-125 transition-transform relative z-10 dark:drop-shadow-[0_0_8px_currentColor]" />
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase leading-tight tracking-wider relative z-10">{action.label}</span>
-            </Link>
-          </motion.div>
-        ))}
+              <Link href={action.href} className="block h-full">
+                <motion.div
+                  className="relative flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer h-full aspect-square sm:aspect-[4/3] p-3 sm:p-4 bg-white/80 backdrop-blur-sm dark:bg-zinc-900/80"
+                  style={{
+                    borderRadius: 16,
+                    border: `1.5px solid ${action.accent}4D`,
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.06)",
+                  }}
+                  whileHover={prefersReducedMotion ? undefined : cardHover}
+                  whileTap={cardTap}
+                >
+                  {/* Glass overlay */}
+                  <div
+                    className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/30 via-transparent to-transparent dark:from-white/[0.06] dark:via-transparent dark:to-transparent"
+                    style={{ borderRadius: "inherit" }}
+                  />
+
+                  {/* Illustration with breathing/floating/parallax/glow/shine */}
+                  <div className="relative z-10 mb-1.5 sm:mb-2.5">
+                    <MotionWrapper
+                      accent={action.accent}
+                      size={56}
+                      animated={!prefersReducedMotion}
+                    >
+                      {Illustration && (
+                        <Illustration
+                          size={56}
+                          accent={action.accent}
+                          animated={!prefersReducedMotion}
+                        />
+                      )}
+                    </MotionWrapper>
+                  </div>
+
+                  {/* Label */}
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase leading-tight tracking-wider relative z-10">
+                    {action.label}
+                  </span>
+                </motion.div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </motion.div>
     </section>
   );

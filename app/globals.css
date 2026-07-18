@@ -66,3 +66,13 @@
   scrollbar-width: none;
 }
 
+/* Illustration shine sweep — fires once, then pauses */
+@keyframes illustration-shine {
+  0% {
+    transform: translateX(-120%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(120%) rotate(25deg);
+  }
+}
+
