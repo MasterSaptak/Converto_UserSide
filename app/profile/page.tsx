@@ -94,8 +94,7 @@ export default function ProfilePage() {
       // 2. Update profile table
       const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
+        .update({
           username: formData.username,
           full_name: formData.full_name,
           phone: formData.phone,
@@ -104,7 +103,8 @@ export default function ProfilePage() {
           preferred_currency: formData.preferred_currency,
           avatar_url: finalAvatarUrl,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
 

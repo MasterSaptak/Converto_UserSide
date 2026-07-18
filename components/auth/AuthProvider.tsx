@@ -37,24 +37,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (currentUser: User) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', currentUser.id)
       .maybeSingle();
 
     if (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
-    } else {
+      return;
+    }
+    
+    if (data) {
+      // Auto-fill missing profile fields from auth metadata (signup data)
+      const meta = currentUser.user_metadata;
+      const needsUpdate: Record<string, string> = {};
+      
+      if (!data.username && meta?.username) needsUpdate.username = meta.username;
+      if (!data.phone && meta?.phone_number) needsUpdate.phone = meta.phone_number;
+      if (!data.full_name && meta?.full_name) needsUpdate.full_name = meta.full_name;
+
+      if (Object.keys(needsUpdate).length > 0) {
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update({ ...needsUpdate, updated_at: new Date().toISOString() })
+          .eq('id', currentUser.id);
+        
+        if (!updateErr) {
+          setProfile({ ...data, ...needsUpdate });
+          return;
+        }
+      }
+
       setProfile(data);
+    } else {
+      setProfile(null);
     }
   }, []);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user);
     }
   }, [user, fetchProfile]);
 
@@ -66,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted) {
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user);
         }
         setLoading(false);
       }
@@ -78,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user);
         } else {
           setProfile(null);
         }
