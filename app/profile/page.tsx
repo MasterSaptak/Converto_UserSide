@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck, User, Users, UserCheck, MapPin, CreditCard, Settings, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X } from "lucide-react";
+import { ShieldCheck, User, Users, UserCheck, CreditCard, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
