@@ -10,7 +10,7 @@ import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { Loader2 } from 'lucide-react';
 import { LiveFooter } from '@/components/layout/LiveFooter';
 
-const AUTH_ROUTES = ['/login', '/signup'];
+const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,10 +25,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       router.replace('/login');
     }
 
-    if (user && isAuthRoute) {
+    if (user && isAuthRoute && pathname !== '/reset-password') {
       router.replace('/');
     }
-  }, [user, loading, isAuthRoute, router]);
+  }, [user, loading, isAuthRoute, pathname, router]);
 
   // Loading state
   if (loading) {
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Auth pages — render without chrome
   if (isAuthRoute) {
-    if (user) return null; // Will redirect
+    if (user && pathname !== '/reset-password') return null; // Will redirect
     return <>{children}</>;
   }
 

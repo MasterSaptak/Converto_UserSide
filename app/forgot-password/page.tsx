@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -70,7 +69,7 @@ export default function ForgotPasswordPage() {
               )}
 
               <p className="text-sm opacity-80 mb-2">
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
 
               <div className="flex flex-col gap-2">
@@ -111,7 +110,7 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="w-16 h-16 text-green-500 mb-2" />
               <h2 className="text-xl font-bold uppercase tracking-tight">Check Your Email</h2>
               <p className="text-sm opacity-80 mb-4">
-                We've sent a password reset link to <strong>{email}</strong>.
+                We&apos;ve sent a password reset link to <strong>{email}</strong>.
               </p>
               <Link 
                 href="/login"
