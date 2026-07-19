@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck, User, Users, UserCheck, CreditCard, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X, Medal, Trophy, Award, Gem, Shield, Crown, MapPin, Mail, Phone, Calendar, Hash, Globe } from "lucide-react";
+import { ShieldCheck, User, Users, UserCheck, CreditCard, LogOut, Loader2, Copy, Check, Upload, Link as LinkIcon, Save, X, Medal, Trophy, Award, Gem, Shield, Crown, MapPin, Mail, Phone, Calendar, Hash, Globe, LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useRewards } from "@/hooks/useRewards";
@@ -9,7 +9,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { REWARD_TIERS } from "@/lib/currencies";
 
-const TIER_STYLES: Record<string, { icon: any, bg: string, text: string }> = {
+const TIER_STYLES: Record<string, { icon: LucideIcon, bg: string, text: string }> = {
   'Bronze': { icon: Medal, bg: 'bg-[#CD7F32]', text: 'text-white' },
   'Silver': { icon: Medal, bg: 'bg-[#C0C0C0]', text: 'text-black' },
   'Gold': { icon: Trophy, bg: 'bg-[#FFD700]', text: 'text-black' },
