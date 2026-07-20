@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users, Train } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
+import { submitServiceRequest } from '@/hooks/useServiceRequests'
 
 type TicketType = 'flight' | 'hotel' | 'bus' | 'event' | 'train'
 type Category = 'travel' | 'hotel' | 'event'
@@ -126,7 +127,6 @@ function TicketBookingForm() {
           const newSaved = [...savedPassengers]
           
           passengersToSave.forEach(pData => {
-            // Only add if not already in saved list (basic check by name + dob)
             if (!newSaved.some(s => s.firstName === pData.firstName && s.lastName === pData.lastName && s.dob === pData.dob)) {
               newSaved.push(pData)
             }
@@ -139,21 +139,21 @@ function TicketBookingForm() {
         }
       }
 
-      // 2. Send request to Server App API
-      const res = await fetch('http://localhost:3000/api/tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      // 2. Submit via SDK
+      const { error: submitError } = await submitServiceRequest({
+        serviceSlug: 'ticket_booking',
+        metadata: formData,
+        amount: 0,
+        currency: 'USD',
+        notes: `Ticket Booking: ${formData.ticketType} to ${formData.destinationCity}`
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to submit request')
-      }
+      if (submitError) throw new Error(submitError)
 
       router.push('/dashboard?service=ticket_booking&status=success')
     } catch (err: any) {
       setError(err.message)
+    } finally {
       setLoading(false)
     }
   }
@@ -197,7 +197,6 @@ function TicketBookingForm() {
           <div className="space-y-6">
             {!hasTypeParam && (
               <>
-                {/* Top Level Category Tabs */}
                 <div className="flex gap-2 mb-6">
                   {[
                     { id: 'travel', label: 'Travel', icon: Plane },
@@ -225,7 +224,6 @@ function TicketBookingForm() {
                   ))}
                 </div>
 
-                {/* Sub-tabs for Travel */}
                 {category === 'travel' && (
                   <div className="grid grid-cols-3 gap-4 mb-8">
                     {[

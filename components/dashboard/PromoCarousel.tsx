@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ const PROMOS = [
   }
 ];
 
-export function PromoCarousel() {
+export const PromoCarousel = React.memo(function PromoCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -104,4 +104,4 @@ export function PromoCarousel() {
       </div>
     </div>
   );
-}
+});

@@ -30,6 +30,7 @@ export default function TrackOrderPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'bg-emerald-100 text-emerald-800 border-emerald-800';
+      case 'Quote Sent': return 'bg-purple-100 text-purple-800 border-purple-800';
       case 'Cancelled':
       case 'Rejected': return 'bg-red-100 text-red-800 border-red-800';
       case 'Processing':
@@ -190,6 +191,20 @@ export default function TrackOrderPage() {
                         <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">Processing</h4>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
                         <p className="text-xs uppercase font-bold opacity-80">Your request is actively being processed by our team.</p>
+                      </div>
+                    ) : selectedRequest.status === 'Quote Sent' ? (
+                       <div className="relative pl-8">
+                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </div>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-purple-600">Quote Ready</h4>
+                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                          {new Date(selectedRequest.updated_at).toLocaleString()}
+                        </span>
+                        <p className="text-xs uppercase font-bold opacity-80 mb-3">Your custom quote has been generated and is ready for payment.</p>
+                        <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2">
+                          Review & Pay <ArrowRight className="w-4 h-4" />
+                        </a>
                       </div>
                     ) : selectedRequest.status === 'Completed' ? (
                        <div className="relative pl-8">

@@ -21,6 +21,8 @@ const QUICK_ACTIONS = [
   { href: "/services/buy-for-me", label: "Buy For Me", icon: ShoppingBag, color: "bg-yellow-400 text-black" },
   { href: "/services/tickets?type=train", label: "Train Booking", icon: Train, color: "bg-cyan-400 text-black" },
   { href: "/services/global-payments", label: "Global Payments", icon: Globe, color: "bg-emerald-400 text-black" },
+  { href: "/insta-order?type=buy", label: "1-Tap Buy", icon: Zap, color: "bg-pink-400 text-black" },
+  { href: "/insta-order?type=transfer", label: "1-Tap Transfer", icon: Zap, color: "bg-orange-400 text-black" },
 ];
 
 export function BottomNav() {
@@ -63,7 +65,7 @@ export function BottomNav() {
               <SheetHeader className="mb-6">
                 <SheetTitle className="text-center font-heading text-xl uppercase tracking-widest">Quick Actions</SheetTitle>
               </SheetHeader>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {QUICK_ACTIONS.map((action, idx) => (
                   <SheetClose 
                     key={idx}
@@ -72,14 +74,14 @@ export function BottomNav() {
                       <Link 
                         href={action.href} 
                         className={cn(
-                          "flex flex-col items-center justify-center gap-3 p-4 border-2 border-foreground bg-card shadow-[4px_4px_0px_var(--color-foreground)] hover:translate-y-1 hover:translate-x-1 hover:shadow-none active:translate-y-1 active:translate-x-1 active:shadow-none transition-all",
+                          "flex flex-col items-center justify-center gap-2 p-3 border-2 border-foreground bg-card shadow-[3px_3px_0px_var(--color-foreground)] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-[1px_1px_0px_var(--color-foreground)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all",
                           action.color
                         )} 
                       />
                     }
                   >
-                    <action.icon className="w-7 h-7 stroke-[2.5px]" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{action.label}</span>
+                    <action.icon className="w-6 h-6 stroke-[2.5px]" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-center leading-tight">{action.label}</span>
                   </SheetClose>
                 ))}
               </div>

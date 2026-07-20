@@ -19,7 +19,7 @@ export const ALL_CURRENCIES = Object.keys(BASE_RATES);
  */
 export function calculateCPoints(amount: number, currencyCode: string): number {
   const baseRate = BASE_RATES[currencyCode];
-  
+
   if (!baseRate) {
     // If currency not found, default to 0 to avoid errors, or fallback to USD rate
     console.warn(`Currency code ${currencyCode} not found in BASE_RATES. Points calculation skipped.`);
@@ -28,29 +28,36 @@ export function calculateCPoints(amount: number, currencyCode: string): number {
 
   // Convert to USD equivalent
   const amountInUSD = Math.abs(amount) / baseRate;
-  
+
   // Calculate points (1 USD = 100 Points) and return as integer
   return Math.floor(amountInUSD * 100);
 }
 
 // Reward Tiers Logic
 export const REWARD_TIERS = [
-  { name: 'Bronze', minPoints: 0 },
-  { name: 'Silver', minPoints: 5000 },
-  { name: 'Gold', minPoints: 25000 },
+  { name: 'Wood', minPoints: 0 },
+  { name: 'Stone', minPoints: 2500 },
+  { name: 'Iron', minPoints: 15000 },
+  { name: 'Bronze', minPoints: 30000 },
+  { name: 'Silver', minPoints: 50000 },
+  { name: 'Gold', minPoints: 75000 },
   { name: 'Platinum', minPoints: 100000 },
-  { name: 'Diamond', minPoints: 250000 },
-  { name: 'Ruby', minPoints: 500000 },
-  { name: 'Sapphire', minPoints: 1000000 },
-  { name: 'Emerald', minPoints: 2500000 },
-  { name: 'Titanium', minPoints: 5000000 },
-  { name: 'Black Card', minPoints: 10000000 },
+  { name: 'Diamond', minPoints: 150000 },
+  { name: 'Obsidian', minPoints: 200000 },
+  { name: 'Ruby', minPoints: 300000 },
+  { name: 'Sapphire', minPoints: 400000 },
+  { name: 'Emerald', minPoints: 500000 },
+  { name: 'Amethyst', minPoints: 600000 },
+  { name: 'Titanium', minPoints: 700000 },
+  { name: 'Vibranium', minPoints: 800000 },
+  { name: 'Antimatter', minPoints: 900000 },
+  { name: 'Black Card', minPoints: 1000000 },
 ];
 
 export function getTierInfo(points: number) {
   let currentTier = REWARD_TIERS[0];
   let nextTier = REWARD_TIERS[1];
-  
+
   for (let i = 0; i < REWARD_TIERS.length; i++) {
     if (points >= REWARD_TIERS[i].minPoints) {
       currentTier = REWARD_TIERS[i];
@@ -63,7 +70,7 @@ export function getTierInfo(points: number) {
   return {
     current: currentTier,
     next: nextTier,
-    progress: nextTier 
+    progress: nextTier
       ? Math.min(100, Math.max(0, ((points - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100))
       : 100
   };

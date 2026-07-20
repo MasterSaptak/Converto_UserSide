@@ -7,7 +7,9 @@ import { useServiceRequests } from "@/hooks/useServiceRequests";
 import { motion } from "motion/react";
 import { staggerContainer, scaleIn } from "@/lib/animations";
 
-export function RequestStatusTracker() {
+import React from 'react';
+
+export const RequestStatusTracker = React.memo(function RequestStatusTracker() {
   const { requests } = useServiceRequests();
 
   const pendingCount = requests.filter(r => ['Submitted', 'Pending', 'Action Required'].includes(r.status)).length;
@@ -46,4 +48,4 @@ export function RequestStatusTracker() {
       </motion.div>
     </div>
   );
-}
+});

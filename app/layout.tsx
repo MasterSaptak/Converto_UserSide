@@ -3,6 +3,7 @@ import { Oswald, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { Toaster } from "sonner";
 
@@ -61,11 +62,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background text-foreground">
-        <AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
           <AppShell>
             {children}
           </AppShell>
         </AuthProvider>
+        </QueryProvider>
         <Toaster position="top-center" toastOptions={{ className: 'font-mono rounded-none border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]' }} />
         <script
           dangerouslySetInnerHTML={{

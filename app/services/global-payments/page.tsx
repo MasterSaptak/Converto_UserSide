@@ -1,5 +1,8 @@
 'use client';
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { submitServiceRequest } from '@/hooks/useServiceRequests';
+import { Loader2 } from 'lucide-react';
 
 const SAVED_RECIPIENTS = [
   {
@@ -21,29 +24,71 @@ const SAVED_RECIPIENTS = [
 ];
 
 export default function GlobalPaymentsPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     recipientName: '',
     country: 'United States',
     bankName: '',
     accountNumber: '',
     swiftCode: '',
+    transferCurrency: 'USD',
+    amount: '',
+    purpose: 'Business Invoice Payment',
+    reference: ''
   });
 
   const handleLoadRecipient = (id: string) => {
     const recipient = SAVED_RECIPIENTS.find(r => r.id === id);
     if (recipient) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         recipientName: recipient.name,
         country: recipient.country,
         bankName: recipient.bankName,
         accountNumber: recipient.accountNumber,
         swiftCode: recipient.swiftCode
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: submitError } = await submitServiceRequest({
+        serviceSlug: 'global_payments',
+        metadata: {
+          recipient_name: formData.recipientName,
+          country: formData.country,
+          bank_name: formData.bankName,
+          account_number: formData.accountNumber,
+          swift_code: formData.swiftCode,
+          purpose: formData.purpose,
+          reference: formData.reference
+        },
+        amount: parseFloat(formData.amount) || 0,
+        currency: formData.transferCurrency.split(' ')[0],
+        notes: `Global Payment: ${formData.purpose} to ${formData.recipientName}`
       });
+
+      if (submitError || !data) {
+        throw new Error(submitError || 'Failed to submit request');
+      }
+
+      router.push('/track');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
+    <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-8 md:gap-10 animate-in fade-in duration-500 pb-10">
       <header className="border-b-2 border-foreground pb-6">
         <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Services</span>
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Global Payments</h1>
@@ -53,6 +98,11 @@ export default function GlobalPaymentsPage() {
         
         {/* Form */}
         <div className="flex flex-col gap-6">
+          {error && (
+            <div className="bg-red-100 border-2 border-red-500 text-red-700 p-4 font-bold text-sm">
+              {error}
+            </div>
+          )}
           <div className="border-2 border-foreground bg-white p-6">
             <h2 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-foreground pb-2">Beneficiary Details</h2>
             
@@ -136,24 +186,40 @@ export default function GlobalPaymentsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t-2 border-dashed border-muted pt-4 mt-2">
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Transfer Currency</label>
-                  <select defaultValue="BDT - Bangladeshi Taka" className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary">
-                    <option>USD - US Dollar</option>
-                    <option>EUR - Euro</option>
-                    <option>GBP - British Pound</option>
-                    <option>BDT - Bangladeshi Taka</option>
-                    <option>INR - Indian Rupee</option>
-                    <option>CNY - Chinese Yuan</option>
+                  <select 
+                    value={formData.transferCurrency}
+                    onChange={(e) => setFormData({...formData, transferCurrency: e.target.value})}
+                    className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary"
+                  >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="BDT">BDT - Bangladeshi Taka</option>
+                    <option value="INR">INR - Indian Rupee</option>
+                    <option value="CNY">CNY - Chinese Yuan</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Amount to Transfer</label>
-                  <input type="number" placeholder="0.00" className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono" />
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    required
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    placeholder="0.00" 
+                    className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono" 
+                  />
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Purpose of Transfer</label>
-                <select className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary">
+                <select 
+                  value={formData.purpose}
+                  onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+                  className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary"
+                >
                   <option>Business Invoice Payment</option>
                   <option>Family / Friend Support</option>
                   <option>Medical Expenses</option>
@@ -171,7 +237,13 @@ export default function GlobalPaymentsPage() {
 
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Payment Reference (For Receiver)</label>
-                <input type="text" placeholder="e.g. INV-2024-10" className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary font-mono" />
+                <input 
+                  type="text" 
+                  value={formData.reference}
+                  onChange={(e) => setFormData({...formData, reference: e.target.value})}
+                  placeholder="e.g. INV-2024-10" 
+                  className="border-2 border-foreground p-3 text-sm font-bold uppercase outline-none focus:border-primary font-mono" 
+                />
               </div>
             </div>
           </div>
@@ -199,13 +271,13 @@ export default function GlobalPaymentsPage() {
               </div>
             </div>
 
-            <button className="w-full border-2 border-foreground bg-white text-foreground p-4 font-bold uppercase tracking-widest text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all">
-              Initialize Transfer
+            <button type="submit" disabled={loading} className="w-full border-2 border-foreground bg-white text-foreground p-4 font-bold uppercase tracking-widest text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all flex justify-center items-center gap-2 disabled:opacity-50">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing</> : 'Initialize Transfer'}
             </button>
           </div>
         </div>
 
       </div>
-    </div>
+    </form>
   );
 }

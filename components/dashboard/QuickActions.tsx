@@ -61,12 +61,14 @@ const ACTIONS = [
     label: "Track",
     illustrationKey: "track",
     accent: "#F97316",
-  },
+  }
 ];
 
 // ─── Component ─────────────────────────────────────────────
 
-export function QuickActions() {
+import React from 'react';
+
+export const QuickActions = React.memo(function QuickActions() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -141,4 +143,4 @@ export function QuickActions() {
       </motion.div>
     </section>
   );
-}
+});

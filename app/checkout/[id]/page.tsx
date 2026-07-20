@@ -25,7 +25,7 @@ export default function CheckoutPage() {
           .single()
 
         if (orderError) throw orderError
-        if (orderData.status_code !== 'awaiting_payment') {
+        if (orderData.status_code !== 'awaiting_payment' && orderData.status_code !== 'quote_sent') {
           router.push('/dashboard')
           return
         }

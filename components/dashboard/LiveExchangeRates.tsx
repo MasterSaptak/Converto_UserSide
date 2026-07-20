@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Settings, Plus, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { BASE_RATES, ALL_CURRENCIES } from '@/lib/currencies';
 
-export function LiveExchangeRates() {
+export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const [baseCurrency, setBaseCurrency] = useState('BDT');
   const [targetCurrencies, setTargetCurrencies] = useState<string[]>(['USD', 'EUR', 'INR', 'CNY']);
   const [isEditing, setIsEditing] = useState(false);
@@ -123,4 +123,4 @@ export function LiveExchangeRates() {
       </div>
     </section>
   );
-}
+});

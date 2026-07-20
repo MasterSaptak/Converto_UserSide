@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ArrowRight, ArrowLeft, ArrowRightLeft, CreditCard, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { submitServiceRequest } from '@/hooks/useServiceRequests'
 
 type Step = 1 | 2 | 3
 type PayoutMethod = "bank_transfer" | "crypto_wallet" | "mobile_money" | "cash_pickup"
@@ -12,6 +13,7 @@ export default function ExchangeServicePage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Form State
   const [fromCurrency, setFromCurrency] = useState("BDT")
@@ -40,31 +42,30 @@ export default function ExchangeServicePage() {
 
   const handleSubmit = async () => {
     setIsLoading(true)
+    setError(null)
     try {
-      // Note: Assuming we are communicating with Converto_ServerSide running on port 3000
-      const response = await fetch("http://localhost:3000/api/exchange", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data, error: submitError } = await submitServiceRequest({
+        serviceSlug: 'exchange',
+        metadata: {
           from_currency: fromCurrency,
           to_currency: toCurrency,
-          amount: parseFloat(amount),
           payout_method: payoutMethod,
-          payout_details: payoutDetails
-        })
+          payout_details: payoutDetails,
+          exchange_rate: exchangeRate,
+          service_fee: serviceFee
+        },
+        amount: parseFloat(amount) || 0,
+        currency: fromCurrency,
+        notes: `Currency Exchange: ${fromCurrency} to ${toCurrency}`
       })
 
-      if (!response.ok) {
-        console.error("API Error")
+      if (submitError || !data) {
+        throw new Error(submitError || 'Failed to initialize exchange')
       }
 
-      // Success
-      router.push("/track") // Redirect to order tracking or success page
-    } catch (error) {
-      console.error(error)
-    } finally {
+      router.push("/track") 
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
       setIsLoading(false)
     }
   }
@@ -254,6 +255,12 @@ export default function ExchangeServicePage() {
           <div className="p-6 md:p-10 animate-in slide-in-from-right-4 duration-300">
             <h2 className="text-2xl font-black uppercase tracking-widest border-b-4 border-foreground pb-4 mb-8">Review & Submit</h2>
             
+            {error && (
+              <div className="bg-red-100 border-2 border-red-500 text-red-700 p-4 font-bold text-sm mb-6">
+                {error}
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-8 mb-10">
               <div className="space-y-6">
                 <div className="brutal-card bg-[#00E5FF] p-6 border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]">
