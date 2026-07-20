@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ShoppingBag, ArrowRight, ArrowLeft, Loader2, Link as LinkIcon, Info, MapPin, ChevronDown, Globe } from 'lucide-react'
 import { submitServiceRequest } from '@/hooks/useServiceRequests'
 import { useForm } from 'react-hook-form'
+import { RewardsWidget } from '@/components/dashboard/RewardsWidget'
 
 interface FormData {
   website: string;
@@ -118,6 +119,10 @@ export default function BuyForMePage() {
         </div>
         <h1 className="text-4xl font-black uppercase tracking-tighter">Buy For Me</h1>
         <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-2">Paste a link, we handle the rest</p>
+      </div>
+
+      <div className="mb-8 max-w-sm mx-auto">
+        <RewardsWidget />
       </div>
 
       <div className="flex gap-2 mb-8">
