@@ -16,8 +16,8 @@ const SERVICE_MAP: Record<string, string> = {
   'buy': 'buy_for_me',
   'transfer': 'exchange',
   'global': 'global_payments',
-  'ticket': 'train_booking',
-  'train': 'train_booking',
+  'ticket': 'tickets',
+  'train': 'tickets',
   'call': 'support', // support is used for general contact/calls
   'help': 'support',
   'medical': 'medical',
