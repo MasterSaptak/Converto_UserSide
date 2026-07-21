@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2, Train, Bus, Plane, Hotel, CalendarDays } from "lucide-react";
+import Image from "next/image";
+import { ArrowRightLeft, ShoppingBag, Ticket, GraduationCap, Globe, Package, HeadphonesIcon, Settings2, Train, Bus, Plane, Hotel, CalendarDays, HeartPulse } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // Map slugs to icons
@@ -17,7 +18,24 @@ const getIconForSlug = (slug: string) => {
     case 'global_payments': return Globe;
     case 'support': return HeadphonesIcon;
     case 'track': return Package;
+    case 'medical': return HeartPulse;
     default: return Settings2;
+  }
+}
+
+const getBgImageForSlug = (slug: string) => {
+  switch (slug) {
+    case 'exchange': return '/Currency.png';
+    case 'buy_for_me': return '/Buy For Me.png';
+    case 'train_booking': return '/Train.png';
+    case 'bus_booking': return '/bus.png';
+    case 'flight_booking': return '/PLane.png';
+    case 'hotel_booking': return '/Hotel.png';
+    case 'event_booking': return '/event.png';
+    case 'education': return '/Education.png';
+    case 'global_payments': return '/global.png';
+    case 'medical': return '/medical.png';
+    default: return null;
   }
 }
 
@@ -26,7 +44,8 @@ const FALLBACK_SERVICES = [
   { id: 'exchange', slug: 'exchange', name: 'Money Exchange', description: 'Convert currencies at competitive rates', route: '/services/exchange', color: '#FF90E8', sort_order: 1, is_active: true },
   { id: 'buy_for_me', slug: 'buy_for_me', name: 'Buy For Me', description: 'We purchase items on your behalf worldwide', route: '/services/buy-for-me', color: '#FFC900', sort_order: 2, is_active: true },
   { id: 'education', slug: 'education', name: 'Educational Payment', description: 'Pay tuition and university fees globally', route: '/services/education', color: '#94A3B8', sort_order: 4, is_active: true },
-  { id: 'global_payments', slug: 'global_payments', name: 'Money Transfer', description: 'Send money across borders instantly', route: '/services/global-payments', color: '#00FF66', sort_order: 5, is_active: true }
+  { id: 'global_payments', slug: 'global_payments', name: 'Money Transfer', description: 'Send money across borders instantly', route: '/services/global-payments', color: '#00FF66', sort_order: 5, is_active: true },
+  { id: 'medical', slug: 'medical', name: 'Medical Appointment Booking', description: 'Book doctor appointments securely', route: '/services/medical', color: '#8B5CF6', sort_order: 6, is_active: true }
 ];
 
 export default async function ServicesPage() {
@@ -65,35 +84,59 @@ export default async function ServicesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {services.map((service) => {
           const Icon = getIconForSlug(service.slug);
+          const bgImage = getBgImageForSlug(service.slug);
           
           return (
-            <Link key={service.id} href={service.route || `/services/${service.slug}`} className="group bg-card border-2 border-foreground p-5 md:p-6 flex flex-col transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_var(--color-foreground)] overflow-hidden relative min-h-[140px] md:min-h-[160px]">
-              {/* Colorful hover backdrop */}
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-[0.15] transition-opacity pointer-events-none duration-500"
-                style={{ backgroundColor: service.color || undefined }}
-              />
+            <Link key={service.id} href={service.route || `/services/${service.slug}`} className="group bg-white border-2 border-foreground flex flex-col transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_var(--color-foreground)] overflow-hidden relative min-h-[220px] md:min-h-[260px]">
               
-              <div className="flex items-center gap-4 mb-3 md:mb-4 relative z-10">
+              {/* Top: Image Frame */}
+              <div className="relative w-full h-32 md:h-40 border-b-2 border-foreground bg-zinc-50 shrink-0">
+                <div className="absolute inset-0 overflow-hidden">
+                  {bgImage ? (
+                    <Image
+                      src={bgImage}
+                      alt={service.name}
+                      fill
+                      className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                    />
+                  ) : (
+                    <div 
+                      className="absolute inset-0 opacity-[0.05] group-hover:opacity-[0.15] transition-opacity duration-500"
+                      style={{ backgroundColor: service.color || undefined }}
+                    />
+                  )}
+                </div>
+
+                {/* Icon overlapping the border */}
                 <div 
-                  className="w-10 h-10 md:w-12 md:h-12 border-2 border-foreground flex items-center justify-center transition-transform group-hover:scale-110 shadow-[2px_2px_0px_var(--color-foreground)]"
-                  style={{ backgroundColor: service.color || '#E2E8F0' }}
+                  className="absolute bottom-0 left-4 md:left-5 translate-y-1/2 w-10 h-10 md:w-12 md:h-12 border-2 border-foreground flex items-center justify-center transition-transform group-hover:scale-110 shadow-[2px_2px_0px_var(--color-foreground)] bg-white z-20"
                 >
                   <Icon className="w-5 h-5 md:w-6 md:h-6 text-zinc-950" />
                 </div>
-                <h2 className="font-bold uppercase tracking-widest text-xs sm:text-sm leading-tight group-hover:text-primary transition-colors">{service.name}</h2>
               </div>
-              
-              <p className="text-[10px] sm:text-xs uppercase font-bold opacity-60 tracking-wider flex-1 relative z-10">
-                {service.description || "Core platform module"}
-              </p>
-              
-              <div className="mt-4 md:mt-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest relative z-10">
-                <span className="group-hover:underline text-foreground">Select Service</span>
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: service.color || '#E2E8F0' }}
-                />
+
+              {/* Bottom: Text Content */}
+              <div className="p-4 md:p-5 pt-8 md:pt-10 flex flex-col flex-1 bg-white relative z-10">
+                <h2 
+                  className="font-bold uppercase tracking-widest text-xs sm:text-sm leading-tight group-hover:opacity-80 transition-opacity mb-2"
+                  style={{ color: service.color || '#000000' }}
+                >
+                  {service.name}
+                </h2>
+                
+                <p className="text-[10px] sm:text-xs uppercase font-bold tracking-wider text-zinc-600 mb-4 line-clamp-2">
+                  {service.description || "Core platform module"}
+                </p>
+                
+                <div className="mt-auto flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black">
+                  <span className="group-hover:underline">
+                    Select Service
+                  </span>
+                  <div 
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: service.color || '#E2E8F0' }}
+                  />
+                </div>
               </div>
             </Link>
           )
