@@ -16,6 +16,13 @@ type UnifiedActivity = {
   createdAt: string;
   icon: string;
 };
+type ExtendedRequest = {
+  status: string;
+  status_obj?: {
+    name: string;
+    customer_visible: boolean;
+  };
+};
 
 export default function HistoryPage() {
   const { transactions, isLoading: isWalletLoading } = useWalletTransactions();
@@ -47,7 +54,7 @@ export default function HistoryPage() {
       title: r.service?.name || 'Order',
       amount: r.amount,
       currency: r.currency || 'USD',
-      status: (r as any).status_obj?.customer_visible === false ? 'Processing' : (r as any).status_obj?.name || r.status,
+      status: (r as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (r as unknown as ExtendedRequest).status_obj?.name || r.status,
       createdAt: r.created_at,
       icon: '📦 ' + (r.service?.name || 'Order')
     }));

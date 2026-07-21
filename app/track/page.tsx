@@ -6,6 +6,17 @@ import { useServiceRequests } from '@/hooks/useServiceRequests';
 import { useAuth } from '@/hooks/useAuth';
 import type { ServiceRequest } from '@/types/database';
 
+type ExtendedRequest = ServiceRequest & {
+  stage?: { name: string; code: string };
+  status_obj?: {
+    name: string;
+    customer_visible: boolean;
+    color?: string;
+    code?: string;
+    requires_customer_action?: boolean;
+  };
+};
+
 export default function TrackOrderPage() {
   const { user } = useAuth();
   const { requests, loading } = useServiceRequests();
@@ -25,14 +36,6 @@ export default function TrackOrderPage() {
     if (found) {
       setSelectedRequest(found);
     }
-  };
-
-  const getStatusColor = (status_obj: any, stage: any) => {
-    if (!status_obj) return 'bg-yellow-100 text-yellow-800 border-yellow-800';
-    if (status_obj.color) {
-      return `border-[${status_obj.color}] text-black`; // We'll just rely on inline styles below for safety
-    }
-    return 'bg-yellow-100 text-yellow-800 border-yellow-800';
   };
 
   const getRequestTitle = (req: ServiceRequest) => {
@@ -120,13 +123,13 @@ export default function TrackOrderPage() {
                       <div 
                         className="border-2 px-3 py-1 font-bold uppercase text-[10px] tracking-widest bg-white"
                         style={{
-                          borderColor: (req as any).status_obj?.color || '#000',
+                          borderColor: (req as unknown as ExtendedRequest).status_obj?.color || '#000',
                           borderWidth: '2px'
                         }}
                       >
-                        <span className="opacity-50">{(req as any).stage?.name} / </span>
-                        <span style={{ color: (req as any).status_obj?.color || '#000' }}>
-                          {(req as any).status_obj?.customer_visible === false ? 'Processing' : (req as any).status_obj?.name || 'Submitted'}
+                        <span className="opacity-50">{(req as unknown as ExtendedRequest).stage?.name} / </span>
+                        <span style={{ color: (req as unknown as ExtendedRequest).status_obj?.color || '#000' }}>
+                          {(req as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (req as unknown as ExtendedRequest).status_obj?.name || 'Submitted'}
                         </span>
                       </div>
                       <ArrowRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -157,13 +160,13 @@ export default function TrackOrderPage() {
                 <div 
                   className="border-2 px-4 py-2 font-bold uppercase text-[10px] tracking-widest bg-white"
                   style={{
-                    borderColor: (selectedRequest as any).status_obj?.color || '#000',
+                    borderColor: (selectedRequest as unknown as ExtendedRequest).status_obj?.color || '#000',
                     borderWidth: '2px'
                   }}
                 >
-                  <span className="opacity-50">{(selectedRequest as any).stage?.name} / </span>
-                  <span style={{ color: (selectedRequest as any).status_obj?.color || '#000' }}>
-                    {(selectedRequest as any).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as any).status_obj?.name || 'Submitted'}
+                  <span className="opacity-50">{(selectedRequest as unknown as ExtendedRequest).stage?.name} / </span>
+                  <span style={{ color: (selectedRequest as unknown as ExtendedRequest).status_obj?.color || '#000' }}>
+                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as unknown as ExtendedRequest).status_obj?.name || 'Submitted'}
                   </span>
                 </div>
               </div>
@@ -185,7 +188,7 @@ export default function TrackOrderPage() {
                       </span>
                       <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
                     </div>                    {/* Dynamic Step based on pipeline status */}
-                    {(selectedRequest as any).status_obj?.code === 'quote_sent' ? (
+                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'quote_sent' ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -199,7 +202,7 @@ export default function TrackOrderPage() {
                           Review & Pay <ArrowRight className="w-4 h-4" />
                         </a>
                       </div>
-                    ) : (selectedRequest as any).stage?.code === 'completed' ? (
+                    ) : (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -210,12 +213,12 @@ export default function TrackOrderPage() {
                         </span>
                         <p className="text-xs uppercase font-bold opacity-80">Service request fulfilled successfully.</p>
                       </div>
-                    ) : (selectedRequest as any).status_obj?.code === 'closed' ? (
+                    ) : (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'closed' ? (
                       <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-red-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <XCircle className="w-3 h-3 text-white" />
                         </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{(selectedRequest as any).status_obj?.name}</h4>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{(selectedRequest as unknown as ExtendedRequest).status_obj?.name}</h4>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
                           {new Date(selectedRequest.updated_at).toLocaleString()}
                         </span>
@@ -227,10 +230,10 @@ export default function TrackOrderPage() {
                           <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
                         </div>
                         <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">
-                          {(selectedRequest as any).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as any).status_obj?.name || 'Submitted'}
+                          {(selectedRequest as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as unknown as ExtendedRequest).status_obj?.name || 'Submitted'}
                         </h4>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
-                        {(selectedRequest as any).status_obj?.requires_customer_action && (
+                        {(selectedRequest as unknown as ExtendedRequest).status_obj?.requires_customer_action && (
                           <p className="text-xs uppercase font-bold text-orange-600 mt-2 p-2 border-2 border-orange-600 bg-orange-50">
                             Action Required. Please check your email or contact support.
                           </p>
