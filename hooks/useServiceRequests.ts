@@ -25,7 +25,7 @@ export function useServiceRequests(options?: UseServiceRequestsOptions) {
 
       let query = supabase
         .from('service_requests')
-        .select('*, service:services(*)')
+        .select('*, service:services(*), stage:pipeline_stages(*), status_obj:pipeline_statuses(*)')
         .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
 

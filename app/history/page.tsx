@@ -47,7 +47,7 @@ export default function HistoryPage() {
       title: r.service?.name || 'Order',
       amount: r.amount,
       currency: r.currency || 'USD',
-      status: r.status,
+      status: (r as any).status_obj?.customer_visible === false ? 'Processing' : (r as any).status_obj?.name || r.status,
       createdAt: r.created_at,
       icon: '📦 ' + (r.service?.name || 'Order')
     }));

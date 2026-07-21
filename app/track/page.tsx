@@ -27,17 +27,12 @@ export default function TrackOrderPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed': return 'bg-emerald-100 text-emerald-800 border-emerald-800';
-      case 'Quote Sent': return 'bg-purple-100 text-purple-800 border-purple-800';
-      case 'Cancelled':
-      case 'Rejected': return 'bg-red-100 text-red-800 border-red-800';
-      case 'Processing':
-      case 'Purchased':
-      case 'Booked': return 'bg-blue-100 text-blue-800 border-blue-800';
-      default: return 'bg-yellow-100 text-yellow-800 border-yellow-800'; // Pending/Submitted states
+  const getStatusColor = (status_obj: any, stage: any) => {
+    if (!status_obj) return 'bg-yellow-100 text-yellow-800 border-yellow-800';
+    if (status_obj.color) {
+      return `border-[${status_obj.color}] text-black`; // We'll just rely on inline styles below for safety
     }
+    return 'bg-yellow-100 text-yellow-800 border-yellow-800';
   };
 
   const getRequestTitle = (req: ServiceRequest) => {
@@ -122,8 +117,17 @@ export default function TrackOrderPage() {
                     </div>
                     
                     <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                      <div className={`border-2 px-3 py-1 font-bold uppercase text-[10px] tracking-widest ${getStatusColor(req.status)}`}>
-                        {req.status}
+                      <div 
+                        className="border-2 px-3 py-1 font-bold uppercase text-[10px] tracking-widest bg-white"
+                        style={{
+                          borderColor: (req as any).status_obj?.color || '#000',
+                          borderWidth: '2px'
+                        }}
+                      >
+                        <span className="opacity-50">{(req as any).stage?.name} / </span>
+                        <span style={{ color: (req as any).status_obj?.color || '#000' }}>
+                          {(req as any).status_obj?.customer_visible === false ? 'Processing' : (req as any).status_obj?.name || 'Submitted'}
+                        </span>
                       </div>
                       <ArrowRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </div>
@@ -150,8 +154,17 @@ export default function TrackOrderPage() {
                   <div className="font-mono uppercase tracking-widest text-[10px] opacity-60 mb-2">Request ID: {selectedRequest.id}</div>
                   <h2 className="font-bold uppercase text-xl leading-none">{getRequestTitle(selectedRequest)}</h2>
                 </div>
-                <div className={`border-2 px-4 py-2 font-bold uppercase text-[10px] tracking-widest ${getStatusColor(selectedRequest.status)}`}>
-                  {selectedRequest.status}
+                <div 
+                  className="border-2 px-4 py-2 font-bold uppercase text-[10px] tracking-widest bg-white"
+                  style={{
+                    borderColor: (selectedRequest as any).status_obj?.color || '#000',
+                    borderWidth: '2px'
+                  }}
+                >
+                  <span className="opacity-50">{(selectedRequest as any).stage?.name} / </span>
+                  <span style={{ color: (selectedRequest as any).status_obj?.color || '#000' }}>
+                    {(selectedRequest as any).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as any).status_obj?.name || 'Submitted'}
+                  </span>
                 </div>
               </div>
 
@@ -171,28 +184,8 @@ export default function TrackOrderPage() {
                         {new Date(selectedRequest.created_at).toLocaleString()}
                       </span>
                       <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
-                    </div>
-
-                    {/* Dynamic Step based on status */}
-                    {selectedRequest.status === 'Submitted' ? (
-                      <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white border-2 border-primary rounded-full z-10">
-                          <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">Awaiting Review</h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
-                        <p className="text-xs uppercase font-bold opacity-80">Our agents are reviewing your request details.</p>
-                      </div>
-                    ) : selectedRequest.status === 'Processing' ? (
-                       <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white border-2 border-primary rounded-full z-10">
-                          <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">Processing</h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
-                        <p className="text-xs uppercase font-bold opacity-80">Your request is actively being processed by our team.</p>
-                      </div>
-                    ) : selectedRequest.status === 'Quote Sent' ? (
+                    </div>                    {/* Dynamic Step based on pipeline status */}
+                    {(selectedRequest as any).status_obj?.code === 'quote_sent' ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -206,7 +199,7 @@ export default function TrackOrderPage() {
                           Review & Pay <ArrowRight className="w-4 h-4" />
                         </a>
                       </div>
-                    ) : selectedRequest.status === 'Completed' ? (
+                    ) : (selectedRequest as any).stage?.code === 'completed' ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -217,27 +210,33 @@ export default function TrackOrderPage() {
                         </span>
                         <p className="text-xs uppercase font-bold opacity-80">Service request fulfilled successfully.</p>
                       </div>
-                    ) : selectedRequest.status === 'Cancelled' || selectedRequest.status === 'Rejected' ? (
+                    ) : (selectedRequest as any).status_obj?.code === 'closed' ? (
                       <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-red-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <XCircle className="w-3 h-3 text-white" />
                         </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{selectedRequest.status}</h4>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{(selectedRequest as any).status_obj?.name}</h4>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
                           {new Date(selectedRequest.updated_at).toLocaleString()}
                         </span>
-                        <p className="text-xs uppercase font-bold opacity-80">This request will not proceed further.</p>
+                        <p className="text-xs uppercase font-bold opacity-80">This request is closed.</p>
                       </div>
                     ) : (
                       <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white border-2 border-primary rounded-full z-10">
                           <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
                         </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">{selectedRequest.status}</h4>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">
+                          {(selectedRequest as any).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as any).status_obj?.name || 'Submitted'}
+                        </h4>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
+                        {(selectedRequest as any).status_obj?.requires_customer_action && (
+                          <p className="text-xs uppercase font-bold text-orange-600 mt-2 p-2 border-2 border-orange-600 bg-orange-50">
+                            Action Required. Please check your email or contact support.
+                          </p>
+                        )}
                       </div>
                     )}
-
                   </div>
                 </div>
 
