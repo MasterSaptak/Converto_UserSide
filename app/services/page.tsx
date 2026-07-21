@@ -59,9 +59,23 @@ export default async function ServicesPage() {
   // Use DB services if they exist, otherwise use hardcoded fallbacks
   // Filter out the old generic ticket services so we can expand them
   // Also filter out 'track' as it's accessible via the main navigation menu
-  const baseServices = (dbServices && dbServices.length > 0) 
+  let baseServices = (dbServices && dbServices.length > 0) 
     ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track')
     : FALLBACK_SERVICES;
+
+  // Ensure 'medical' is included even if it's not in the DB yet
+  if (!baseServices.some(s => s.slug === 'medical')) {
+    baseServices.push({ 
+      id: 'medical', 
+      slug: 'medical', 
+      name: 'Medical Appointment Booking', 
+      description: 'Book doctor appointments securely', 
+      route: '/services/medical', 
+      color: '#8B5CF6', 
+      sort_order: 6, 
+      is_active: true 
+    });
+  }
 
   // Manually inject the expanded ticket services
   const expandedTicketServices = [

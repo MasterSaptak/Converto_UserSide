@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Globe, Train } from "lucide-react";
+import { Grid, MapPin, HeadphonesIcon, Zap, ArrowRightLeft, ShoppingBag, Globe, Train, Stethoscope } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { MobileSidebar } from "./MobileSidebar";
 
@@ -17,12 +17,12 @@ const RIGHT_NAV_ITEMS = [
 ];
 
 const QUICK_ACTIONS = [
-  { href: "/services/exchange", label: "New Transfer", icon: ArrowRightLeft, color: "bg-primary text-primary-foreground" },
-  { href: "/services/buy-for-me", label: "Buy For Me", icon: ShoppingBag, color: "bg-yellow-400 text-black" },
-  { href: "/services/tickets?type=train", label: "Train Booking", icon: Train, color: "bg-cyan-400 text-black" },
-  { href: "/services/global-payments", label: "Global Payments", icon: Globe, color: "bg-emerald-400 text-black" },
-  { href: "/insta-order?type=buy", label: "1-Tap Buy", icon: Zap, color: "bg-pink-400 text-black" },
-  { href: "/insta-order?type=transfer", label: "1-Tap Transfer", icon: Zap, color: "bg-orange-400 text-black" },
+  { href: "/insta-order?type=transfer", label: "1-Tap Transfer", icon: ArrowRightLeft, color: "bg-primary text-primary-foreground" },
+  { href: "/insta-order?type=buy", label: "1-Tap Buy", icon: ShoppingBag, color: "bg-yellow-400 text-black" },
+  { href: "/insta-order?type=ticket", label: "1-Tap Train", icon: Train, color: "bg-cyan-400 text-black" },
+  { href: "/insta-order?type=global", label: "1-Tap Global", icon: Globe, color: "bg-emerald-400 text-black" },
+  { href: "/insta-order?type=medical", label: "1-Tap Medical", icon: Stethoscope, color: "bg-purple-400 text-white" },
+  { href: "/insta-order?type=call", label: "1-Tap Call", icon: HeadphonesIcon, color: "bg-pink-400 text-black" },
 ];
 
 export function BottomNav() {

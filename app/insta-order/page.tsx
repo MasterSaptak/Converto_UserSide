@@ -15,10 +15,12 @@ type ErrorType = 'auth' | 'network' | 'supabase' | 'unknown' | null;
 const SERVICE_MAP: Record<string, string> = {
   'buy': 'buy_for_me',
   'transfer': 'exchange',
-  'global': 'global_payment',
-  'ticket': 'travel_booking',
-  'call': 'callback_request',
-  'help': 'support_request',
+  'global': 'global_payments',
+  'ticket': 'train_booking',
+  'train': 'train_booking',
+  'call': 'support', // support is used for general contact/calls
+  'help': 'support',
+  'medical': 'medical',
 };
 
 export default function InstaOrderPage() {
@@ -43,6 +45,7 @@ export default function InstaOrderPage() {
       case 'global': return 'Global Payment';
       case 'ticket': return 'Ticket Booking';
       case 'call': return 'Call Me';
+      case 'medical': return '1-Tap Medical';
       default: return 'Quick Action';
     }
   };
