@@ -59,7 +59,7 @@ export default async function ServicesPage() {
   // Use DB services if they exist, otherwise use hardcoded fallbacks
   // Filter out the old generic ticket services so we can expand them
   // Also filter out 'track' as it's accessible via the main navigation menu
-  let baseServices = (dbServices && dbServices.length > 0) 
+  const baseServices = (dbServices && dbServices.length > 0) 
     ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track')
     : FALLBACK_SERVICES;
 

@@ -77,7 +77,7 @@ function Step1PatientInfo({ data, onChange }: { data: MedicalFormData, onChange:
 }
 
 function Step2MedicalInfo({ data, onChange }: { data: MedicalFormData, onChange: (d: MedicalFormData) => void }) {
-  const handleChange = (field: keyof MedicalFormData, value: any) => onChange({ ...data, [field]: value })
+  const handleChange = (field: keyof MedicalFormData, value: string | boolean | string[]) => onChange({ ...data, [field]: value })
   
   const conditionsList = ["Diabetes", "High Blood Pressure", "Heart Disease", "Kidney Disease", "Asthma", "Cancer", "Thyroid", "None", "Others"]
   
@@ -137,7 +137,7 @@ function Step2MedicalInfo({ data, onChange }: { data: MedicalFormData, onChange:
 }
 
 function Step3HospitalPreference({ data, onChange }: { data: MedicalFormData, onChange: (d: MedicalFormData) => void }) {
-  const handleChange = (field: keyof MedicalFormData, value: any) => onChange({ ...data, [field]: value })
+  const handleChange = (field: keyof MedicalFormData, value: string | boolean | string[]) => onChange({ ...data, [field]: value })
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -183,7 +183,7 @@ function Step3HospitalPreference({ data, onChange }: { data: MedicalFormData, on
 }
 
 function Step4TravelInfo({ data, onChange }: { data: MedicalFormData, onChange: (d: MedicalFormData) => void }) {
-  const handleChange = (field: keyof MedicalFormData, value: any) => onChange({ ...data, [field]: value })
+  const handleChange = (field: keyof MedicalFormData, value: string | boolean | string[]) => onChange({ ...data, [field]: value })
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-black uppercase tracking-widest border-b-2 border-foreground pb-2">Travel Information</h3>
@@ -301,7 +301,7 @@ function Step5Attendants({ data, onChange }: { data: MedicalFormData, onChange: 
   )
 }
 
-function Step6DocumentUpload({ data, onChange }: { data: MedicalFormData, onChange: (d: MedicalFormData) => void }) {
+function Step6DocumentUpload() {
   // In a real app, this would handle file uploads to Supabase Storage and track the state
   return (
     <div className="space-y-6">
@@ -417,13 +417,14 @@ export default function MedicalServicePage() {
   }, [])
 
   const steps = [
-    { title: "Contact Information", component: ContactInformationSection, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Patient Details", component: Step1PatientInfo, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Medical Information", component: Step2MedicalInfo, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Hospital Preference", component: Step3HospitalPreference, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Travel Details", component: Step4TravelInfo, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Attendants", component: Step5Attendants, props: { data: formData, onChange: (d: any) => setFormData(d) } },
-    { title: "Documents", component: Step6DocumentUpload, props: { data: formData, onChange: (d: any) => setFormData(d) } },
+    { title: "Contact Information", component: ContactInformationSection, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Patient Details", component: Step1PatientInfo, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Medical Information", component: Step2MedicalInfo, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Hospital Preference", component: Step3HospitalPreference, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Travel Details", component: Step4TravelInfo, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Attendants", component: Step5Attendants, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Documents", component: Step6DocumentUpload, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
+    { title: "Additional Info", component: Step7AdditionalInfo, props: { data: formData, onChange: (d: MedicalFormData) => setFormData(d) } },
     { title: "Review", component: Step8Review, props: { data: formData } },
   ]
 
@@ -479,8 +480,8 @@ export default function MedicalServicePage() {
       
       router.push(`/services/medical/success?id=${requestData?.request_uid || 'MED-PENDING'}`)
       
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       setIsLoading(false)
     }
   }
@@ -567,6 +568,7 @@ export default function MedicalServicePage() {
           </div>
 
           <div className="bg-card border-2 border-foreground shadow-[8px_8px_0px_var(--color-foreground)] p-6 md:p-10 relative min-h-[400px]">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <CurrentStepComponent {...(steps[step].props as any)} />
         
         {error && (
