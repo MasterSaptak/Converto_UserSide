@@ -307,10 +307,12 @@ export default function ProfilePage() {
                   <div className="flex flex-col gap-1 md:gap-1.5">
                     <label className="text-[9px] md:text-xs uppercase font-black tracking-widest opacity-80">Currency</label>
                     <select value={formData.preferred_currency} onChange={(e) => setFormData({ ...formData, preferred_currency: e.target.value })} className="w-full border-2 md:border-4 border-foreground bg-background px-2 py-2 md:px-3 md:py-3 text-xs md:text-base font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-[2px_2px_0px_var(--color-foreground)] md:shadow-[4px_4px_0px_var(--color-foreground)]">
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="INR">INR</option>
+                      <option value="USD">$ USD</option>
+                      <option value="EUR">€ EUR</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="INR">₹ INR</option>
+                      <option value="BDT">৳ BDT</option>
+                      <option value="CNY">¥ CNY</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1 md:gap-1.5">

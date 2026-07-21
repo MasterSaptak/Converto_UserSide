@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { ArrowRight, ArrowLeft, ArrowRightLeft, CheckCircle2, Globe, Shield, Loader2, AlertTriangle, CreditCard, Banknote, Smartphone, Zap, MessageSquare, Bitcoin, Wallet, Send } from "lucide-react"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { ArrowRight, ArrowLeft, ArrowRightLeft, CheckCircle2, Loader2, AlertTriangle, CreditCard, Banknote, Smartphone, Zap, MessageSquare, Send } from "lucide-react"
 import { SiBinance, SiPaypal, SiPhonepe, SiTether, SiWise } from "react-icons/si"
 import { BsBank } from "react-icons/bs"
 import Link from "next/link"
@@ -39,37 +39,42 @@ function getIconComponent(iconName: string, methodName: string) {
   const name = methodName.toLowerCase();
   
   const getUnavatar = (domain: string) => `https://unavatar.io/${domain}`;
-  const getGoogleFavicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
   if (name.includes('bkash')) {
-    return ({ className, style }: any) => (
-      <img src={getUnavatar('bkash.com')} alt="bKash" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function BkashIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={getUnavatar('bkash.com')} alt="bKash" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
   if (name.includes('nagad')) {
-    return ({ className, style }: any) => (
-      <img src="https://ui-avatars.com/api/?name=Nagad&background=ED1C24&color=fff&rounded=true&bold=true" alt="Nagad" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function NagadIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src="https://ui-avatars.com/api/?name=Nagad&background=ED1C24&color=fff&rounded=true&bold=true" alt="Nagad" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
   if (name.includes('rocket')) {
-    return ({ className, style }: any) => (
-      <img src="https://ui-avatars.com/api/?name=Rocket&background=8C3494&color=fff&rounded=true&bold=true" alt="Rocket" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function RocketIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src="https://ui-avatars.com/api/?name=Rocket&background=8C3494&color=fff&rounded=true&bold=true" alt="Rocket" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
   if (name.includes('upi')) {
-    return ({ className, style }: any) => (
-      <img src={getUnavatar('bhimupi.org.in')} alt="UPI" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function UpiIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={getUnavatar('bhimupi.org.in')} alt="UPI" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
   if (name.includes('remitly')) {
-    return ({ className, style }: any) => (
-      <img src={getUnavatar('remitly.com')} alt="Remitly" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function RemitlyIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={getUnavatar('remitly.com')} alt="Remitly" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
   if (name.includes('taptap')) {
-    return ({ className, style }: any) => (
-      <img src={getUnavatar('taptapsend.com')} alt="TapTap Send" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
-    )
+    return function TaptapIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={getUnavatar('taptapsend.com')} alt="TapTap Send" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+    }
   }
 
   switch(iconName) {
@@ -148,7 +153,7 @@ export default function ExchangeServicePage() {
   const [isNegotiating, setIsNegotiating] = useState(false)
   const [requestedRate, setRequestedRate] = useState<string>("")
   const [requestNote, setRequestNote] = useState<string>("")
-  const [notifyMe, setNotifyMe] = useState(false)
+  const [notifyMe] = useState(false)
 
   // Fetch all active corridors
   const fetchCorridors = useCallback(async () => {
@@ -162,7 +167,7 @@ export default function ExchangeServicePage() {
         `)
 
       if (fetchError) throw fetchError
-      setCorridors((data as any) || [])
+      setCorridors((data as TransferCorridor[]) || [])
     } catch (err) {
       console.error('Failed to fetch corridors:', err)
       setError('Failed to load exchange rates. Please try again.')
@@ -187,8 +192,8 @@ export default function ExchangeServicePage() {
   )
 
   // Extract Methods
-  const availableSendMethods = activeCorridor?.corridor_send_methods.map(s => s.transfer_methods).filter(Boolean) || []
-  const availableReceiveMethods = activeCorridor?.corridor_receive_methods.map(r => r.transfer_methods).filter(Boolean) || []
+  const availableSendMethods = useMemo(() => activeCorridor?.corridor_send_methods.map(s => s.transfer_methods).filter(Boolean) || [], [activeCorridor])
+  const availableReceiveMethods = useMemo(() => activeCorridor?.corridor_receive_methods.map(r => r.transfer_methods).filter(Boolean) || [], [activeCorridor])
 
   // Auto-select valid to_currency when from_currency changes
   useEffect(() => {
@@ -506,7 +511,7 @@ export default function ExchangeServicePage() {
                             <option value="">Select a reason (Optional)</option>
                             <option value="Large Transfer Amount">Large Transfer Amount</option>
                             <option value="Another Agent Offered a Better Rate">Another Agent Offered a Better Rate</option>
-                            <option value="I'm a Regular Customer">I'm a Regular Customer</option>
+                            <option value="I'm a Regular Customer">I&apos;m a Regular Customer</option>
                             <option value="Urgent Transfer">Urgent Transfer</option>
                             <option value="Long-Term Business Partnership">Long-Term Business Partnership</option>
                           </select>

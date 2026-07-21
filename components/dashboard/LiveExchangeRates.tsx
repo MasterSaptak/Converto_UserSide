@@ -41,6 +41,17 @@ const getCurrencyColor = (currency: string) => {
   }
 };
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency) {
+    case 'USD': return '$';
+    case 'EUR': return '€';
+    case 'CNY': return '¥';
+    case 'INR': return '₹';
+    case 'BDT': return '৳';
+    default: return '';
+  }
+};
+
 export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const [baseCurrency, setBaseCurrency] = useState('BDT');
   const [marketRates, setMarketRates] = useState<Record<string, number>>({});
@@ -107,7 +118,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const targetLiveCurrencies = FIXED_CURRENCIES.filter(c => c !== baseCurrency);
 
   return (
-    <section className="bg-white border-2 border-black p-4 sm:p-6 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full overflow-hidden mb-8">
+    <section className="bg-[#f4f4f0] border-2 border-black p-4 sm:p-6 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full overflow-hidden mb-8">
       
       <div className="relative z-10 flex flex-col gap-6">
         
@@ -167,7 +178,10 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                       )}
                     >
                       <div className="text-[10px] uppercase tracking-widest mb-1.5 font-black flex items-center justify-between opacity-80">
-                        <span>{currency}</span>
+                        <span className="flex items-center gap-1">
+                          <span className="text-sm font-sans">{getCurrencySymbol(currency)}</span>
+                          {currency}
+                        </span>
                       </div>
                       <div className="font-black font-mono text-lg sm:text-xl">
                         {rate ? rate.toFixed(4) : '—'}
@@ -202,7 +216,10 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                         )}
                       >
                         <div className="text-[10px] uppercase tracking-widest mb-1.5 font-black flex justify-between items-center">
-                          <span className="opacity-80">{pair.to_currency}</span>
+                          <span className="opacity-80 flex items-center gap-1">
+                            <span className="text-sm font-sans">{getCurrencySymbol(pair.to_currency)}</span>
+                            {pair.to_currency}
+                          </span>
                           <span className="text-[9px] border-2 border-current px-1.5 py-0.5 bg-white/20 font-black">
                             CUSTOM
                           </span>
