@@ -147,7 +147,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                 <h3 className="font-black uppercase tracking-widest text-xs sm:text-sm">Google Live Rates</h3>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {targetLiveCurrencies.map(currency => {
                   const rate = marketRates[currency];
                   const flagUrl = getCurrencyFlagUrl(currency);
@@ -156,8 +156,8 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                       key={`live_${currency}`} 
                       className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
                     >
-                      {/* Flag Left Section - 3:2 Aspect Ratio (108x72) */}
-                      <div className="w-[108px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                      {/* Flag Left Section */}
+                      <div className="w-[80px] shrink-0 border-r-2 border-black relative bg-zinc-100">
                         <img 
                           src={flagUrl} 
                           alt={`${currency} flag`}
@@ -189,7 +189,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                 <h3 className="font-black uppercase tracking-widest text-xs sm:text-sm">Converto Rates</h3>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {targetLiveCurrencies.map((currency) => {
                   const customRate = convertoRates[currency] || marketRates[currency];
                   const flagUrl = getCurrencyFlagUrl(currency);
@@ -199,7 +199,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                       className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
                     >
                       {/* Flag Left Section */}
-                      <div className="w-[108px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                      <div className="w-[80px] shrink-0 border-r-2 border-black relative bg-zinc-100">
                         <img 
                           src={flagUrl} 
                           alt={`${currency} flag`}
