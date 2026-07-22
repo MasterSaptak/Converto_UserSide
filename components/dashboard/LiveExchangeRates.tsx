@@ -2,17 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Globe, Shield, ChevronDown, TrendingUp, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 
 
 const FIXED_CURRENCIES = ['INR', 'BDT', 'USD', 'EUR', 'CNY'];
-
-// Brutalist currency styling map
-const getCurrencyColor = (currency: string) => {
-  return 'bg-white text-black';
-};
 
 const getCurrencySymbol = (currency: string) => {
   switch (currency) {
@@ -40,6 +34,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const [baseCurrency, setBaseCurrency] = useState('BDT');
   const [marketRates, setMarketRates] = useState<Record<string, number>>({});
   const [convertoRates, setConvertoRates] = useState<Record<string, number>>({});
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [dbBases, setDbBases] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -155,7 +150,6 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {targetLiveCurrencies.map(currency => {
                   const rate = marketRates[currency];
-                  const colorClass = getCurrencyColor(currency);
                   const flagUrl = getCurrencyFlagUrl(currency);
                   return (
                     <div 
@@ -198,7 +192,6 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {targetLiveCurrencies.map((currency) => {
                   const customRate = convertoRates[currency] || marketRates[currency];
-                  const colorClass = getCurrencyColor(currency);
                   const flagUrl = getCurrencyFlagUrl(currency);
                   return (
                     <div
