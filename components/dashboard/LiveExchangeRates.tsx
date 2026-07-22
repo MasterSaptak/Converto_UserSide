@@ -5,40 +5,13 @@ import { Globe, Shield, ChevronDown, TrendingUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
-interface TransferCorridorData {
-  id: string;
-  from_country: string;
-  to_country: string;
-  from_currency: string;
-  to_currency: string;
-  market_rate: number;
-  custom_rate: number;
-}
 
-// Group pairs by from_country -> to_country
-function groupPairs(pairs: TransferCorridorData[]): TransferCorridorData[] {
-  const seen = new Map<string, TransferCorridorData>();
-  for (const p of pairs) {
-    const key = `${p.from_country}_${p.to_country}`;
-    if (!seen.has(key)) {
-      seen.set(key, p);
-    }
-  }
-  return Array.from(seen.values());
-}
 
 const FIXED_CURRENCIES = ['INR', 'BDT', 'USD', 'EUR', 'CNY'];
 
 // Brutalist currency styling map
 const getCurrencyColor = (currency: string) => {
-  switch (currency) {
-    case 'USD': return 'bg-[#00FF66] text-black'; // Neon Green
-    case 'EUR': return 'bg-[#00F0FF] text-black'; // Cyan
-    case 'CNY': return 'bg-[#FF90E8] text-black'; // Pink
-    case 'INR': return 'bg-[#FFE200] text-black'; // Yellow
-    case 'BDT': return 'bg-[#FF4D00] text-white'; // Deep Orange
-    default: return 'bg-white text-black';
-  }
+  return 'bg-white text-black';
 };
 
 const getCurrencySymbol = (currency: string) => {
@@ -52,10 +25,21 @@ const getCurrencySymbol = (currency: string) => {
   }
 };
 
+const getCurrencyFlagUrl = (currency: string) => {
+  switch (currency) {
+    case 'USD': return 'https://flagcdn.com/w320/us.png';
+    case 'EUR': return 'https://flagcdn.com/w320/eu.png';
+    case 'CNY': return 'https://flagcdn.com/w320/cn.png';
+    case 'INR': return 'https://flagcdn.com/w320/in.png';
+    case 'BDT': return 'https://flagcdn.com/w320/bd.png';
+    default: return '';
+  }
+};
+
 export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const [baseCurrency, setBaseCurrency] = useState('BDT');
   const [marketRates, setMarketRates] = useState<Record<string, number>>({});
-  const [convertoCorridors, setConvertoCorridors] = useState<TransferCorridorData[]>([]);
+  const [convertoRates, setConvertoRates] = useState<Record<string, number>>({});
   const [dbBases, setDbBases] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,13 +70,16 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
 
       // 2. Fetch Converto Custom Rates from Supabase
       const { data, error } = await supabase
-        .from('transfer_corridors')
-        .select('id, from_country, to_country, from_currency, to_currency, market_rate, custom_rate')
-        .eq('from_currency', baseCurrency)
-        .eq('is_active', true);
+        .from('currency_rates')
+        .select('target_currency, custom_rate')
+        .eq('base_currency', baseCurrency);
         
       if (!error && data) {
-        setConvertoCorridors(groupPairs(data as TransferCorridorData[]));
+        const ratesMap: Record<string, number> = {};
+        data.forEach((r: { target_currency: string, custom_rate: number }) => {
+          ratesMap[r.target_currency] = r.custom_rate;
+        });
+        setConvertoRates(ratesMap);
       }
     } catch (err) {
       console.error('Failed to fetch rates:', err);
@@ -111,8 +98,8 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // Combine fixed currencies and db bases for the dropdown
-  const availableBases = Array.from(new Set([...FIXED_CURRENCIES, ...dbBases])).sort();
+  // Restrict to only the fixed currencies as requested
+  const availableBases = [...FIXED_CURRENCIES].sort();
 
   // Currencies to show in the Google Live Rates section
   const targetLiveCurrencies = FIXED_CURRENCIES.filter(c => c !== baseCurrency);
@@ -169,22 +156,31 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                 {targetLiveCurrencies.map(currency => {
                   const rate = marketRates[currency];
                   const colorClass = getCurrencyColor(currency);
+                  const flagUrl = getCurrencyFlagUrl(currency);
                   return (
                     <div 
                       key={`live_${currency}`} 
-                      className={cn(
-                        "border-2 border-black p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
-                        colorClass
-                      )}
+                      className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
                     >
-                      <div className="text-[10px] uppercase tracking-widest mb-1.5 font-black flex items-center justify-between opacity-80">
-                        <span className="flex items-center gap-1">
-                          <span className="text-sm font-sans">{getCurrencySymbol(currency)}</span>
-                          {currency}
-                        </span>
+                      {/* Flag Left Section - 3:2 Aspect Ratio (108x72) */}
+                      <div className="w-[108px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                        <img 
+                          src={flagUrl} 
+                          alt={`${currency} flag`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="font-black font-mono text-lg sm:text-xl">
-                        {rate ? rate.toFixed(4) : '—'}
+                      {/* Details Right Section */}
+                      <div className="flex-1 px-3 py-2 flex flex-col justify-center bg-white relative">
+                        <div className="text-[10px] uppercase tracking-widest font-black flex items-center justify-between opacity-80 mb-1">
+                          <span className="flex items-center gap-1">
+                            <span className="text-sm font-sans leading-none">{getCurrencySymbol(currency)}</span>
+                            <span className="leading-none">{currency}</span>
+                          </span>
+                        </div>
+                        <div className="font-black font-mono text-lg leading-none">
+                          {rate ? rate.toFixed(4) : '—'}
+                        </div>
                       </div>
                     </div>
                   );
@@ -199,40 +195,43 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                 <h3 className="font-black uppercase tracking-widest text-xs sm:text-sm">Converto Rates</h3>
               </div>
               
-              {convertoCorridors.length === 0 ? (
-                <div className="py-6 border-2 border-dashed border-black/20 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-center opacity-60">
-                  No Converto corridors for {baseCurrency}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {convertoCorridors.map((pair) => {
-                    const colorClass = getCurrencyColor(pair.to_currency);
-                    return (
-                      <div
-                        key={pair.id}
-                        className={cn(
-                          "border-2 border-black p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between",
-                          colorClass
-                        )}
-                      >
-                        <div className="text-[10px] uppercase tracking-widest mb-1.5 font-black flex justify-between items-center">
-                          <span className="opacity-80 flex items-center gap-1">
-                            <span className="text-sm font-sans">{getCurrencySymbol(pair.to_currency)}</span>
-                            {pair.to_currency}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                {targetLiveCurrencies.map((currency) => {
+                  const customRate = convertoRates[currency] || marketRates[currency];
+                  const colorClass = getCurrencyColor(currency);
+                  const flagUrl = getCurrencyFlagUrl(currency);
+                  return (
+                    <div
+                      key={`converto_${currency}`}
+                      className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
+                    >
+                      {/* Flag Left Section */}
+                      <div className="w-[108px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                        <img 
+                          src={flagUrl} 
+                          alt={`${currency} flag`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Details Right Section */}
+                      <div className="flex-1 px-3 py-2 flex flex-col justify-center bg-white relative">
+                        <div className="text-[10px] uppercase tracking-widest font-black flex justify-between items-center w-full mb-1">
+                          <span className="flex items-center gap-1 opacity-80">
+                            <span className="text-sm font-sans leading-none">{getCurrencySymbol(currency)}</span>
+                            <span className="leading-none">{currency}</span>
                           </span>
-                          <span className="text-[9px] border-2 border-current px-1.5 py-0.5 bg-white/20 font-black">
+                          <span className="text-[8px] border-2 border-black px-1 py-0.5 bg-yellow-400 font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] leading-none">
                             CUSTOM
                           </span>
                         </div>
-                        
-                        <div className="font-black font-mono text-xl sm:text-2xl mt-1">
-                          {Number(pair.custom_rate).toFixed(4)}
+                        <div className="font-black font-mono text-lg leading-none">
+                          {customRate ? Number(customRate).toFixed(4) : '—'}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
           </div>

@@ -35,6 +35,14 @@ interface TransferCorridor {
   corridor_receive_methods: { transfer_methods: TransferMethod }[]
 }
 
+interface CurrencyRate {
+  id: string
+  base_currency: string
+  target_currency: string
+  market_rate: number
+  custom_rate: number
+}
+
 function getIconComponent(iconName: string, methodName: string) {
   const name = methodName.toLowerCase();
   
@@ -135,6 +143,7 @@ export default function ExchangeServicePage() {
 
   // Data from database
   const [corridors, setCorridors] = useState<TransferCorridor[]>([])
+  const [currencyRates, setCurrencyRates] = useState<CurrencyRate[]>([])
   const [loadingCorridors, setLoadingCorridors] = useState(true)
 
   // Form State
@@ -158,16 +167,20 @@ export default function ExchangeServicePage() {
   // Fetch all active corridors
   const fetchCorridors = useCallback(async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('transfer_corridors')
-        .select(`
-          *,
-          corridor_send_methods ( transfer_methods (*) ),
-          corridor_receive_methods ( transfer_methods (*) )
-        `)
+      const [corridorsRes, ratesRes] = await Promise.all([
+        supabase
+          .from('transfer_corridors')
+          .select(`
+            *,
+            corridor_send_methods ( transfer_methods (*) ),
+            corridor_receive_methods ( transfer_methods (*) )
+          `),
+        supabase.from('currency_rates').select('*')
+      ])
 
-      if (fetchError) throw fetchError
-      setCorridors((data as TransferCorridor[]) || [])
+      if (corridorsRes.error) throw corridorsRes.error
+      setCorridors((corridorsRes.data as TransferCorridor[]) || [])
+      setCurrencyRates(ratesRes.data || [])
     } catch (err) {
       console.error('Failed to fetch corridors:', err)
       setError('Failed to load exchange rates. Please try again.')
@@ -186,10 +199,19 @@ export default function ExchangeServicePage() {
     new Set(corridors.filter(c => c.from_currency === fromCurrency).map(c => c.to_currency))
   ).sort()
 
-  // Active corridor
+  // Active corridor and dynamic rate lookup
   const activeCorridor = corridors.find(
     c => c.from_currency === fromCurrency && c.to_currency === toCurrency
   )
+
+  const activeRates = useMemo(() => {
+    if (!activeCorridor) return null
+    const dbRate = currencyRates.find(r => r.base_currency === fromCurrency && r.target_currency === toCurrency)
+    return {
+      custom_rate: dbRate?.custom_rate || activeCorridor.custom_rate,
+      market_rate: dbRate?.market_rate || activeCorridor.market_rate
+    }
+  }, [activeCorridor, currencyRates, fromCurrency, toCurrency])
 
   // Extract Methods
   const availableSendMethods = useMemo(() => activeCorridor?.corridor_send_methods.map(s => s.transfer_methods).filter(Boolean) || [], [activeCorridor])
@@ -215,7 +237,9 @@ export default function ExchangeServicePage() {
   // Calculations
   const numAmount = parseFloat(amount || "0")
   const fee = activeCorridor ? calculateFee(numAmount, activeCorridor) : { flat: 0, percentage: 0, total: 0 }
-  const recipientReceives = activeCorridor ? Math.round(numAmount * activeCorridor.custom_rate * 100) / 100 : 0
+  const effectiveCustomRate = activeRates?.custom_rate || 0
+  const effectiveMarketRate = activeRates?.market_rate || 0
+  const recipientReceives = activeCorridor ? Math.round(numAmount * effectiveCustomRate * 100) / 100 : 0
   const totalToPay = Math.round((numAmount + fee.total) * 100) / 100
 
   const preferredSendMethod = availableSendMethods.find(m => m.id === preferredSendMethodId)
@@ -253,8 +277,8 @@ export default function ExchangeServicePage() {
           corridor_id: activeCorridor.id,
           from_currency: fromCurrency,
           to_currency: toCurrency,
-          market_rate_snapshot: activeCorridor.market_rate,
-          custom_rate_snapshot: activeCorridor.custom_rate,
+          market_rate_snapshot: effectiveMarketRate,
+          custom_rate_snapshot: effectiveCustomRate,
           fee_type: activeCorridor.fee_type,
           fee_flat_snapshot: fee.flat,
           fee_percentage_snapshot: fee.percentage,
@@ -269,7 +293,7 @@ export default function ExchangeServicePage() {
           requested_rate: isNegotiating ? parseFloat(requestedRate) : null,
           request_note: isNegotiating ? requestNote : null,
           notify_me: isNegotiating ? notifyMe : false,
-          effective_rate: activeCorridor.custom_rate,
+          effective_rate: effectiveCustomRate,
         },
         amount: numAmount,
         currency: fromCurrency,
@@ -458,7 +482,7 @@ export default function ExchangeServicePage() {
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-widest opacity-60">Official Converto Rate</div>
                     <div className="font-mono font-black text-lg text-emerald-600">
-                      1 {fromCurrency} = {Number(activeCorridor.custom_rate).toFixed(4)} {toCurrency}
+                      1 {fromCurrency} = {Number(effectiveCustomRate).toFixed(4)} {toCurrency}
                     </div>
                   </div>
                   
@@ -470,7 +494,7 @@ export default function ExchangeServicePage() {
                       onChange={(e) => {
                         setIsNegotiating(e.target.checked)
                         if (e.target.checked && activeCorridor) {
-                          setRequestedRate(Number(activeCorridor.custom_rate).toFixed(4))
+                          setRequestedRate(Number(effectiveCustomRate).toFixed(4))
                         }
                       }}
                       className="w-4 h-4 accent-indigo-600 border-2 border-foreground cursor-pointer"
@@ -494,7 +518,7 @@ export default function ExchangeServicePage() {
                             value={requestedRate}
                             onChange={(e) => setRequestedRate(e.target.value)}
                             className="w-full bg-transparent p-3 font-mono text-lg font-black outline-none"
-                            placeholder={Number(activeCorridor.custom_rate).toFixed(4)}
+                            placeholder={Number(effectiveCustomRate).toFixed(4)}
                           />
                           <div className="bg-indigo-100 text-indigo-800 p-3 font-black text-xs flex items-center">{toCurrency}</div>
                         </div>
@@ -643,7 +667,7 @@ export default function ExchangeServicePage() {
                   </span>
                   <div className="font-mono text-3xl font-black">{recipientReceives.toLocaleString(undefined, { minimumFractionDigits: 2 })} {toCurrency}</div>
                   <div className="text-xs font-bold mt-2">
-                    Converto Rate: {Number(activeCorridor.custom_rate).toFixed(4)}
+                    Converto Rate: {Number(effectiveCustomRate).toFixed(4)}
                   </div>
                 </div>
               </div>
