@@ -3,23 +3,47 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 
+/**
+ * Helper to get a Supabase client.
+ * Prefers createAdminClient if SUPABASE_SERVICE_ROLE_KEY is set,
+ * otherwise safely falls back to standard SSR server client (which uses RLS).
+ */
+async function getClient() {
+  const supabase = await createServerClient();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (serviceKey) {
+    try {
+      return createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceKey
+      );
+    } catch (e) {
+      console.warn("Failed to create admin client, using server client fallback:", e);
+    }
+  }
+  return supabase;
+}
+
 export async function fetchUserAvatars(userIds: string[]) {
   if (!userIds || userIds.length === 0) return {};
   
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const client = await getClient();
 
-  const { data } = await supabaseAdmin
-    .from('profiles')
-    .select('id, avatar_url')
-    .in('id', userIds);
-    
-  return (data || []).reduce((acc: Record<string, string>, p: { id: string, avatar_url: string | null }) => {
-    if (p.avatar_url) acc[p.id] = p.avatar_url;
-    return acc;
-  }, {} as Record<string, string>);
+    const { data } = await client
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', userIds);
+      
+    return (data || []).reduce((acc: Record<string, string>, p: { id: string, avatar_url: string | null }) => {
+      if (p.avatar_url) acc[p.id] = p.avatar_url;
+      return acc;
+    }, {} as Record<string, string>);
+  } catch (err) {
+    console.error("fetchUserAvatars error:", err);
+    return {};
+  }
 }
 
 /**
@@ -62,7 +86,7 @@ export async function sendCustomerChatMessage(text: string) {
 
 /**
  * Get the active (non-closed, non-deleted) conversation for the current user.
- * Uses admin client to bypass RLS complexity.
+ * Uses getClient() to safely handle environments with or without SERVICE_ROLE_KEY.
  */
 export async function getActiveConversation() {
   try {
@@ -71,13 +95,10 @@ export async function getActiveConversation() {
 
     if (!user) return { conversation_id: null };
 
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const client = await getClient();
 
     // Find conversations where this user is a participant
-    const { data: participants } = await supabaseAdmin
+    const { data: participants } = await client
       .from('communication_participants')
       .select('conversation_id')
       .eq('user_id', user.id)
@@ -85,7 +106,7 @@ export async function getActiveConversation() {
 
     if (participants && participants.length > 0) {
       const convIds = participants.map(p => p.conversation_id);
-      const { data: activeConvs } = await supabaseAdmin
+      const { data: activeConvs } = await client
         .from('communication_conversations')
         .select('id')
         .in('id', convIds)
@@ -106,8 +127,8 @@ export async function getActiveConversation() {
 }
 
 /**
- * Get messages for a conversation. Uses admin client to reliably
- * fetch all customer-visible messages. Checks that conversation is not deleted.
+ * Get messages for a conversation. Checks that conversation is not deleted.
+ * Uses getClient() to safely handle environments with or without SERVICE_ROLE_KEY.
  */
 export async function getMessages(convId: string) {
   try {
@@ -116,13 +137,10 @@ export async function getMessages(convId: string) {
 
     if (!user) return [];
 
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const client = await getClient();
 
     // Verify conversation exists and is not deleted
-    const { data: conv } = await supabaseAdmin
+    const { data: conv } = await client
       .from('communication_conversations')
       .select('id, is_deleted')
       .eq('id', convId)
@@ -131,7 +149,7 @@ export async function getMessages(convId: string) {
     if (!conv || conv.is_deleted) return [];
 
     // Verify user is part of the conversation
-    const { data: participant } = await supabaseAdmin
+    const { data: participant } = await client
       .from('communication_participants')
       .select('id')
       .eq('conversation_id', convId)
@@ -140,7 +158,7 @@ export async function getMessages(convId: string) {
 
     if (!participant) return [];
 
-    const { data: msgs, error } = await supabaseAdmin
+    const { data: msgs, error } = await client
       .from('communication_messages')
       .select('*')
       .eq('conversation_id', convId)
