@@ -89,7 +89,7 @@ export async function getActiveConversation() {
         .from('communication_conversations')
         .select('id')
         .in('id', convIds)
-        .in('status', ['open', 'waiting_on_customer'])
+        .in('status', ['open', 'waiting_on_customer', 'resolved'])
         .eq('is_deleted', false)
         .order('last_message_at', { ascending: false, nullsFirst: false })
         .limit(1);

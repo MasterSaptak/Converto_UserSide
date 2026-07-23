@@ -5,7 +5,7 @@
 - **Business goal**: Empower customers to track orders, perform financial transactions, and get instant live support.
 - **Problem being solved**: Providing a frictionless, highly responsive, and premium user experience for clients to manage their Converto services.
 - **Target users**: Customers and clients of Converto.
-- **Current development status**: Active development. Real-time live chat modal, PWA installation (`@ducanh2912/next-pwa`), atomic RPC messaging, and notifications are fully implemented. Deployed on Vercel.
+- **Current development status**: Active development. Real-time live chat modal, system status event badges, PWA installation (`@ducanh2912/next-pwa`), atomic RPC messaging, and notifications are fully implemented. Deployed on Vercel.
 
 # 2. Architecture
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS. Focus on premium glassmorphism aesthetics.
@@ -41,7 +41,7 @@
 # 6. Database
 - **profiles**: Customer profiles.
 - **communication_conversations**: Chat threads (`is_deleted`, `status`, `channel`, `priority`).
-- **communication_messages**: Individual lines of dialogue.
+- **communication_messages**: Individual lines of dialogue (`sender_type`: `customer`, `staff`, `system`).
 - **communication_participants**: Links users to conversations (`user_type = 'customer'`).
 - **notifications**: Stores system and chat notifications (`target_role = 'customer'`).
 - **RLS**: Row Level Security restricts `SELECT` queries to authorized participants.
@@ -54,14 +54,14 @@
 # 8. API Documentation
 - **Server Actions**:
   - `sendCustomerChatMessage(text)`: Calls Postgres RPC `fn_customer_send_chat_message` to insert messages atomically.
-  - `getActiveConversation()`: Retrieves the user's active, non-deleted conversation ID.
+  - `getActiveConversation()`: Retrieves active non-deleted conversation ID (matching statuses: `open`, `waiting_on_customer`, `resolved`).
   - `getMessages(convId)`: Retrieves message history for non-deleted conversations.
   - `fetchUserAvatars(userIds)`: Fetches profile avatars.
 
 # 9. Components
 - **SupportPage**: Renders live support options and interactive `LiveChatModal`. Subscribes to realtime message (`msgChannel`) and conversation status (`convChannel`) updates.
 - **NotificationBell**: Subscribes to user-targeted notifications via `useSharedNotifications`.
-- **LiveChatModal**: AnimatePresence modal handling live chat UI.
+- **LiveChatModal**: AnimatePresence modal handling live chat UI. Differentiates user messages, staff agent messages, and centered system event badges (`sender === 'system'`).
 
 # 10. Pages
 - `/support`: The customer support hub. Takes `?chat=open` as a URL parameter to auto-expand the live chat modal (used by notifications).
@@ -73,6 +73,7 @@
 - **Global Notifs**: Managed via `useSharedNotifications` hook and `sonner` provider.
 
 # 12. Business Logic
+- **Centered System Event Badges**: System state changes (e.g. `"Conversation marked as waiting on customer."`, `"Conversation marked as open."`, `"Conversation marked as resolved."`) render as centered status badges with a Bot icon instead of left-aligned user bubbles.
 - **URL Parameter Auto-Open**: If a notification navigates the user to `/support?chat=open`, `SupportPage` detects this and automatically opens the chat modal (`setIsChatOpen(true)`).
 - **Realtime Soft-Delete Sync**: When an admin soft-deletes a conversation (`is_deleted = true`), the customer's realtime listener immediately clears out messages and resets chat state.
 - **Role-Targeted Notifications**: `useSharedNotifications` filters notifications so customers only receive customer-targeted items (`target_role IN ('customer', 'all')`).
@@ -88,7 +89,7 @@
 
 # 15. Build Process
 - Standard Next.js `npm run build`.
-- Enforces strict TypeScript (no `any`).
+- Enforces strict TypeScript (no `any`, default `SupabaseClient` generics).
 - Deployed on Vercel.
 
 # 16. Third-party Services
@@ -108,13 +109,13 @@
 - **Zero-latency Chat UI**: Message sending uses atomic RPC + optimistic UI updates.
 
 # 20. Reusable Utilities
-- `useSharedNotifications`: Shared hook for real-time toast notifications across User and Server apps.
+- `useSharedNotifications`: Shared hook for real-time toast notifications across User and Server apps. Accepts default `SupabaseClient` type for strict build compatibility.
 
 # 21. Constants
 - N/A
 
 # 22. Types
-- `ChatMessage`, `Notification`.
+- `ChatMessage` (`sender`: `'user' | 'agent' | 'system'`), `Notification`.
 
 # 23. Development Workflow
 - Local: `npm run dev`.
@@ -127,8 +128,8 @@
 - Email support ticketing.
 
 # 26. Developer Decisions
+- **Unified System Message Design**: Matched the Admin portal's centered system status badges in UserSide live chat for design consistency.
 - **Atomic RPC Migration**: Switched from manual client-side inserts to `fn_customer_send_chat_message` to guarantee 100% data consistency and prevent orphaned conversation rows.
-- **State Reset on Deletion**: `getMessages()` and `page.tsx` explicitly clear message arrays when conversations are soft-deleted or closed.
 
 # 27. Coding Conventions
 - Strict TypeScript.
@@ -139,9 +140,9 @@
 
 # 29. Critical Files
 - `app/support/actions.ts`: Server Actions for support chat.
-- `app/support/page.tsx`: Live chat page & Realtime listeners.
-- `next.config.mjs`: PWA configuration.
+- `app/support/page.tsx`: Live chat page, system event renderer & Realtime listeners.
+- `lib/notifications/useNotifications.ts`: Shared notification hook.
 
 # 30. AI Continuation Notes
-- **TypeScript Compliance**: Never use `any` types to pass Vercel ESLint builds.
+- **TypeScript Compliance**: Never use `any` types or strict generics on `SupabaseClient` that trigger `never` table inference in Vercel builds.
 - **Realtime Listeners**: Ensure unmount cleanups are always handled (`supabase.removeChannel`).

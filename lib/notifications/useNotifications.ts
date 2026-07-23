@@ -16,7 +16,7 @@ import {
 } from './types';
 
 export function useSharedNotifications(
-  supabase: SupabaseClient<Record<string, unknown>>,
+  supabase: SupabaseClient,
   config: UseNotificationsConfig
 ): UseNotificationsReturn {
   const { mode, limit = 50 } = config;

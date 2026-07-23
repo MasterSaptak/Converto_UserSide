@@ -10,7 +10,7 @@ import { fetchUserAvatars, getActiveConversation, getMessages, sendCustomerChatM
 
 interface ChatMessage {
   id: string;
-  sender: 'system' | 'user';
+  sender: 'user' | 'agent' | 'system';
   text: string;
   time: string;
   avatarUrl?: string | null;
@@ -87,7 +87,7 @@ export default function SupportPage() {
 
         setMessages(msgs.map(m => ({
           id: m.id,
-          sender: m.sender_type === 'customer' ? 'user' : 'system',
+          sender: m.sender_type === 'customer' ? 'user' : (m.sender_type === 'system' ? 'system' : 'agent'),
           text: m.text,
           time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           avatarUrl: avatarMap[m.sender_id] || null
@@ -121,7 +121,7 @@ export default function SupportPage() {
               if (prev.some(m => m.id === msg.id)) return prev;
               return [...prev, {
                 id: msg.id,
-                sender: msg.sender_type === 'customer' ? 'user' : 'system',
+                sender: msg.sender_type === 'customer' ? 'user' : (msg.sender_type === 'system' ? 'system' : 'agent'),
                 text: msg.text,
                 time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 avatarUrl: null
@@ -523,37 +523,54 @@ export default function SupportPage() {
                     <p className="text-[10px] font-mono opacity-70 mt-1">Send a message below and an account manager will assist you live.</p>
                   </div>
                 ) : (
-                  messages.map((msg) => (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className={`flex gap-3 w-full ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                      <div className={`w-8 h-8 shrink-0 rounded-full border-2 border-foreground flex items-center justify-center shadow-[2px_2px_0px_var(--color-foreground)] overflow-hidden ${msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-900'}`}>
-                        {msg.avatarUrl ? (
-                          <img src={msg.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} max-w-[75%]`}>
-                        <div 
-                          className={`p-3 border-2 border-foreground text-xs md:text-sm font-medium leading-relaxed ${
-                            msg.sender === 'user' 
-                              ? 'bg-primary text-primary-foreground shadow-[3px_3px_0px_var(--color-foreground)]' 
-                              : 'bg-white text-foreground shadow-[3px_3px_0px_var(--color-foreground)]'
-                          }`}
-                        >
-                          {msg.text}
+                  messages.map((msg) => {
+                    if (msg.sender === 'system') {
+                      return (
+                        <div key={msg.id} className="flex justify-center my-1.5 w-full">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/80 border border-foreground/40 text-foreground shadow-[2px_2px_0px_var(--color-foreground)] max-w-[90%]">
+                            <Bot className="w-3.5 h-3.5 text-foreground shrink-0" />
+                            <p className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-center leading-snug">
+                              {msg.text}
+                            </p>
+                          </div>
                         </div>
-                        <span className="text-[9px] uppercase font-bold opacity-40 mt-1 px-1">
-                          {msg.time}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))
+                      );
+                    }
+
+                    const isUser = msg.sender === 'user';
+
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={`flex gap-3 w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                      >
+                        <div className={`w-8 h-8 shrink-0 rounded-full border-2 border-foreground flex items-center justify-center shadow-[2px_2px_0px_var(--color-foreground)] overflow-hidden ${isUser ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-900'}`}>
+                          {msg.avatarUrl ? (
+                            <img src={msg.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                          <div 
+                            className={`p-3 border-2 border-foreground text-xs md:text-sm font-medium leading-relaxed ${
+                              isUser 
+                                ? 'bg-primary text-primary-foreground shadow-[3px_3px_0px_var(--color-foreground)]' 
+                                : 'bg-white text-foreground shadow-[3px_3px_0px_var(--color-foreground)]'
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+                          <span className="text-[9px] uppercase font-bold opacity-40 mt-1 px-1">
+                            {msg.time}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })
                 )}
                 <div ref={messagesEndRef} />
               </div>
