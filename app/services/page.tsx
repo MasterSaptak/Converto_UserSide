@@ -60,7 +60,7 @@ export default async function ServicesPage() {
   // Filter out the old generic ticket services so we can expand them
   // Also filter out 'track' as it's accessible via the main navigation menu
   const baseServices = (dbServices && dbServices.length > 0) 
-    ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track')
+    ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track' && s.slug !== 'support')
     : FALLBACK_SERVICES;
 
   // Ensure 'medical' is included even if it's not in the DB yet

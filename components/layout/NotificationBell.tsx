@@ -43,6 +43,7 @@ export function NotificationBell() {
     unread: unreadCount,
     request: notifications.filter(n => n.category === NotificationCategory.REQUEST).length,
     payment: notifications.filter(n => n.category === NotificationCategory.PAYMENT).length,
+    chat: notifications.filter(n => n.category === NotificationCategory.CHAT).length,
   }), [notifications, unreadCount]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
@@ -93,17 +94,20 @@ export function NotificationBell() {
           </div>
           
           {/* Tabs */}
-          <div className="flex border-b-2 border-foreground overflow-x-auto scrollbar-hide text-[10px] uppercase font-bold bg-white">
-            <button onClick={() => setFilter('all')} className={cn("px-3 py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === 'all' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
+          <div className="flex border-b-2 border-foreground overflow-x-auto scrollbar-hide text-[9px] md:text-[10px] uppercase font-bold bg-white">
+            <button onClick={() => setFilter('all')} className={cn("px-2 md:px-3 py-1.5 md:py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === 'all' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
               All ({tabCounts.all})
             </button>
-            <button onClick={() => setFilter('unread')} className={cn("px-3 py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === 'unread' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
+            <button onClick={() => setFilter('unread')} className={cn("px-2 md:px-3 py-1.5 md:py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === 'unread' ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
               Unread ({tabCounts.unread})
             </button>
-            <button onClick={() => setFilter(NotificationCategory.REQUEST)} className={cn("px-3 py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === NotificationCategory.REQUEST ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
+            <button onClick={() => setFilter(NotificationCategory.CHAT)} className={cn("px-2 md:px-3 py-1.5 md:py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === NotificationCategory.CHAT ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
+              Chat ({tabCounts.chat})
+            </button>
+            <button onClick={() => setFilter(NotificationCategory.REQUEST)} className={cn("px-2 md:px-3 py-1.5 md:py-2 shrink-0 border-r-2 border-foreground transition-colors", filter === NotificationCategory.REQUEST ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
               Requests ({tabCounts.request})
             </button>
-            <button onClick={() => setFilter(NotificationCategory.PAYMENT)} className={cn("px-3 py-2 shrink-0 transition-colors", filter === NotificationCategory.PAYMENT ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
+            <button onClick={() => setFilter(NotificationCategory.PAYMENT)} className={cn("px-2 md:px-3 py-1.5 md:py-2 shrink-0 transition-colors", filter === NotificationCategory.PAYMENT ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
               Payments ({tabCounts.payment})
             </button>
           </div>
