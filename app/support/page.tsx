@@ -62,6 +62,9 @@ export default function SupportPage() {
       const res = await getActiveConversation();
       if (res.conversation_id) {
         setConversationId(res.conversation_id);
+      } else {
+        setConversationId(null);
+        setMessages([]);
       }
     };
 
@@ -89,6 +92,8 @@ export default function SupportPage() {
           time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           avatarUrl: avatarMap[m.sender_id] || null
         })));
+      } else {
+        setMessages([]);
       }
     } finally {
       setLoading(false);
@@ -100,7 +105,7 @@ export default function SupportPage() {
       fetchMessages(conversationId);
 
       // Subscribe to real-time incoming messages for this conversation
-      const channel = supabase
+      const msgChannel = supabase
         .channel(`cust-chat-${conversationId}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -109,8 +114,9 @@ export default function SupportPage() {
           filter: `conversation_id=eq.${conversationId}`,
         }, (payload: { new: { id: string; sender_id: string; sender_type: string; visibility: string; text: string; created_at: string } }) => {
           const msg = payload.new;
+          // Only show customer-visible messages in the user's chat
           if (msg.visibility === 'customer') {
-            // Optimistically add the message without waiting for the avatar
+            // Add the message to UI immediately
             setMessages(prev => {
               if (prev.some(m => m.id === msg.id)) return prev;
               return [...prev, {
@@ -136,9 +142,28 @@ export default function SupportPage() {
         })
         .subscribe();
 
+      // Subscribe to real-time conversation deletion / status changes
+      const convChannel = supabase
+        .channel(`cust-conv-${conversationId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'communication_conversations',
+          filter: `id=eq.${conversationId}`,
+        }, (payload: { new: { id: string; is_deleted: boolean; status: string } }) => {
+          if (payload.new.is_deleted || payload.new.status === 'closed') {
+            setConversationId(null);
+            setMessages([]);
+          }
+        })
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(msgChannel);
+        supabase.removeChannel(convChannel);
       };
+    } else {
+      setMessages([]);
     }
   }, [conversationId, fetchMessages]);
 
@@ -160,13 +185,14 @@ export default function SupportPage() {
         return;
       }
 
-      if (res.conversation_id) {
+      // If this is the first message (new conversation created), set the ID
+      // This will trigger the useEffect to subscribe to realtime for this conversation
+      if (res.conversation_id && res.conversation_id !== conversationId) {
         setConversationId(res.conversation_id);
       }
 
       // Optimistically add to UI if realtime hasn't added it yet
       if (res.message_id) {
-        // Find our own avatar from auth
         const { data: { user } } = await supabase.auth.getUser();
         let myAvatarUrl = null;
         if (user) {
@@ -180,7 +206,7 @@ export default function SupportPage() {
             id: res.message_id!,
             sender: 'user',
             text: text,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date(res.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             avatarUrl: myAvatarUrl
           }];
         });

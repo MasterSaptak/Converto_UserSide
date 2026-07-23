@@ -70,17 +70,6 @@ export default function RootLayout({
         </AuthProvider>
         </QueryProvider>
         <Toaster position="top-center" toastOptions={{ className: 'font-mono rounded-none border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]' }} />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );

@@ -5,137 +5,143 @@
 - **Business goal**: Empower customers to track orders, perform financial transactions, and get instant live support.
 - **Problem being solved**: Providing a frictionless, highly responsive, and premium user experience for clients to manage their Converto services.
 - **Target users**: Customers and clients of Converto.
-- **Current development status**: Active development. Realtime live chat and notifications are fully implemented. Deployed on Vercel.
+- **Current development status**: Active development. Real-time live chat modal, PWA installation (`@ducanh2912/next-pwa`), atomic RPC messaging, and notifications are fully implemented. Deployed on Vercel.
 
 # 2. Architecture
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS. Focus on premium glassmorphism aesthetics.
-- **Backend**: Next.js Server Actions handle core logic securely.
+- **Backend**: Next.js Server Actions handle core logic securely using Supabase RPCs.
 - **Database**: Supabase PostgreSQL.
 - **Authentication**: Supabase Auth with SSR cookies.
+- **PWA**: Powered by `@ducanh2912/next-pwa` with `192x192` and `512x512` maskable icons in `manifest.json`.
 - **Deployment**: Vercel.
-- **Data Flow**: User sends a message -> Action inserts into Supabase -> Supabase realtime pushes updates to UI. Optimistic updates mask network latency.
+- **Data Flow**: User sends a message -> `sendCustomerChatMessage` calls Postgres RPC `fn_customer_send_chat_message` -> Message & participant inserted atomically -> Supabase realtime pushes updates to UI & staff.
 
 # 3. Folder Structure
-- `/app`: Next.js App Router root. Contains `/support`, `/dashboard`, etc.
-- `/components`: Granular React components. Broken down into `/layout`, `/auth`, `/dashboard`, etc.
-- `/lib`: Helper functions, Supabase clients (`client.ts`, `server.ts`, `middleware.ts`).
-- `/hooks`: Custom hooks like `useNotifications`.
-- `/public`: Public assets.
+- `/app`: Next.js App Router root. Contains `/support`, `/dashboard`, `/track`, etc.
+- `/components`: Granular React components (`/layout`, `/auth`, `/dashboard`, `/providers`).
+- `/lib`: Helper functions, Supabase clients (`client.ts`, `server.ts`, `middleware.ts`), notification hooks (`useNotifications.ts`).
+- `/hooks`: Custom hooks.
+- `/public`: Public assets and PWA `manifest.json`.
 
 # 4. Technologies
 - **Next.js (15.x)**: Framework.
 - **React (19.x)**: UI Library.
 - **TypeScript**: Strict type checking.
 - **Tailwind CSS**: Styling.
+- **@ducanh2912/next-pwa**: PWA service worker wrapper.
 - **Supabase JS / SSR**: Backend-as-a-service.
 - **Framer Motion**: Animations.
-- **Sonner**: Notifications.
+- **Sonner**: Toast Notifications.
 
 # 5. Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Public Supabase API URL.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Public anonymous key.
-- `SUPABASE_SERVICE_ROLE_KEY`: Secret Admin key. Used on the server only to bypass strict RLS policies (e.g., when initially fetching or creating a conversation where the user is not yet authorized by the standard select policies).
+- `SUPABASE_SERVICE_ROLE_KEY`: Secret Admin key. Used on the server to execute admin queries securely.
 
 # 6. Database
 - **profiles**: Customer profiles.
-- **communication_conversations**: The overarching chat threads.
-- **communication_messages**: The individual lines of dialogue.
-- **communication_participants**: The link table authorizing a user to read a specific conversation.
-- **notifications**: Stores system notifications. Read by the `NotificationBell`.
-- **RLS**: Row Level Security heavily restricts `SELECT` queries to only rows where the user's ID matches the `profile_id` or `user_id`.
+- **communication_conversations**: Chat threads (`is_deleted`, `status`, `channel`, `priority`).
+- **communication_messages**: Individual lines of dialogue.
+- **communication_participants**: Links users to conversations (`user_type = 'customer'`).
+- **notifications**: Stores system and chat notifications (`target_role = 'customer'`).
+- **RLS**: Row Level Security restricts `SELECT` queries to authorized participants.
 
 # 7. Authentication Flow
 - Handled securely via Supabase SSR.
-- Middleware intercepts requests to `/dashboard` and `/support` and redirects unauthenticated users to the `/login` page.
+- Middleware intercepts requests to `/dashboard` and `/support` and redirects unauthenticated users to `/login`.
 - Sessions are maintained in secure HTTP-only cookies.
 
 # 8. API Documentation
-- **Server Actions** used instead of REST endpoints:
-  - `sendCustomerChatMessage`: Creates conversation (if new), adds participant, and inserts message. Uses `SUPABASE_SERVICE_ROLE_KEY` to securely bypass RLS chicken-and-egg selection bugs.
-  - `getActiveConversation`: Uses service role to reliably fetch the user's active conversation ID.
-  - `getMessages`: Safely retrieves message history after verifying participation.
+- **Server Actions**:
+  - `sendCustomerChatMessage(text)`: Calls Postgres RPC `fn_customer_send_chat_message` to insert messages atomically.
+  - `getActiveConversation()`: Retrieves the user's active, non-deleted conversation ID.
+  - `getMessages(convId)`: Retrieves message history for non-deleted conversations.
+  - `fetchUserAvatars(userIds)`: Fetches profile avatars.
 
 # 9. Components
-- **SupportPage**: Renders the support options and houses the `LiveChatModal`.
-- **NotificationBell**: Uses `useSharedNotifications` to subscribe to the database and render `sonner` toasts on new inserts.
-- **LiveChatModal**: AnimatePresence modal handling the chat UI.
+- **SupportPage**: Renders live support options and interactive `LiveChatModal`. Subscribes to realtime message (`msgChannel`) and conversation status (`convChannel`) updates.
+- **NotificationBell**: Subscribes to user-targeted notifications via `useSharedNotifications`.
+- **LiveChatModal**: AnimatePresence modal handling live chat UI.
 
 # 10. Pages
-- `/support`: The customer support hub. Can take `?chat=open` as a URL parameter to auto-expand the live chat modal (used by notifications).
+- `/support`: The customer support hub. Takes `?chat=open` as a URL parameter to auto-expand the live chat modal (used by notifications).
 - `/dashboard`: Customer overview.
 
 # 11. State Management
-- **Local State**: Contextual toggles (e.g., `isChatOpen`).
-- **Optimistic State**: `setMessages(prev => [...prev, newMsg])` handles instant feedback.
+- **Local State**: UI state (`isChatOpen`, `messages`, `conversationId`).
+- **Optimistic State**: UI updates immediately when user sends a message.
 - **Global Notifs**: Managed via `useSharedNotifications` hook and `sonner` provider.
 
 # 12. Business Logic
-- **URL Parameter Routing**: If a notification navigates the user to `/support?chat=open`, the `SupportPage` detects this and automatically triggers `setIsChatOpen(true)`.
-- **Admin Bypasses**: Supabase Admin client is strictly required when a user initiates their *very first* chat message. The system must create the conversation and link the user to it simultaneously, which RLS normally prevents.
+- **URL Parameter Auto-Open**: If a notification navigates the user to `/support?chat=open`, `SupportPage` detects this and automatically opens the chat modal (`setIsChatOpen(true)`).
+- **Realtime Soft-Delete Sync**: When an admin soft-deletes a conversation (`is_deleted = true`), the customer's realtime listener immediately clears out messages and resets chat state.
+- **Role-Targeted Notifications**: `useSharedNotifications` filters notifications so customers only receive customer-targeted items (`target_role IN ('customer', 'all')`).
 
 # 13. Important Algorithms
-- **Async Avatar Loading**: To prevent the UI from "hanging" when a new WebSocket message arrives, the message is inserted into React state instantly. A promise is fired to `fetchUserAvatars()`, which updates the specific message's avatar in the background once resolved.
+- **Async Avatar Loading**: Message text renders instantly on WebSocket payloads; user avatars are fetched asynchronously in the background.
+- **Atomic RPC Execution**: Conversation creation, participant linking, message insertion, pointer updating, and notification creation execute inside a single Postgres transaction (`fn_customer_send_chat_message`).
 
 # 14. Configuration Files
-- `next.config.ts`
-- `tailwind.config.ts`
-- `.eslintrc.json`: Configured to heavily penalize `any` types.
+- `next.config.mjs`: Configured with `@ducanh2912/next-pwa`.
+- `public/manifest.json`: PWA manifest with `192x192` and `512x512` maskable icons.
+- `tailwind.config.ts`: Defines design system.
 
 # 15. Build Process
 - Standard Next.js `npm run build`.
-- Fails strictly if ESLint detects `any` type overrides.
+- Enforces strict TypeScript (no `any`).
+- Deployed on Vercel.
 
 # 16. Third-party Services
-- Supabase (Backend/DB).
+- Supabase (Backend/DB/Realtime).
 - Vercel (Hosting).
 
 # 17. Error Handling
 - Server Actions catch Postgres errors and return `{ error: string }`.
-- Frontend maps these strings into `sonner` toasts so the user understands the failure.
+- Frontend displays errors via toasts.
 
 # 18. Security
-- Client components only ever use `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - `SUPABASE_SERVICE_ROLE_KEY` is strictly confined to `use server` files.
+- Client components only use public anon key.
 
 # 19. Performance
-- **Optimistic UI**: Interactions feel zero-latency.
-- **WebSocket offloading**: Complex data fetching (like avatars) is decoupled from the critical websocket rendering path.
+- **PWA Service Worker**: Instant loading & offline support.
+- **Zero-latency Chat UI**: Message sending uses atomic RPC + optimistic UI updates.
 
 # 20. Reusable Utilities
-- `useSharedNotifications`: A powerful hook that abstracts Supabase Realtime subscriptions and toast rendering.
+- `useSharedNotifications`: Shared hook for real-time toast notifications across User and Server apps.
 
 # 21. Constants
 - N/A
 
 # 22. Types
-- Strict TypeScript enforcement across all database schemas.
+- `ChatMessage`, `Notification`.
 
 # 23. Development Workflow
 - Local: `npm run dev`.
-- Strict Mode causes double-mounting, which tested our WebSocket unmount cleanup heavily.
 
 # 24. Known Issues
-- Relying on `window.location.href` for notification navigation forces a full page reload. In the future, Next.js `<Link>` or `useRouter()` could be injected into the toast action, but `sonner` runs outside the router context.
+- None currently active.
 
 # 25. Future Roadmap
-- WhatsApp integration using Twilio or Meta Graph API.
+- WhatsApp integration.
 - Email support ticketing.
 
 # 26. Developer Decisions
-- **Toast Deduplication**: `id: newNotif.id` is explicitly passed to `sonner` to prevent React Strict Mode from double-rendering toasts during development hot-reloads.
+- **Atomic RPC Migration**: Switched from manual client-side inserts to `fn_customer_send_chat_message` to guarantee 100% data consistency and prevent orphaned conversation rows.
+- **State Reset on Deletion**: `getMessages()` and `page.tsx` explicitly clear message arrays when conversations are soft-deleted or closed.
 
 # 27. Coding Conventions
-- Strict TypeScript. Explicit types over `any`.
-- Tailwind classes sorted logically.
+- Strict TypeScript.
+- Tailwind CSS utility classes.
 
 # 28. Dependencies Between Modules
-- The Support system relies entirely on `actions.ts` Server Actions rather than direct client-side Supabase queries to guarantee reliability.
+- The Support system relies entirely on `actions.ts` Server Actions and `useSharedNotifications`.
 
 # 29. Critical Files
-- `app/support/actions.ts`: Handles secure conversation initialization.
-- `app/support/page.tsx`: Contains the core Realtime chat logic.
+- `app/support/actions.ts`: Server Actions for support chat.
+- `app/support/page.tsx`: Live chat page & Realtime listeners.
+- `next.config.mjs`: PWA configuration.
 
 # 30. AI Continuation Notes
-- **Vercel Builds**: The UserSide project will completely fail to compile on Vercel if you use `any`. Use `unknown`, `Record<string, string>`, or specific interfaces.
-- **Realtime UI**: Always opt for optimistic updates. Do not block state updates behind `await` calls when receiving websocket payloads.
-- **URL States**: Be mindful of URL parameters (like `?chat=open`). They are an effective way to communicate state across full-page reloads (like when a toast action is clicked).
+- **TypeScript Compliance**: Never use `any` types to pass Vercel ESLint builds.
+- **Realtime Listeners**: Ensure unmount cleanups are always handled (`supabase.removeChannel`).
