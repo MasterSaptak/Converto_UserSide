@@ -107,15 +107,10 @@ export default function SupportPage() {
           schema: 'public',
           table: 'communication_messages',
           filter: `conversation_id=eq.${conversationId}`,
-        }, async (payload: { new: { id: string; sender_id: string; sender_type: string; visibility: string; text: string; created_at: string } }) => {
+        }, (payload: { new: { id: string; sender_id: string; sender_type: string; visibility: string; text: string; created_at: string } }) => {
           const msg = payload.new;
           if (msg.visibility === 'customer') {
-            let avatarUrl = null;
-            if (msg.sender_id) {
-              const avatars = await fetchUserAvatars([msg.sender_id]);
-              if (avatars[msg.sender_id]) avatarUrl = avatars[msg.sender_id];
-            }
-
+            // Optimistically add the message without waiting for the avatar
             setMessages(prev => {
               if (prev.some(m => m.id === msg.id)) return prev;
               return [...prev, {
@@ -123,9 +118,20 @@ export default function SupportPage() {
                 sender: msg.sender_type === 'customer' ? 'user' : 'system',
                 text: msg.text,
                 time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                avatarUrl
+                avatarUrl: null
               }];
             });
+
+            // Asynchronously fetch avatar and update the message later
+            if (msg.sender_id) {
+              fetchUserAvatars([msg.sender_id]).then(avatars => {
+                if (avatars[msg.sender_id]) {
+                  setMessages(prev => prev.map(m => 
+                    m.id === msg.id ? { ...m, avatarUrl: avatars[msg.sender_id] } : m
+                  ));
+                }
+              }).catch(err => console.error("Failed to fetch realtime avatar:", err));
+            }
           }
         })
         .subscribe();

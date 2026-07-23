@@ -113,6 +113,7 @@ export function useSharedNotifications(
             if (!shownToasts.current.has(newNotif.id)) {
               shownToasts.current.add(newNotif.id);
               toast(newNotif.title, {
+                id: newNotif.id,
                 description: newNotif.message,
                 action: newNotif.action_url ? {
                   label: 'View',

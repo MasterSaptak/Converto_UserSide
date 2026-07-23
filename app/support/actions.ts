@@ -16,10 +16,10 @@ export async function fetchUserAvatars(userIds: string[]) {
     .select('id, avatar_url')
     .in('id', userIds);
     
-  return (data || []).reduce((acc: any, p: any) => {
+  return (data || []).reduce((acc: Record<string, string>, p: { id: string, avatar_url: string | null }) => {
     if (p.avatar_url) acc[p.id] = p.avatar_url;
     return acc;
-  }, {});
+  }, {} as Record<string, string>);
 }
 
 export async function sendCustomerChatMessage(text: string) {
@@ -128,8 +128,9 @@ export async function sendCustomerChatMessage(text: string) {
       message_id: message.id,
       conversation_id: conversationId 
     };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    if (err instanceof Error) return { error: err.message };
+    return { error: 'An unknown error occurred' };
   }
 }
 
