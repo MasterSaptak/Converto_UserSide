@@ -8,7 +8,7 @@
 - **Current development status**: Active development. Real-time live chat modal, system status event badges, PWA installation (`@ducanh2912/next-pwa`), atomic RPC messaging, and notifications are fully implemented. Deployed on Vercel.
 
 # 2. Architecture
-- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS. Focus on premium glassmorphism aesthetics.
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS. Focus on premium glassmorphism aesthetics with resilient Dark/Light mode support via CSS variables (`bg-background`, `text-foreground`).
 - **Backend**: Next.js Server Actions handle core logic securely using Supabase RPCs.
 - **Database**: Supabase PostgreSQL.
 - **Authentication**: Supabase Auth with SSR cookies.
@@ -47,13 +47,13 @@
 - **RLS**: Row Level Security restricts `SELECT` queries to authorized participants.
 
 # 7. Authentication Flow
-- Handled securely via Supabase SSR.
-- Middleware intercepts requests to `/dashboard` and `/support` and redirects unauthenticated users to `/login`.
+- Handled via Supabase SSR cookies.
+- **⚠️ Server-side redirect is currently disabled**: `lib/supabase/middleware.ts` only calls `supabase.auth.getUser()` to refresh the session cookie — the redirect block (unauthenticated → `/login`, authenticated → `/`) is commented out with the note "auth is fully handled client-side via AppShell." This means `/dashboard` and `/support` are reachable at the HTTP level by anyone (no-JS clients, bots, direct fetches); protection currently depends entirely on `AppShell` blocking render client-side. Found during a 2026-07 security review, not yet fixed.
 - Sessions are maintained in secure HTTP-only cookies.
 
 # 8. API Documentation
 - **Server Actions**:
-  - `sendCustomerChatMessage(text)`: Calls Postgres RPC `fn_customer_send_chat_message` to insert messages atomically.
+  - `sendCustomerChatMessage(text)`: Calls Postgres RPC `fn_customer_send_chat_message` to insert messages atomically. **Then patches the staff notification's deep link**: the RPC writes `action_url = '/support'` with empty `metadata`, so the notification does not record which conversation it belongs to. This action rewrites it to `/support?id=<conversation_id>` (and sets `metadata.conversation_id`), scoped to rows created after a timestamp captured just before the RPC call and filtered on `action_url = '/support'` so it is idempotent. Best-effort — wrapped in its own try/catch because the message is already committed and a failed patch must never surface as a send error. **Proper long-term fix is `action_url := '/support?id=' || v_conversation_id` inside the RPC**; remove this patch once that lands.
   - `getActiveConversation()`: Retrieves active non-deleted conversation ID (matching statuses: `open`, `waiting_on_customer`, `resolved`).
   - `getMessages(convId)`: Retrieves message history for non-deleted conversations.
   - `fetchUserAvatars(userIds)`: Fetches profile avatars.
@@ -103,6 +103,8 @@
 # 18. Security
 - `SUPABASE_SERVICE_ROLE_KEY` is strictly confined to `use server` files.
 - Client components only use public anon key.
+- **⚠️ `app/support/actions.ts` reads bypass RLS**: `getClient()` prefers the service-role client whenever `SUPABASE_SERVICE_ROLE_KEY` is set (true in production), so `getActiveConversation`/`getMessages` run with RLS fully bypassed — correctness relies solely on manual `user_id`/participant checks in the action code rather than a database-level backstop. Prefer the anon/SSR client for reads; reserve service-role for privileged writes only. Found during a 2026-07 security review, not yet fixed.
+- See § 7 for the disabled middleware redirect — same review.
 
 # 19. Performance
 - **PWA Service Worker**: Instant loading & offline support.
@@ -121,7 +123,9 @@
 - Local: `npm run dev`.
 
 # 24. Known Issues
-- None currently active.
+- **Middleware auth redirect disabled** (§7) — server-side route protection is weaker than documented elsewhere; relies on client-side gating.
+- **Service-role client used for chat reads** (§18) — bypasses RLS as the authorization backstop for `getActiveConversation`/`getMessages`.
+- `app/services/exchange/page.tsx`: `notifyMe` state is set but its setter is never wired to a checkbox — `notify_me` in submitted request metadata is always `false`. Minor, dead-ish code; feature likely half-removed.
 
 # 25. Future Roadmap
 - WhatsApp integration.

@@ -61,6 +61,9 @@ export async function sendCustomerChatMessage(text: string) {
       return { error: 'Not authenticated' };
     }
 
+    // Bound the notification patch below to rows created by THIS call.
+    const sentAt = new Date().toISOString();
+
     // Call the atomic RPC — this handles everything in one transaction
     const { data, error: rpcError } = await supabase.rpc('fn_customer_send_chat_message', {
       p_text: text.trim()
@@ -69,6 +72,39 @@ export async function sendCustomerChatMessage(text: string) {
     if (rpcError) {
       console.error("RPC error:", rpcError);
       return { error: rpcError.message || 'Failed to send message' };
+    }
+
+    // Add the conversation deep link to the staff notification the RPC just created.
+    //
+    // Why this exists: fn_customer_send_chat_message writes the staff notification with
+    // a bare `action_url = '/support'` and an empty `metadata`, so the notification does
+    // not record WHICH conversation it is about. The admin Support Hub then falls back to
+    // auto-selecting the newest conversation — which merely *looks* correct (the newest
+    // conversation is usually the one that triggered the notification) and leaves the
+    // mobile view stranded on the ticket list, since only the `?id=` code path switches
+    // it to the chat view.
+    //
+    // Proper long-term fix is `action_url := '/support?id=' || v_conversation_id` inside
+    // the RPC itself; this patches it from the action layer instead. Best-effort only —
+    // the message is already committed, so a failure here must never surface as a send
+    // error. Filtering on `action_url = '/support'` keeps it idempotent and stops it from
+    // ever overwriting an already-correct link.
+    if (data?.conversation_id) {
+      try {
+        const admin = await getClient();
+        await admin
+          .from('notifications')
+          .update({
+            action_url: `/support?id=${data.conversation_id}`,
+            metadata: { conversation_id: data.conversation_id },
+          })
+          .eq('target_role', 'staff')
+          .eq('category', 'chat')
+          .eq('action_url', '/support')
+          .gte('created_at', sentAt);
+      } catch (patchErr) {
+        console.warn('Could not attach deep link to staff notification:', patchErr);
+      }
     }
 
     // RPC returns { conversation_id, message_id, created_at }

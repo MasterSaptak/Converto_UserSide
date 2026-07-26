@@ -51,7 +51,7 @@ function getIconComponent(iconName: string, methodName: string) {
   if (name.includes('bkash')) {
     return function BkashIcon({ className, style }: { className?: string, style?: React.CSSProperties }) {
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={getUnavatar('bkash.com')} alt="bKash" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
+      return <img src="/logos/bkash.svg" alt="bKash" className={className} style={{...style, objectFit: 'contain', borderRadius: '4px'}} />
     }
   }
   if (name.includes('nagad')) {
