@@ -44,7 +44,10 @@
 - **communication_messages**: Individual lines of dialogue (`sender_type`: `customer`, `staff`, `system`).
 - **communication_participants**: Links users to conversations (`user_type = 'customer'`).
 - **notifications**: Stores system and chat notifications (`target_role = 'customer'`).
-- **RLS**: Row Level Security restricts `SELECT` queries to authorized participants.
+- **service_cases** & **service_requests** (v18): Core request architecture grouping requests into cases.
+- **quotes** (v21): Per-service quotes. Immutable prices enforced by triggers (v22). Customers can only approve or reject.
+- **payments** (v21): Case-level payments (wallet or offline). `payment_allocations` links payments to the quotes they settle.
+- **RLS**: Row Level Security restricts `SELECT` queries to authorized participants and strictly guards write operations.
 
 # 7. Authentication Flow
 - Handled via Supabase SSR cookies.
@@ -126,10 +129,33 @@
 - **Middleware auth redirect disabled** (§7) — server-side route protection is weaker than documented elsewhere; relies on client-side gating.
 - **Service-role client used for chat reads** (§18) — bypasses RLS as the authorization backstop for `getActiveConversation`/`getMessages`.
 - `app/services/exchange/page.tsx`: `notifyMe` state is set but its setter is never wired to a checkbox — `notify_me` in submitted request metadata is always `false`. Minor, dead-ish code; feature likely half-removed.
+- **`app/user/requests/page.tsx` renders `MOCK_REQUESTS`** — a hardcoded array, not the database. It has never shown a real request. The DB-backed equivalent is `/user/cases` (§31); this page should be retired or rewritten against `useCases`.
+- **`activity_logs` never existed — FIXED 2026-07.** `submitServiceRequest` wrote every submission to a table with no row in the database and discarded the error, so the customer-side audit trail silently did nothing. Repointed onto `activity_feed`. Requires `schema_v19_case_notes_fix.sql` §B2 for the customer INSERT policy.
 
 # 25. Future Roadmap
 - WhatsApp integration.
 - Email support ticketing.
+
+# 31. Cases (v18 case-centric model)
+Every request now belongs to a `service_case` — the unit of work that groups the services in one journey ("Medical Trip to India" = medical + visa + flights).
+
+- `submitServiceRequest` (`hooks/useServiceRequests.ts`) opens a case **and** its primary request. Pass `caseId` to attach a service to an existing journey instead; pass `caseTitle` to override the default (the service name). It returns `{ data, caseId, error }` — the added `caseId` is backward compatible with every existing caller.
+- **There is no transaction over PostgREST.** The case is inserted first, so if the request insert fails the client deletes the case it just created — otherwise the customer is left with an empty journey in their list. The rollback only ever fires for a case *we* created in that call, never one the customer was already using.
+- `hooks/useCases.ts` — `useCases()` for the list, `useCase(id)` for one case with its line items and documents.
+- `/user/cases` and `/user/cases/[id]` are the customer-facing views. **A single-service case renders as a plain request**: the word "case" only surfaces once a journey actually holds more than one service, so the model change is invisible to simple flows.
+- The realtime subscription **invalidates rather than merging the payload**, because a `service_cases` realtime row carries no joined `service_requests` — merging it would blank out the services already on screen.
+
+## 31.1 What customers may and may not do (verified under real RLS)
+`verify_userside_cases.mjs` creates a throwaway auth user, signs in with the **anon key**, exercises the flow, and deletes the user. This matters: the app talks to Supabase as a customer session, so a service-role test would pass while the real app fails.
+
+Confirmed enforced by RLS — a customer **cannot** create a case for another customer, see another customer's cases, add their own line items, self-verify their own documents, or delete a case that has requests. They **can** open their own case, create a request in it, read its charges and documents, and delete an *empty* case (the rollback above).
+
+Run it after any change to case RLS or the submission path.
+
+## 31.2 Quotes and Payments (v21/v22)
+- **Quotes are per-service:** A customer approves or rejects quotes at the individual request level.
+- **Payments are per-case:** A single payment settles multiple approved-but-unpaid quotes on the case. Customers can pay from their Wallet balance (instant atomic deduction) or via offline methods (bKash/Bank/Cash) requiring proof upload and staff confirmation.
+- **Price Lockdown (v22):** RLS and triggers strictly prevent a customer from altering the price or currency of a quote. Customers can only change quote status from `sent` to `approved` or `rejected`.
 
 # 26. Developer Decisions
 - **Unified System Message Design**: Matched the Admin portal's centered system status badges in UserSide live chat for design consistency.
