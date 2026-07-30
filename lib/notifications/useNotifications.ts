@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { 
   Notification, 
   UseNotificationsConfig, 
@@ -82,17 +82,24 @@ export function useSharedNotifications(
 
     // Unique channel name to avoid conflicts
     const channelName = `public:notifications-${mode}-${Math.random().toString(36).substring(7)}`;
-    
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'notifications',
-        },
-        (payload) => {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Filtering happens SERVER-SIDE (see the bindings below), not just in JS.
+    //
+    // This used to be a single unfiltered subscription to the whole table with
+    // all filtering done here in the callback. That was survivable while every
+    // notification was written one at a time. It stopped being survivable with
+    // v23's content publish, which inserts one row PER RECIPIENT: a 5,000-person
+    // announcement would push 5,000 INSERT events to every connected client,
+    // each one re-rendering this hook and checking the toast set. Postgres
+    // filters now drop those rows before they ever reach the browser.
+    //
+    // The JS checks below are kept as defence in depth — a broadcast row still
+    // has to be matched against `target_role`, which the server filter can't do.
+    // ─────────────────────────────────────────────────────────────────────────
+    const handlePayload = (
+      payload: RealtimePostgresChangesPayload<Notification>
+    ) => {
           if (payload.eventType === 'INSERT') {
             const newNotif = payload.new as Notification;
             
@@ -145,15 +152,48 @@ export function useSharedNotifications(
           }
 
           if (payload.eventType === 'DELETE') {
-            setNotifications((prev) => prev.filter(n => n.id !== payload.old.id));
+            setNotifications((prev) => prev.filter(n => n.id !== payload.old?.id));
           }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.warn(`Notification channel (${mode}) disconnected:`, status);
-        }
-      });
+    };
+
+    const channel = supabase.channel(channelName);
+
+    // Rows addressed to this user specifically. Every notification v23 writes is
+    // per-user, so this is the binding that carries essentially all traffic.
+    if (userId) {
+      channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `profile_id=eq.${userId}` },
+        handlePayload
+      );
+    }
+
+    // Legacy broadcast rows (profile_id IS NULL). Nothing writes these any more —
+    // v23 fans out per-user precisely because a broadcast shares ONE is_read flag
+    // between everybody — but historic rows still exist and must keep arriving.
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications', filter: 'profile_id=is.null' },
+      handlePayload
+    );
+
+    // DELETE is subscribed unfiltered on purpose. Postgres only ships the primary
+    // key in a delete payload unless the table is REPLICA IDENTITY FULL, so a
+    // `profile_id=eq.…` filter would silently never match and deletions would stop
+    // syncing across tabs. Deletes are rare and carry no body, so this does not
+    // reintroduce the flood the filters above exist to prevent. A duplicate DELETE
+    // from both bindings is harmless — the handler filters by id and is idempotent.
+    channel.on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'notifications' },
+      handlePayload
+    );
+
+    channel.subscribe((status) => {
+      if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        console.warn(`Notification channel (${mode}) disconnected:`, status);
+      }
+    });
 
     return () => {
       supabase.removeChannel(channel);

@@ -100,64 +100,64 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const targetLiveCurrencies = FIXED_CURRENCIES.filter(c => c !== baseCurrency);
 
   return (
-    <section className="bg-[#f4f4f0] border-2 border-black p-4 sm:p-6 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full overflow-hidden mb-8">
-      
-      <div className="relative z-10 flex flex-col gap-6">
-        
+    <section className="bg-[#f4f4f0] border-2 border-black p-3 sm:p-4 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full overflow-hidden mb-4">
+
+      <div className="relative z-10 flex flex-col gap-3">
+
         {/* Header Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#FF90E8] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-black" strokeWidth={3} />
+        <div className="flex flex-row justify-between items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-[#FF90E8] border-2 border-black p-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <TrendingUp className="w-4 h-4 text-black" strokeWidth={3} />
             </div>
-            <div className="font-black text-xl sm:text-2xl font-heading tracking-tight uppercase">
+            <div className="font-black text-base sm:text-lg font-heading tracking-tight uppercase">
               Exchange Rates
             </div>
           </div>
-            
-          <div className="flex items-center gap-2 bg-slate-50 p-1.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest pl-2">Base:</span>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 p-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] shrink-0">
+            <span className="text-[9px] font-black uppercase tracking-widest pl-1.5 hidden sm:inline">Base:</span>
             <div className="relative">
-              <select 
+              <select
                 value={baseCurrency}
                 onChange={(e) => setBaseCurrency(e.target.value)}
-                className="appearance-none bg-white border-2 border-black text-xs uppercase font-black py-1.5 pl-3 pr-8 cursor-pointer outline-none hover:bg-slate-100 transition-colors"
+                className="appearance-none bg-white border-2 border-black text-[11px] uppercase font-black py-1 pl-2 pr-6 cursor-pointer outline-none hover:bg-slate-100 transition-colors"
               >
                 {availableBases.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[3]" />
+              <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[3]" />
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-10 gap-3 border-2 border-dashed border-black/20 bg-slate-50">
-            <Loader2 className="w-6 h-6 animate-spin text-black" />
-            <span className="text-xs font-black uppercase tracking-widest">Fetching Rates...</span>
+          <div className="flex items-center justify-center py-6 gap-2 border-2 border-dashed border-black/20 bg-slate-50">
+            <Loader2 className="w-4 h-4 animate-spin text-black" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Fetching Rates...</span>
           </div>
         ) : (
-          <div className="flex flex-col gap-8">
-            
+          <div className="flex flex-col gap-3">
+
             {/* Section 1: Google Live Rates */}
             <div>
-              <div className="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
-                <Globe className="w-4 h-4 stroke-[3]" />
-                <h3 className="font-black uppercase tracking-widest text-xs sm:text-sm">Google Live Rates</h3>
+              <div className="flex items-center gap-1.5 mb-2 border-b-2 border-black pb-1">
+                <Globe className="w-3 h-3 stroke-[3]" />
+                <h3 className="font-black uppercase tracking-widest text-[10px]">Google Live Rates</h3>
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
                 {targetLiveCurrencies.map(currency => {
                   const rate = marketRates[currency];
                   const flagUrl = getCurrencyFlagUrl(currency);
                   return (
                     <div 
                       key={`live_${currency}`} 
-                      className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
+                      className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[52px] overflow-hidden"
                     >
                       {/* Flag Left Section */}
-                      <div className="w-[80px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                      <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
                         <img 
                           src={flagUrl} 
                           alt={`${currency} flag`}
@@ -165,14 +165,14 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                         />
                       </div>
                       {/* Details Right Section */}
-                      <div className="flex-1 px-3 py-2 flex flex-col justify-center bg-white relative">
-                        <div className="text-[10px] uppercase tracking-widest font-black flex items-center justify-between opacity-80 mb-1">
+                      <div className="flex-1 px-2 py-1 flex flex-col justify-center bg-white relative">
+                        <div className="text-[9px] uppercase tracking-widest font-black flex items-center justify-between opacity-80 mb-0.5">
                           <span className="flex items-center gap-1">
-                            <span className="text-sm font-sans leading-none">{getCurrencySymbol(currency)}</span>
+                            <span className="text-[11px] font-sans leading-none">{getCurrencySymbol(currency)}</span>
                             <span className="leading-none">{currency}</span>
                           </span>
                         </div>
-                        <div className="font-black font-mono text-lg leading-none">
+                        <div className="font-black font-mono text-sm leading-none">
                           {rate ? rate.toFixed(4) : '—'}
                         </div>
                       </div>
@@ -184,22 +184,22 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
 
             {/* Section 2: Converto Rates */}
             <div>
-              <div className="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
-                <Shield className="w-4 h-4 stroke-[3]" />
-                <h3 className="font-black uppercase tracking-widest text-xs sm:text-sm">Converto Rates</h3>
+              <div className="flex items-center gap-1.5 mb-2 border-b-2 border-black pb-1">
+                <Shield className="w-3 h-3 stroke-[3]" />
+                <h3 className="font-black uppercase tracking-widest text-[10px]">Converto Rates</h3>
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
                 {targetLiveCurrencies.map((currency) => {
                   const customRate = convertoRates[currency] || marketRates[currency];
                   const flagUrl = getCurrencyFlagUrl(currency);
                   return (
                     <div
                       key={`converto_${currency}`}
-                      className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[72px] overflow-hidden"
+                      className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[52px] overflow-hidden"
                     >
                       {/* Flag Left Section */}
-                      <div className="w-[80px] shrink-0 border-r-2 border-black relative bg-zinc-100">
+                      <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
                         <img 
                           src={flagUrl} 
                           alt={`${currency} flag`}
@@ -207,17 +207,17 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                         />
                       </div>
                       {/* Details Right Section */}
-                      <div className="flex-1 px-3 py-2 flex flex-col justify-center bg-white relative">
-                        <div className="text-[10px] uppercase tracking-widest font-black flex justify-between items-center w-full mb-1">
+                      <div className="flex-1 px-2 py-1 flex flex-col justify-center bg-white relative">
+                        <div className="text-[9px] uppercase tracking-widest font-black flex justify-between items-center w-full mb-0.5">
                           <span className="flex items-center gap-1 opacity-80">
-                            <span className="text-sm font-sans leading-none">{getCurrencySymbol(currency)}</span>
+                            <span className="text-[11px] font-sans leading-none">{getCurrencySymbol(currency)}</span>
                             <span className="leading-none">{currency}</span>
                           </span>
-                          <span className="text-[8px] border-2 border-black px-1 py-0.5 bg-yellow-400 font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] leading-none">
+                          <span className="text-[7px] border border-black px-1 bg-yellow-400 font-black leading-none">
                             CUSTOM
                           </span>
                         </div>
-                        <div className="font-black font-mono text-lg leading-none">
+                        <div className="font-black font-mono text-sm leading-none">
                           {customRate ? Number(customRate).toFixed(4) : '—'}
                         </div>
                       </div>

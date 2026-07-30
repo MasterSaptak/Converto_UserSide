@@ -383,8 +383,19 @@ export interface Notification {
 }
 
 // ── Campaigns ─────────────────────────────────────────
+/**
+ * @deprecated Since v23. Superseded by `ContentType` in `types/content.ts`.
+ * The `campaigns` table is retained but marked DEPRECATED in the database; any
+ * rows were backfilled as archived `content_items`. Do not write to it.
+ */
 export type CampaignType = 'promo' | 'ad' | 'announcement' | 'seasonal' | 'maintenance' | 'referral';
 
+/**
+ * @deprecated Since v23. Use `ContentItem` from `types/content.ts` instead.
+ * Nothing has ever read this table; `schema_v23_content_engine.sql` replaces it
+ * with `content_items`, which adds slugs, structured blocks, media, audience
+ * targeting and analytics.
+ */
 export interface Campaign {
   id: string;
   type: CampaignType;

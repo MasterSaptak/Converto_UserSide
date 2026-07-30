@@ -9,6 +9,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { Loader2 } from 'lucide-react';
 import { LiveFooter } from '@/components/layout/LiveFooter';
+import { ContentPopup } from '@/components/content/ContentPopup';
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
@@ -67,6 +68,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <BottomNav />
       </div>
+      {/* Inside the authenticated branch on purpose — a marketing modal must
+          never appear over the login screen. */}
+      <ContentPopup />
     </div>
   );
 }

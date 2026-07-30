@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { staggerContainer, fadeUp } from "@/lib/animations";
 import { RequestStatusTracker } from "@/components/dashboard/RequestStatusTracker";
-import { PromoCarousel } from "@/components/dashboard/PromoCarousel";
+import { ContentCarousel } from "@/components/content/ContentCarousel";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { LiveExchangeRates } from "@/components/dashboard/LiveExchangeRates";
 import { ShieldCheck, ArrowRight } from "lucide-react";
@@ -71,7 +71,7 @@ export default function DashboardPage() {
       </motion.div>
 
       <motion.div variants={fadeUp}>
-        <PromoCarousel />
+        <ContentCarousel placement="dashboard_carousel" />
       </motion.div>
 
       <motion.div variants={fadeUp}>
