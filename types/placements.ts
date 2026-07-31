@@ -33,6 +33,10 @@ export const PLACEMENTS = {
     description: 'The rotating promo panel on the customer dashboard.',
     width: 1600,
     height: 500,
+    tabletWidth: 1024,
+    tabletHeight: 400,
+    mobileWidth: 600,
+    mobileHeight: 600,
     maxBytes: 2 * 1024 * 1024,
     serviceScoped: false,
     live: true,
@@ -99,6 +103,10 @@ export interface PlacementSpec {
   /** 0 means this placement takes no image. */
   width: number;
   height: number;
+  tabletWidth?: number;
+  tabletHeight?: number;
+  mobileWidth?: number;
+  mobileHeight?: number;
   maxBytes: number;
   /** True when the surface belongs to one service, chosen from the live services table. */
   serviceScoped: boolean;
@@ -124,18 +132,40 @@ export function takesImage(key: string): boolean {
 }
 
 /** "2.95 : 1" — derived, never stored, so it can't disagree with the dimensions. */
-export function aspectRatioLabel(key: string): string {
+export function aspectRatioLabel(key: string, device: 'desktop' | 'tablet' | 'mobile' = 'desktop'): string {
   const spec = getPlacement(key);
-  if (!spec || !spec.width || !spec.height) return '—';
-  const r = spec.width / spec.height;
+  if (!spec) return '—';
+  let w = spec.width;
+  let h = spec.height;
+  if (device === 'tablet' && spec.tabletWidth && spec.tabletHeight) {
+    w = spec.tabletWidth;
+    h = spec.tabletHeight;
+  }
+  if (device === 'mobile' && spec.mobileWidth && spec.mobileHeight) {
+    w = spec.mobileWidth;
+    h = spec.mobileHeight;
+  }
+  if (!w || !h) return '—';
+  const r = w / h;
   return r >= 1 ? `${r.toFixed(2)} : 1` : `1 : ${(1 / r).toFixed(2)}`;
 }
 
 /** CSS aspect-ratio value for preview frames, e.g. "1600 / 500". */
-export function aspectRatioCss(key: string): string | undefined {
+export function aspectRatioCss(key: string, device: 'desktop' | 'tablet' | 'mobile' = 'desktop'): string | undefined {
   const spec = getPlacement(key);
-  if (!spec || !spec.width || !spec.height) return undefined;
-  return `${spec.width} / ${spec.height}`;
+  if (!spec) return undefined;
+  let w = spec.width;
+  let h = spec.height;
+  if (device === 'tablet' && spec.tabletWidth && spec.tabletHeight) {
+    w = spec.tabletWidth;
+    h = spec.tabletHeight;
+  }
+  if (device === 'mobile' && spec.mobileWidth && spec.mobileHeight) {
+    w = spec.mobileWidth;
+    h = spec.mobileHeight;
+  }
+  if (!w || !h) return undefined;
+  return `${w} / ${h}`;
 }
 
 export function formatBytes(bytes: number): string {
@@ -161,6 +191,7 @@ export interface ImageIssue {
 export function validateImage(
   key: string,
   info: { width: number; height: number; bytes: number; type: string },
+  device: 'desktop' | 'tablet' | 'mobile' = 'desktop'
 ): ImageIssue[] {
   const spec = getPlacement(key);
   if (!spec) return [];
@@ -178,22 +209,33 @@ export function validateImage(
     });
   }
 
-  if (!spec.width || !info.width || !info.height) return issues;
+  let expectedWidth = spec.width;
+  let expectedHeight = spec.height;
+  if (device === 'tablet' && spec.tabletWidth && spec.tabletHeight) {
+    expectedWidth = spec.tabletWidth;
+    expectedHeight = spec.tabletHeight;
+  }
+  if (device === 'mobile' && spec.mobileWidth && spec.mobileHeight) {
+    expectedWidth = spec.mobileWidth;
+    expectedHeight = spec.mobileHeight;
+  }
 
-  if (info.width < spec.width || info.height < spec.height) {
+  if (!expectedWidth || !info.width || !info.height) return issues;
+
+  if (info.width < expectedWidth || info.height < expectedHeight) {
     issues.push({
       level: 'warning',
-      message: `Smaller than recommended (${info.width}×${info.height} vs ${spec.width}×${spec.height}). It will still work, but may look soft on large screens.`,
+      message: `Smaller than recommended (${info.width}×${info.height} vs ${expectedWidth}×${expectedHeight}). It will still work, but may look soft on large screens.`,
     });
   }
 
   // 2% tolerance: a 1600×499 export is not worth a warning.
-  const target = spec.width / spec.height;
+  const target = expectedWidth / expectedHeight;
   const actual = info.width / info.height;
   if (Math.abs(actual - target) / target > 0.02) {
     issues.push({
       level: 'warning',
-      message: `Different shape to ${aspectRatioLabel(key)}. The image will be cropped to fit — check the preview below.`,
+      message: `Different shape to ${aspectRatioLabel(key, device)}. The image will be cropped to fit — check the preview below.`,
     });
   }
 

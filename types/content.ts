@@ -123,6 +123,8 @@ export interface ContentPlacementRow {
   placement: string;
   service_slug: string | null;
   image_url: string | null;
+  image_url_tablet: string | null;
+  image_url_mobile: string | null;
   image_alt: string | null;
   sort_order: number;
   created_at: string;
@@ -134,6 +136,8 @@ export interface PlacementInput {
   placement: string;
   service_slug?: string | null;
   image_url?: string | null;
+  image_url_tablet?: string | null;
+  image_url_mobile?: string | null;
   image_alt?: string | null;
 }
 
@@ -216,7 +220,7 @@ export type PublicContentItem = Pick<ContentItem,
   | 'body' | 'icon_key' | 'theme' | 'tag'
   | 'cta_label' | 'cta_href' | 'cta_style' | 'priority' | 'is_dismissible'
   | 'details_description' | 'details_requirements' | 'details_process' | 'details_costs'>
-  & { placements?: Pick<ContentPlacementRow, 'placement' | 'service_slug' | 'image_url' | 'image_alt'>[] };
+  & { placements?: Pick<ContentPlacementRow, 'placement' | 'service_slug' | 'image_url' | 'image_url_tablet' | 'image_url_mobile' | 'image_alt'>[] };
 
 /**
  * The artwork for one surface. Returns nulls rather than throwing when the item
@@ -226,9 +230,14 @@ export type PublicContentItem = Pick<ContentItem,
 export function imageFor(
   item: PublicContentItem,
   placement: string,
-): { url: string | null; alt: string } {
+): { url: string | null; urlTablet: string | null; urlMobile: string | null; alt: string } {
   const match = item.placements?.find((p) => p.placement === placement);
-  return { url: match?.image_url ?? null, alt: match?.image_alt ?? '' };
+  return { 
+    url: match?.image_url ?? null, 
+    urlTablet: match?.image_url_tablet ?? null,
+    urlMobile: match?.image_url_mobile ?? null,
+    alt: match?.image_alt ?? '' 
+  };
 }
 
 /** Row shape returned by the fn_content_analytics RPC. CTR is derived in TS. */
