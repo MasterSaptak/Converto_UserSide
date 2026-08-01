@@ -136,6 +136,13 @@
 - WhatsApp integration.
 - Email support ticketing.
 
+## Exchange-rates customer workflow
+
+- The dashboard widget lives at `components/dashboard/LiveExchangeRates.tsx` and reads published pricing from `transfer_corridors` and `currency_rates` under customer RLS. It is display-only; staff manage rates in ServerSide `/exchange-rates`.
+- The exchange request flow lives at `app/services/exchange/page.tsx`. It uses the corridor's published rate and fee configuration to initialize a customer exchange request; keep its Supabase field names aligned with ServerSide schema and actions.
+- The admin UI intentionally hides fee, limit, audit-reason, and active-state controls for compact rate maintenance, but those values remain persisted and continue to affect customer-facing calculations. Do not treat their absence from the admin form as removal from the data model.
+- When changing exchange-rate presentation or query shape, verify both the dashboard widget and the service form. A customer-visible rate must come from the published corridor/custom-rate path, not a client-only fallback.
+
 # 31. Cases (v18 case-centric model)
 Every request now belongs to a `service_case` — the unit of work that groups the services in one journey ("Medical Trip to India" = medical + visa + flights).
 
