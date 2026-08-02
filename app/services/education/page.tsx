@@ -1,24 +1,33 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { submitServiceRequest } from '@/hooks/useServiceRequests';
-import { Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Loader2, UploadCloud, CheckCircle2 } from 'lucide-react';
 
 export default function EducationPaymentsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isOtherCountry, setIsOtherCountry] = useState(false);
+
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     institution: '',
-    country: 'United Kingdom',
+    country: 'UK',
     studentName: '',
     studentId: '',
+    passportNumber: '',
+    visaNumber: '',
     paymentPurpose: 'Tuition Fee',
     currency: 'BDT - Bangladeshi Taka',
     amount: '',
     deadline: '',
-    notes: ''
+    notes: '',
+    document_url: ''
   });
 
   const updateForm = (field: string, value: string) => {
@@ -38,10 +47,13 @@ export default function EducationPaymentsPage() {
           country: formData.country,
           student_name: formData.studentName,
           student_id: formData.studentId,
-          payment_purpose: formData.paymentPurpose,
-          target_currency: formData.currency,
+          passport_number: formData.passportNumber,
+          visa_number: formData.visaNumber,
+          payment_type: formData.paymentPurpose,
+          currency: formData.currency,
           deadline: formData.deadline,
-          notes: formData.notes
+          notes: formData.notes,
+          document_url: formData.document_url
         },
         amount: parseFloat(formData.amount) || 0,
         currency: formData.currency.split(' ')[0], // Extracts USD, GBP, BDT, etc.
@@ -75,6 +87,12 @@ export default function EducationPaymentsPage() {
               {error}
             </div>
           )}
+
+          {formData.document_url && (
+            <div className="bg-green-100 border-2 border-green-500 text-green-800 p-4 font-bold text-sm flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5" /> Image successfully uploaded!
+            </div>
+          )}
           <div className="border-2 border-foreground bg-white p-6">
             <h2 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-foreground pb-2">Student & Institution Details</h2>
             
@@ -87,12 +105,47 @@ export default function EducationPaymentsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Country</label>
-                  <select value={formData.country} onChange={(e) => updateForm('country', e.target.value)} className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary w-full">
-                    <option>United Kingdom</option>
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
+                  <select 
+                    value={isOtherCountry ? 'Other' : formData.country} 
+                    onChange={(e) => {
+                      if (e.target.value === 'Other') {
+                        setIsOtherCountry(true);
+                        updateForm('country', '');
+                      } else {
+                        setIsOtherCountry(false);
+                        updateForm('country', e.target.value);
+                      }
+                    }} 
+                    className="border-2 border-foreground p-3 min-h-[48px] bg-secondary text-sm font-bold uppercase outline-none focus:border-primary w-full"
+                  >
+                    <option value="India">India</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="China">China</option>
+                    <option value="USA">USA</option>
+                    <option value="UK">UK</option>
+                    <option value="Germany">Germany</option>
+                    <option value="Austria">Austria</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Ireland">Ireland</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Japan">Japan</option>
+                    <option value="South Korea">South Korea</option>
+                    <option value="Denmark">Denmark</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Other">Other</option>
                   </select>
+                  
+                  {isOtherCountry && (
+                    <input 
+                      type="text" 
+                      value={formData.country} 
+                      onChange={(e) => updateForm('country', e.target.value)} 
+                      required 
+                      placeholder="Enter Country Name" 
+                      className="border-2 border-foreground p-3 mt-2 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary w-full" 
+                    />
+                  )}
                 </div>
               </div>
 
@@ -104,6 +157,17 @@ export default function EducationPaymentsPage() {
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Student ID / Reference Number</label>
                   <input type="text" value={formData.studentId} onChange={(e) => updateForm('studentId', e.target.value)} required placeholder="ID Number" className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Passport Number (Optional)</label>
+                  <input type="text" value={formData.passportNumber} onChange={(e) => updateForm('passportNumber', e.target.value)} placeholder="Passport No" className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Visa Number (Optional)</label>
+                  <input type="text" value={formData.visaNumber} onChange={(e) => updateForm('visaNumber', e.target.value)} placeholder="Visa No" className="border-2 border-foreground p-3 min-h-[48px] text-sm font-bold uppercase outline-none focus:border-primary font-mono w-full" />
                 </div>
               </div>
 
@@ -143,9 +207,72 @@ export default function EducationPaymentsPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload Invoice / Offer Letter</label>
-                <div className="border-2 border-dashed border-foreground p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-secondary/50 transition-colors">
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload PDF or images of the official invoice</span>
+                <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload Invoice / Offer Letter (Image Only)</label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed ${formData.document_url ? 'border-green-500 bg-green-50' : 'border-foreground hover:bg-secondary/50'} p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors relative overflow-hidden group`}
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      if (!file.type.startsWith('image/')) {
+                        setError('Please upload a valid image file (JPG, PNG).');
+                        return;
+                      }
+
+                      setUploading(true);
+                      setError(null);
+
+                      try {
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+                        const filePath = `education_invoices/${fileName}`;
+
+                        const { error: uploadError } = await supabase.storage
+                          .from('service_documents')
+                          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('service_documents')
+                          .getPublicUrl(filePath);
+
+                        updateForm('document_url', publicUrl);
+                      } catch (err) {
+                        const message = err instanceof Error ? err.message : 'Failed to upload image. Please ensure the storage bucket is set up.';
+                        setError(message);
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  />
+                  {uploading ? (
+                    <div className="flex items-center gap-2 text-sm font-bold uppercase">
+                      <Loader2 className="w-5 h-5 animate-spin" /> Uploading...
+                    </div>
+                  ) : formData.document_url ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 text-sm font-bold uppercase text-green-700">
+                        <CheckCircle2 className="w-5 h-5" /> Image Attached
+                      </div>
+                      <a href={formData.document_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="block w-32 h-32 border-2 border-green-500 overflow-hidden hover:opacity-80 transition-opacity">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={formData.document_url} alt="Uploaded Invoice" className="w-full h-full object-cover" />
+                      </a>
+                    </div>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-8 h-8 mb-2 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Click to upload image of the official invoice</span>
+                    </>
+                  )}
                 </div>
               </div>
               

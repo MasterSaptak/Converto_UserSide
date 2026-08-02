@@ -125,57 +125,57 @@ interface SubmitRequestParams {
   currency?: string;
   metadata: Record<string, unknown>;
   notes?: string;
+  /**
+   * Attach to an existing case instead of opening a new one — this is how a
+   * customer adds a second service (visa, flights) to a journey they already
+   * started. Omit for the normal 1-Tap flow.
+   */
+  caseId?: string;
+  /** Overrides the default case title (the service name). */
+  caseTitle?: string;
 }
 
 export async function submitServiceRequest(params: SubmitRequestParams): Promise<{
   data: ServiceRequest | null;
+  caseId: string | null;
   error: string | null;
 }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return { data: null, error: 'Not authenticated. Please log in.' };
+    return { data: null, caseId: null, error: 'Not authenticated. Please log in.' };
   }
 
-  // Look up the service by slug
-  const { data: service, error: serviceError } = await supabase
-    .from('services')
-    .select('id')
-    .eq('slug', params.serviceSlug)
-    .single();
-
-  if (serviceError || !service) {
-    return { data: null, error: 'Service not found.' };
-  }
-
-  // Insert the service request
-  const { data: request, error: insertError } = await supabase
-    .from('service_requests')
-    .insert({
-      profile_id: user.id,
-      service_id: service.id,
-      amount: params.amount || null,
-      currency: params.currency || null,
-      metadata: params.metadata,
-      notes: params.notes || null,
-      status: 'Submitted',
-      priority: 'Normal',
-    })
-    .select('*')
-    .single();
-
-  if (insertError) {
-    return { data: null, error: insertError.message };
-  }
-
-  // Log the activity
-  await supabase.from('activity_logs').insert({
-    profile_id: user.id,
-    entity_type: 'service_request',
-    entity_id: request.id,
-    action: 'REQUEST_SUBMITTED',
-    details: `Submitted ${params.serviceSlug} request`,
-    metadata: { service_slug: params.serviceSlug },
+  // 1-Tap Universal Builder via Postgres RPC
+  const { data: result, error } = await supabase.rpc('fn_create_service_request', {
+    p_service_slug: params.serviceSlug,
+    p_profile_id: user.id,
+    p_amount: params.amount || null,
+    p_currency: params.currency || 'USD',
+    p_metadata: params.metadata || {},
+    p_notes: params.notes || null,
+    p_case_id: params.caseId || null,
+    p_case_title: params.caseTitle?.trim() || null,
+    p_is_draft: false
   });
 
-  return { data: request as ServiceRequest, error: null };
+  if (error) {
+    console.error('[submitServiceRequest] RPC error:', error);
+    return { data: null, caseId: null, error: error.message };
+  }
+
+  const payload = result as { case_id: string; request_id: string };
+
+  // Fetch the created request fully joined
+  const { data: request, error: fetchError } = await supabase
+    .from('service_requests')
+    .select('*, service:services(*), stage:pipeline_stages(*), status_obj:pipeline_statuses(*)')
+    .eq('id', payload.request_id)
+    .single();
+
+  if (fetchError) {
+    console.error('[submitServiceRequest] fetch newly created error:', fetchError);
+    return { data: null, caseId: payload.case_id, error: 'Request created but failed to load fully.' };
+  }
+
+  return { data: request as ServiceRequest, caseId: payload.case_id, error: null };
 }

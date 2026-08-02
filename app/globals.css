@@ -76,3 +76,23 @@
   }
 }
 
+/* Promo carousel rotation timer. The element is keyed on the slide cycle so this
+   restarts from zero on every advance, manual or automatic. Width rather than
+   scaleX so the bar does not blur at small heights. */
+@keyframes carousel-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Respect a reduced-motion preference: hold the bar full rather than sweeping it. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[carousel-progress_6s_linear_forwards\] {
+    animation: none;
+    width: 100%;
+  }
+}
+

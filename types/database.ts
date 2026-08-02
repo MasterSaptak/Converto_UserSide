@@ -67,8 +67,11 @@ export type RequestPriority = 'Low' | 'Normal' | 'High' | 'Urgent';
 
 export interface ServiceRequest {
   id: string;
-  profile_id: string;
+  /** Nullable since v18: a staff-created case may have no customer account yet. */
+  profile_id: string | null;
   service_id: string;
+  /** v18 — every request now belongs to a case. */
+  service_case_id: string | null;
   status: RequestStatus;
   priority: RequestPriority;
   amount: number | null;
@@ -77,12 +80,80 @@ export interface ServiceRequest {
   quote_id: string | null;
   metadata: Record<string, unknown>;
   notes: string | null;
+  /** v18 — partial progress saved before a request is submitted. */
+  draft_data: Record<string, unknown>;
+  is_draft: boolean;
   created_at: string;
   updated_at: string;
   // Joined relations
   profile?: Profile;
   service?: Service;
   quote?: Quote;
+  service_case?: ServiceCase;
+}
+
+export type CaseStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+export type CaseHandlingMode = 'SELF_SERVICE' | 'CONCIERGE' | 'STAFF_CREATED' | 'IMPORTED' | 'API';
+
+/**
+ * The top-level unit of work (v18). Groups one or more `service_requests` —
+ * e.g. "Medical Trip to India" holds the medical request, the visa, and the flights.
+ */
+export interface ServiceCase {
+  id: string;
+  case_uid: string | null;
+  title: string;
+  description: string | null;
+  customer_id: string | null;
+  status: CaseStatus;
+  handling_mode: CaseHandlingMode;
+  priority: RequestPriority;
+  currency: string;
+  /** Maintained by a DB trigger from request_line_items — never write directly. */
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  // Joined relations
+  service_requests?: ServiceRequest[];
+}
+
+export type LineItemKind = 'fee' | 'service' | 'discount' | 'tax' | 'refund' | 'adjustment';
+
+export interface RequestLineItem {
+  id: string;
+  service_case_id: string;
+  service_request_id: string | null;
+  kind: LineItemKind;
+  label: string;
+  description: string | null;
+  quantity: number;
+  /** Negative for discounts and refunds — enforced by a DB CHECK. */
+  unit_amount: number;
+  amount: number;
+  currency: string;
+  created_at: string;
+}
+
+export type RequiredDocumentStatus = 'pending' | 'requested' | 'received' | 'verified' | 'rejected';
+
+/**
+ * Models the requirement AND its fulfilment — a row exists at 'pending' before
+ * anything is uploaded, so `file_url` is nullable.
+ */
+export interface RequiredDocument {
+  id: string;
+  service_case_id: string;
+  service_request_id: string | null;
+  name: string;
+  category: string | null;
+  is_mandatory: boolean;
+  status: RequiredDocumentStatus;
+  file_url: string | null;
+  file_name: string | null;
+  rejection_reason: string | null;
+  due_date: string | null;
+  created_at: string;
 }
 
 // ── Service-Specific Metadata Shapes ──────────────────
@@ -129,44 +200,78 @@ export interface GlobalPaymentMetadata {
 }
 
 // ── Quotes ────────────────────────────────────────────
-export type QuoteStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
+// v21 replaced the old pending/accepted wording with a real lifecycle. A quote
+// covers ONE service; a case with three services has three quotes, each
+// approved on its own timeline.
+export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired' | 'superseded';
 
 export interface Quote {
   id: string;
-  request_id: string;
+  quote_uid: string | null;
+  request_id: string | null;
+  service_case_id: string | null;
   amount: number;
-  currency_code: string;
-  margin: number;
-  breakdown: Record<string, unknown>;
+  currency_code: string | null;
+  margin: number | null;
+  /** Line items frozen at send time so later edits can't change what was agreed. */
+  breakdown: Record<string, unknown> | null;
   valid_until: string | null;
   notes: string | null;
   status: QuoteStatus;
+  sent_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  superseded_by: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
 }
 
 // ── Payments ──────────────────────────────────────────
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+// One payment settles EVERY approved, unpaid quote on a case — the customer
+// approves per service but pays once. `payment_allocations` maps it back.
+export type PaymentStatus =
+  | 'pending' | 'awaiting_confirmation' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+export type PaymentMethodKind = 'wallet' | 'manual' | 'gateway';
 
 export interface PaymentMethod {
   id: string;
   name: string;
   slug: string;
   is_active: boolean;
+  config: Record<string, unknown> | null;
   created_at: string;
 }
 
 export interface Payment {
   id: string;
+  payment_uid: string | null;
   request_id: string | null;
   quote_id: string | null;
+  service_case_id: string | null;
   profile_id: string;
   amount: number;
-  currency: string;
+  currency: string | null;
   status: PaymentStatus;
+  method: PaymentMethodKind;
+  reference: string | null;
+  proof_url: string | null;
+  proof_uploaded_at: string | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PaymentAllocation {
+  id: string;
+  payment_id: string;
+  quote_id: string;
+  amount: number;
+  created_at: string;
 }
 
 // ── Wallet & Ledger ───────────────────────────────────
@@ -278,8 +383,19 @@ export interface Notification {
 }
 
 // ── Campaigns ─────────────────────────────────────────
+/**
+ * @deprecated Since v23. Superseded by `ContentType` in `types/content.ts`.
+ * The `campaigns` table is retained but marked DEPRECATED in the database; any
+ * rows were backfilled as archived `content_items`. Do not write to it.
+ */
 export type CampaignType = 'promo' | 'ad' | 'announcement' | 'seasonal' | 'maintenance' | 'referral';
 
+/**
+ * @deprecated Since v23. Use `ContentItem` from `types/content.ts` instead.
+ * Nothing has ever read this table; `schema_v23_content_engine.sql` replaces it
+ * with `content_items`, which adds slugs, structured blocks, media, audience
+ * targeting and analytics.
+ */
 export interface Campaign {
   id: string;
   type: CampaignType;
