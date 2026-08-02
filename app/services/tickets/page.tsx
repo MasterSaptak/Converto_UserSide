@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users, Train } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { submitServiceRequest } from '@/hooks/useServiceRequests'
+import { searchStations } from 'indian-railway-station-codes'
+import { searchTrains } from '@/lib/trains'
 
 type TicketType = 'flight' | 'hotel' | 'bus' | 'event' | 'train'
 type Category = 'travel' | 'hotel' | 'event'
@@ -25,6 +27,15 @@ function TicketBookingForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedPassengers, setSavedPassengers] = useState<any[]>([])
+  const [fromQuery, setFromQuery] = useState('')
+  const [toQuery, setToQuery] = useState('')
+  const [trainQuery, setTrainQuery] = useState('')
+  const [fromOpen, setFromOpen] = useState(false)
+  const [toOpen, setToOpen] = useState(false)
+  const [trainOpen, setTrainOpen] = useState(false)
+  const fromRef = useRef<HTMLDivElement>(null)
+  const toRef = useRef<HTMLDivElement>(null)
+  const trainRef = useRef<HTMLDivElement>(null)
   
   const [category, setCategory] = useState<Category>(initialCategory)
 
@@ -56,9 +67,25 @@ function TicketBookingForm() {
     trainChoice: '',
     specialRequests: '',
     passengers: [
-      { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: '', nidOrAadhar: '', mealPreference: false, mealType: '' }
+      { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: 'Indian', nidOrAadhar: '', mealPreference: false, mealType: '' }
     ]
   })
+
+  // Close autocomplete dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (fromRef.current && !fromRef.current.contains(e.target as Node)) setFromOpen(false)
+      if (toRef.current && !toRef.current.contains(e.target as Node)) setToOpen(false)
+      if (trainRef.current && !trainRef.current.contains(e.target as Node)) setTrainOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Memoized station search results
+  const fromMatches = useMemo(() => fromQuery.length >= 1 ? searchStations(fromQuery).slice(0, 30) : [], [fromQuery])
+  const toMatches = useMemo(() => toQuery.length >= 1 ? searchStations(toQuery).slice(0, 30) : [], [toQuery])
+  const trainMatches = useMemo(() => trainQuery.length >= 1 ? searchTrains(trainQuery).slice(0, 20) : [], [trainQuery])
 
   const updateForm = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -97,7 +124,7 @@ function TicketBookingForm() {
   const addPassenger = () => {
     setFormData(prev => ({
       ...prev,
-      passengers: [...prev.passengers, { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: '', nidOrAadhar: '', mealPreference: false, mealType: '' }]
+      passengers: [...prev.passengers, { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: 'Indian', nidOrAadhar: '', mealPreference: false, mealType: '' }]
     }))
   }
 
@@ -141,7 +168,7 @@ function TicketBookingForm() {
 
       // 2. Submit via SDK
       const { error: submitError } = await submitServiceRequest({
-        serviceSlug: 'ticket_booking',
+        serviceSlug: 'tickets',
         metadata: formData,
         amount: 0,
         currency: 'USD',
@@ -150,7 +177,7 @@ function TicketBookingForm() {
 
       if (submitError) throw new Error(submitError)
 
-      router.push('/dashboard?service=ticket_booking&status=success')
+      router.push('/?service=ticket_booking&status=success')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -159,7 +186,7 @@ function TicketBookingForm() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4 animate-in fade-in duration-500">
+    <div className="max-w-3xl mx-auto py-10 px-4 animate-in fade-in duration-500 [&_button]:cursor-pointer">
       
       <div className="mb-10 text-center">
         <div className="inline-flex w-16 h-16 border-2 border-foreground bg-primary items-center justify-center mb-6 shadow-[4px_4px_0px_var(--color-foreground)]">
@@ -264,60 +291,127 @@ function TicketBookingForm() {
             ) : formData.ticketType === 'train' ? (
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  {/* FROM STATION AUTOCOMPLETE */}
+                  <div className="space-y-2" ref={fromRef}>
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">From Station</label>
-                    <input 
-                      type="text"
-                      value={formData.departureCity}
-                      onChange={(e) => updateForm('departureCity', e.target.value)}
-                      placeholder="E.g., NDLS - New Delhi"
-                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={fromQuery}
+                        onChange={(e) => { setFromQuery(e.target.value); updateForm('departureCity', e.target.value); setFromOpen(true) }}
+                        onFocus={() => setFromOpen(true)}
+                        placeholder="Type station name or code..."
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                      {fromOpen && fromMatches.length > 0 && (
+                        <ul className="absolute z-50 top-full left-0 right-0 bg-white border-2 border-black shadow-[4px_4px_0px_#000] max-h-52 overflow-y-auto">
+                          {fromMatches.map((s) => (
+                            <li
+                              key={s.code}
+                              onMouseDown={() => { const v = `${s.code} - ${s.name}`; updateForm('departureCity', v); setFromQuery(v); setFromOpen(false) }}
+                              className="p-3 font-bold text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground border-b border-black/10 last:border-0"
+                            >
+                              <span className="font-black text-primary">{s.code}</span> — {s.name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-2">
+                  {/* TO STATION AUTOCOMPLETE */}
+                  <div className="space-y-2" ref={toRef}>
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">To Station</label>
-                    <input 
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={toQuery}
+                        onChange={(e) => { setToQuery(e.target.value); updateForm('destinationCity', e.target.value); setToOpen(true) }}
+                        onFocus={() => setToOpen(true)}
+                        placeholder="Type station name or code..."
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                      {toOpen && toMatches.length > 0 && (
+                        <ul className="absolute z-50 top-full left-0 right-0 bg-white border-2 border-black shadow-[4px_4px_0px_#000] max-h-52 overflow-y-auto">
+                          {toMatches.map((s) => (
+                            <li
+                              key={s.code}
+                              onMouseDown={() => { const v = `${s.code} - ${s.name}`; updateForm('destinationCity', v); setToQuery(v); setToOpen(false) }}
+                              className="p-3 font-bold text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground border-b border-black/10 last:border-0"
+                            >
+                              <span className="font-black text-primary">{s.code}</span> — {s.name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* TRAIN CHOICE AUTOCOMPLETE - Moved above Coach/Seat */}
+                <div className="space-y-2" ref={trainRef}>
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Train Choice Preference (Name / Number)</label>
+                  <div className="relative">
+                    <input
                       type="text"
-                      value={formData.destinationCity}
-                      onChange={(e) => updateForm('destinationCity', e.target.value)}
-                      placeholder="E.g., HWH - Howrah"
+                      value={trainQuery}
+                      onChange={(e) => { setTrainQuery(e.target.value); updateForm('trainChoice', e.target.value); setTrainOpen(true) }}
+                      onFocus={() => setTrainOpen(true)}
+                      placeholder="Type train name or number..."
                       className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                     />
+                    {trainOpen && trainMatches.length > 0 && (
+                      <ul className="absolute z-50 top-full left-0 right-0 bg-white border-2 border-black shadow-[4px_4px_0px_#000] max-h-52 overflow-y-auto">
+                        {trainMatches.map((t) => (
+                          <li
+                            key={`${t.number}-${t.name}`}
+                            onMouseDown={() => { const v = `${t.number} - ${t.name}`; updateForm('trainChoice', v); setTrainQuery(v); setTrainOpen(false) }}
+                            className="p-3 font-bold text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground border-b border-black/10 last:border-0"
+                          >
+                            <span className="font-black text-primary">{t.number}</span> — {t.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Coach Class</label>
-                    <input 
-                      type="text"
+                    <select
                       value={formData.coachClass}
                       onChange={(e) => updateForm('coachClass', e.target.value)}
-                      placeholder="E.g., 3AC, 2AC, Sleeper"
-                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none bg-white cursor-pointer"
+                    >
+                      <option value="">Select Coach Class</option>
+                      <option value="1A - First AC">1A - First AC</option>
+                      <option value="2A - Second AC">2A - Second AC</option>
+                      <option value="3A - Third AC">3A - Third AC</option>
+                      <option value="3E - Third AC Economy">3E - Third AC Economy</option>
+                      <option value="SL - Sleeper">SL - Sleeper</option>
+                      <option value="CC - Chair Car">CC - Chair Car</option>
+                      <option value="EC - Executive Chair Car">EC - Executive Chair Car</option>
+                      <option value="2S - Second Seating">2S - Second Seating</option>
+                      <option value="GN - General">GN - General</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Seat Position Preference</label>
-                    <input 
-                      type="text"
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Seat/Berth Preference</label>
+                    <select
                       value={formData.seatPreference}
                       onChange={(e) => updateForm('seatPreference', e.target.value)}
-                      placeholder="E.g., Lower Berth, Side Lower"
-                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
+                      className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none bg-white cursor-pointer"
+                    >
+                      <option value="">No Preference</option>
+                      <option value="Lower Berth">Lower Berth</option>
+                      <option value="Middle Berth">Middle Berth</option>
+                      <option value="Upper Berth">Upper Berth</option>
+                      <option value="Side Lower">Side Lower</option>
+                      <option value="Side Upper">Side Upper</option>
+                      <option value="Window Seat">Window Seat</option>
+                      <option value="Aisle Seat">Aisle Seat</option>
+                    </select>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Train Choice Preference (Name / Number)</label>
-                  <input 
-                    type="text"
-                    value={formData.trainChoice}
-                    onChange={(e) => updateForm('trainChoice', e.target.value)}
-                    placeholder="E.g., 12301 Rajdhani Express"
-                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                  />
                 </div>
               </div>
             ) : (
@@ -444,14 +538,20 @@ function TicketBookingForm() {
                   
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Nationality</label>
-                    <input 
-                      type="text"
+                    <select
                       value={passenger.nationality}
-                      onChange={(e) => updatePassenger(index, 'nationality', e.target.value)}
-                      placeholder="E.g., Indian"
+                      onChange={(e) => {
+                        updatePassenger(index, 'nationality', e.target.value)
+                        // Clear the ID field when switching
+                        updatePassenger(index, 'passportOrIdNumber', '')
+                        updatePassenger(index, 'nidOrAadhar', '')
+                      }}
                       required
-                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
+                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none bg-white cursor-pointer"
+                    >
+                      <option value="Indian">Indian</option>
+                      <option value="Foreigner">Foreigner</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Date of Birth</label>
@@ -463,28 +563,33 @@ function TicketBookingForm() {
                       className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
                     />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Passport Number</label>
-                    <input 
-                      type="text"
-                      value={passenger.passportOrIdNumber}
-                      onChange={(e) => updatePassenger(index, 'passportOrIdNumber', e.target.value)}
-                      placeholder="Optional for domestic travel"
-                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">NID / AADHAR Number</label>
-                    <input 
-                      type="text"
-                      value={passenger.nidOrAadhar}
-                      onChange={(e) => updatePassenger(index, 'nidOrAadhar', e.target.value)}
-                      required
-                      className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                    />
-                  </div>
+                  {passenger.nationality === 'Indian' ? (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Aadhar Number</label>
+                      <input
+                        type="text"
+                        value={passenger.nidOrAadhar}
+                        onChange={(e) => updatePassenger(index, 'nidOrAadhar', e.target.value)}
+                        placeholder="Enter 12-digit Aadhar number"
+                        required
+                        maxLength={12}
+                        className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Passport Number</label>
+                      <input
+                        type="text"
+                        value={passenger.passportOrIdNumber}
+                        onChange={(e) => updatePassenger(index, 'passportOrIdNumber', e.target.value)}
+                        placeholder="Enter passport number"
+                        required
+                        className="w-full p-3 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2 md:col-span-2 bg-white p-4 border-2 border-black">
                     <label className="flex items-center gap-2 cursor-pointer">

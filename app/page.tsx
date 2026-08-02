@@ -12,6 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useWalletTransactions } from "@/hooks/useWalletTransactions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -24,6 +27,18 @@ export default function DashboardPage() {
   const { user, profile } = useAuth();
   const { accounts, isLoading: isWalletLoading } = useWallet();
   const { transactions, isLoading: isTxnLoading } = useWalletTransactions();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Show success toast when redirected from a service request submission
+  useEffect(() => {
+    if (searchParams.get('status') === 'success') {
+      toast.success('Your request has been submitted successfully! Our team will get back to you shortly.', { duration: 5000 });
+      // Clean up the URL to prevent the toast from showing again on refresh
+      router.replace('/', { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const displayName = profile?.username || profile?.full_name || user?.email?.split('@')[0] || 'User';
 
