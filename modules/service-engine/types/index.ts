@@ -61,6 +61,67 @@ export interface ServiceLifecycle {
   author: string;
 }
 
+/* ─── SEO-Specific Types ─── */
+
+export interface SEOKeywords {
+  primary: string[];
+  secondary: string[];
+  longTail: string[];
+}
+
+export interface PaymentMethodInfo {
+  name: string;
+  slug: string;
+  category: 'card' | 'wallet' | 'regional' | 'crypto' | 'bank';
+  supported: boolean;
+  /** If true, the feature is planned but not live */
+  comingSoon?: boolean;
+}
+
+export interface CountryRoute {
+  from: string;
+  to: string;
+  slug: string;
+  /** e.g. "India → Bangladesh" */
+  label: string;
+}
+
+export interface ShoppingPlatform {
+  name: string;
+  slug: string;
+  supported: boolean;
+}
+
+export interface BankOffer {
+  bankName: string;
+  cardName: string;
+  slug: string;
+  supported: boolean;
+}
+
+export interface SEODrivenCTA {
+  /** Displayed text, e.g. "Need to send money to Bangladesh?" */
+  headline: string;
+  /** CTA button text */
+  buttonText: string;
+  /** Link target */
+  href: string;
+}
+
+export interface ServiceSEO {
+  title: string;
+  description: string;
+  keywords: SEOKeywords;
+  relatedSearches: string[];
+  paymentMethods?: PaymentMethodInfo[];
+  countryRoutes?: CountryRoute[];
+  shoppingPlatforms?: ShoppingPlatform[];
+  bankOffers?: BankOffer[];
+  ctaSections?: SEODrivenCTA[];
+}
+
+/* ─── Main ServiceConfig ─── */
+
 export interface ServiceConfig {
   id: string;
   slug: string;
@@ -76,6 +137,9 @@ export interface ServiceConfig {
   seoTitle: string;
   seoDescription: string;
   searchKeywords: string[];
+  
+  /** Extended SEO data for Phase 2.5 discoverability */
+  seo?: ServiceSEO;
   
   media: ServiceMedia;
   
@@ -137,3 +201,4 @@ export interface ServiceConfig {
     icon: LucideIcon;
   }[];
 }
+

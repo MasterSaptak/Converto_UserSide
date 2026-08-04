@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, Loader2, PhoneCall, AlertCircle, X, Clock, Navigation } from 'lucide-react';
@@ -23,7 +23,7 @@ const SERVICE_MAP: Record<string, string> = {
   'medical': 'medical',
 };
 
-export default function InstaOrderPage() {
+function InstaOrderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const type = searchParams.get('type') || 'buy';
@@ -358,5 +358,13 @@ export default function InstaOrderPage() {
         </AnimatePresence>
       </motion.div>
     </div>
+  );
+}
+
+export default function InstaOrderPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-16 h-16 text-primary animate-spin" /></div>}>
+      <InstaOrderContent />
+    </Suspense>
   );
 }

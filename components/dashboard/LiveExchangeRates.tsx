@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Globe, Shield, ChevronDown, TrendingUp, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 
@@ -158,9 +159,12 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                     >
                       {/* Flag Left Section */}
                       <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
-                        <img 
+                        <Image
                           src={flagUrl} 
                           alt={`${currency} flag`}
+                          width={52}
+                          height={52}
+                          unoptimized
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                       </div>
@@ -200,9 +204,12 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
                     >
                       {/* Flag Left Section */}
                       <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
-                        <img 
+                        <Image 
                           src={flagUrl} 
                           alt={`${currency} flag`}
+                          width={52}
+                          height={52}
+                          unoptimized
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                       </div>

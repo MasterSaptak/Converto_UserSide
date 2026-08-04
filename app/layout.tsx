@@ -10,25 +10,59 @@ import { Toaster } from "sonner";
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
 const oswald = Oswald({ subsets: ["latin"], variable: "--font-heading" });
 
+const SITE_URL = "https://converto.saptech.online";
+
 export const metadata: Metadata = {
-  title: "Converto",
-  description: "Global Financial, Payment, Shopping, and Booking Platform",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Converto — International Payments, Shopping, Buy For Me, Education & Medical Services",
+    template: "%s | Converto",
+  },
+  description: "Send money internationally, shop globally with Buy For Me, pay university tuition, book medical tourism, exchange currencies, and discover credit card offers — all through Converto.",
+  keywords: [
+    "international payment", "cross border payment", "send money abroad", "money transfer",
+    "remittance", "send money to Bangladesh", "send money to India",
+    "Bangladesh to India money transfer", "India to Bangladesh remittance",
+    "currency exchange", "forex", "exchange rate", "USD to BDT", "USD to INR",
+    "buy for me", "shopping concierge", "proxy shopping", "personal shopper India",
+    "Amazon offers", "Flipkart offers", "credit card offers", "bank card offers",
+    "Amazon Pay ICICI", "Flipkart Axis", "SBI Cashback", "HDFC Millennia",
+    "education payment", "tuition payment", "study abroad", "university fees",
+    "medical tourism", "hospital booking India", "medical visa",
+    "flight booking", "hotel booking", "visa assistance", "travel services",
+    "PayPal", "Wise", "Remitly", "bKash", "Nagad",
+    "Converto", "global payments", "international financial services",
+  ],
+  applicationName: "Converto",
+  category: "Finance",
   manifest: "/manifest.json",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Converto",
   },
   openGraph: {
-    title: "Converto",
-    description: "Global Financial, Payment, Shopping, and Booking Platform",
-    url: "https://converto.saptech.online",
+    title: "Converto — International Payments, Shopping & Financial Services",
+    description: "Send money globally, shop with Buy For Me, pay tuition abroad, book medical tourism, and exchange currencies at the best rates. Trusted by thousands worldwide.",
+    url: SITE_URL,
     siteName: "Converto",
     images: [
       {
         url: "/opengraph-image.png",
-        width: 1024,
-        height: 1024,
+        width: 1200,
+        height: 630,
+        alt: "Converto — Your Global Financial & Shopping Platform",
       },
     ],
     locale: "en_US",
@@ -36,9 +70,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Converto",
-    description: "Global Financial, Payment, Shopping, and Booking Platform",
+    title: "Converto — International Payments, Shopping & Financial Services",
+    description: "Send money globally, shop with Buy For Me, pay tuition abroad, book medical tourism, and exchange currencies at the best rates.",
     images: ["/opengraph-image.png"],
+    creator: "@converto",
+  },
+  alternates: {
+    canonical: SITE_URL,
   },
 };
 

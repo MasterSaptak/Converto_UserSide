@@ -15,6 +15,14 @@ import {
 import { ServiceConfig } from '@/modules/service-engine/types';
 import { ServiceRegistry } from '@/modules/service-engine/configs';
 import { cn } from '@/lib/utils';
+import {
+  PaymentMethodsSEO,
+  CountryRoutesSEO,
+  ShoppingPlatformsSEO,
+  BankOffersSEO,
+  RelatedSearchesSEO,
+  SEODrivenCTASection,
+} from '@/components/seo/SEOSections';
 
 // Placeholder for future analytics integration
 const trackEvent = (eventName: string, properties?: Record<string, any>) => {
@@ -83,30 +91,60 @@ export function ServiceLandingLayout({ serviceId }: Props) {
 
   if (!config) return null;
 
-  // JSON-LD Schema
-  const structuredData = {
+  // JSON-LD Schema — Service
+  const serviceSchema = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: config.title,
-    description: config.seoDescription || config.shortDescription,
-    provider: { '@type': 'Organization', name: 'Converto', url: 'https://converto.com' },
+    description: config.seo?.description || config.seoDescription || config.shortDescription,
+    provider: { '@type': 'Organization', name: 'Converto', url: 'https://converto.saptech.online' },
     areaServed: 'Worldwide',
-    ...(config.faqs &&
-      config.faqs.length > 0 && {
-        mainEntity: config.faqs.map((faq) => ({
-          '@type': 'Question',
-          name: faq.question,
-          acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-        })),
-      }),
+    serviceType: config.category,
   };
+
+  // JSON-LD Schema — FAQ (separate for richer results)
+  const faqSchema = config.faqs && config.faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: config.faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
+  } : null;
+
+  // JSON-LD Schema — Breadcrumb
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://converto.saptech.online' },
+      { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://converto.saptech.online/services' },
+      { '@type': 'ListItem', position: 3, name: config.title, item: `https://converto.saptech.online/services/${config.slug}` },
+    ],
+  };
+
+  // Collect SEO data
+  const seo = config.seo;
 
   return (
     <div className="w-full bg-background min-h-screen text-foreground selection:bg-primary selection:text-primary-foreground relative pb-28">
-      {/* SEO Schema */}
+      {/* SEO Schema — Service */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
+      {/* SEO Schema — FAQ */}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      {/* SEO Schema — Breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
       {/* ─── Floating Sticky CTA (mobile full-width, desktop bottom-right) ─── */}
@@ -509,7 +547,61 @@ export function ServiceLandingLayout({ serviceId }: Props) {
         )}
 
         {/* ══════════════════════════════════════════════════
-            10. RELATED SERVICES
+            10. SEO — PAYMENT METHODS
+           ══════════════════════════════════════════════════ */}
+        {seo?.paymentMethods && seo.paymentMethods.length > 0 && (
+          <Reveal>
+            <PaymentMethodsSEO methods={seo.paymentMethods} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            11. SEO — COUNTRY ROUTES
+           ══════════════════════════════════════════════════ */}
+        {seo?.countryRoutes && seo.countryRoutes.length > 0 && (
+          <Reveal>
+            <CountryRoutesSEO routes={seo.countryRoutes} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            12. SEO — SHOPPING PLATFORMS
+           ══════════════════════════════════════════════════ */}
+        {seo?.shoppingPlatforms && seo.shoppingPlatforms.length > 0 && (
+          <Reveal>
+            <ShoppingPlatformsSEO platforms={seo.shoppingPlatforms} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            13. SEO — BANK OFFERS
+           ══════════════════════════════════════════════════ */}
+        {seo?.bankOffers && seo.bankOffers.length > 0 && (
+          <Reveal>
+            <BankOffersSEO offers={seo.bankOffers} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            14. SEO — RELATED SEARCHES
+           ══════════════════════════════════════════════════ */}
+        {seo?.relatedSearches && seo.relatedSearches.length > 0 && (
+          <Reveal>
+            <RelatedSearchesSEO searches={seo.relatedSearches} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            15. SEO — INTENT-DRIVEN CTAs
+           ══════════════════════════════════════════════════ */}
+        {seo?.ctaSections && seo.ctaSections.length > 0 && (
+          <Reveal>
+            <SEODrivenCTASection ctas={seo.ctaSections} />
+          </Reveal>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            16. RELATED SERVICES
            ══════════════════════════════════════════════════ */}
         {config.relatedServices && config.relatedServices.length > 0 && (
           <section className="max-w-6xl mx-auto px-4 md:px-8 w-full flex flex-col gap-8 pt-8 border-t border-foreground/10">
