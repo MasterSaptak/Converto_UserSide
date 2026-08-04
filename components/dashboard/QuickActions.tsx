@@ -15,14 +15,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import { IllustrationRegistry } from "@/components/illustrations";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 // ─── Action definitions ────────────────────────────────────
 
 const ACTIONS = [
   {
     href: "/services/buy-for-me/request",
+    infoHref: "/services/buy-for-me",
     label: "Buy For Me",
     desc: "Shop globally",
     illustrationKey: "buy_for_me",
@@ -31,6 +33,7 @@ const ACTIONS = [
   },
   {
     href: "/services/education/request",
+    infoHref: "/services/education",
     label: "Educational Payment",
     desc: "Pay tuition & fees",
     illustrationKey: "education",
@@ -39,6 +42,7 @@ const ACTIONS = [
   },
   {
     href: "/services/tickets/request?type=train",
+    infoHref: "/services/trains",
     label: "Train Ticket Booking",
     desc: "Book railway tickets easily",
     illustrationKey: "ticket_booking",
@@ -47,6 +51,7 @@ const ACTIONS = [
   },
   {
     href: "/services/global-payments/request",
+    infoHref: "/services/global-payments",
     label: "Global Payments",
     desc: "Send money globally",
     illustrationKey: "global_payments",
@@ -55,6 +60,7 @@ const ACTIONS = [
   },
   {
     href: "/services/exchange/request",
+    infoHref: "/services/exchange",
     label: "Currency Exchange",
     desc: "Exchange currencies",
     illustrationKey: "exchange",
@@ -63,6 +69,7 @@ const ACTIONS = [
   },
   {
     href: "/services/medical/request",
+    infoHref: "/services/medical",
     label: "Medical Appointment Booking",
     desc: "Book doctor appointments",
     illustrationKey: "medical",
@@ -75,6 +82,7 @@ const ACTIONS = [
 
 export const QuickActions = React.memo(function QuickActions() {
   const prefersReducedMotion = useReducedMotion();
+  const router = useRouter();
 
   return (
     <section>
@@ -84,10 +92,30 @@ export const QuickActions = React.memo(function QuickActions() {
         Quick Actions
       </div>
 
+      {/* Glow keyframes injected once */}
+      <style jsx global>{`
+        @keyframes info-glow {
+          0%, 100% {
+            box-shadow: 0 0 4px 1px rgba(var(--info-glow-rgb), 0.4), 0 0 8px 2px rgba(var(--info-glow-rgb), 0.15);
+          }
+          50% {
+            box-shadow: 0 0 8px 3px rgba(var(--info-glow-rgb), 0.6), 0 0 16px 6px rgba(var(--info-glow-rgb), 0.25);
+          }
+        }
+      `}</style>
+
       {/* Cards grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-4">
         {ACTIONS.map((action) => {
           const Illustration = IllustrationRegistry[action.illustrationKey as keyof typeof IllustrationRegistry];
+
+          // Parse hex accent to RGB for the glow effect
+          const hexToRgb = (hex: string) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${r}, ${g}, ${b}`;
+          };
 
           return (
             <Link key={action.href} href={action.href} className="block h-full group outline-none">
@@ -107,6 +135,28 @@ export const QuickActions = React.memo(function QuickActions() {
                   boxShadow: "0px 0px 0px rgba(0,0,0,1)",
                 }}
               >
+                {/* ⓘ Info Button — Top Right Corner */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(action.infoHref);
+                  }}
+                  className="absolute top-3 right-3 z-30 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-black/20 hover:bg-white hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+                  style={{
+                    ['--info-glow-rgb' as string]: hexToRgb(action.accent),
+                    animation: 'info-glow 2s ease-in-out infinite',
+                  }}
+                  title="Need Details?"
+                  aria-label={`Info about ${action.label}`}
+                >
+                  <Info
+                    size={14}
+                    style={{ color: action.accent }}
+                    strokeWidth={2.5}
+                  />
+                </button>
+
                 {/* Top: Image Frame */}
                 <div className="relative w-full h-28 md:h-32 border-b-2 border-black bg-zinc-50 overflow-hidden shrink-0">
                   {action.bgImage ? (

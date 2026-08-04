@@ -1,4 +1,4 @@
-import { ShoppingBag, Globe2, ShieldCheck, Truck, Link as LinkIcon, DollarSign, HeadphonesIcon, CreditCard, Stethoscope, BriefcaseMedical, PhoneCall, RefreshCcw, Landmark, Plane, Bus, Train, Ticket, GraduationCap, Building2 } from 'lucide-react';
+import { ShoppingBag, Globe2, ShieldCheck, Truck, Link as LinkIcon, DollarSign, HeadphonesIcon, CreditCard, Stethoscope, BriefcaseMedical, PhoneCall, RefreshCcw, Landmark, Plane, Bus, Train, Ticket, GraduationCap, Building2, Zap } from 'lucide-react';
 import { ServiceConfig } from '@/types/services';
 
 export const buyForMeConfig: ServiceConfig = {
