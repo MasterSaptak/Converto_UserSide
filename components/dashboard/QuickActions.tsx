@@ -22,7 +22,7 @@ import React from 'react';
 
 const ACTIONS = [
   {
-    href: "/services/buy-for-me",
+    href: "/services/buy-for-me/request",
     label: "Buy For Me",
     desc: "Shop globally",
     illustrationKey: "buy_for_me",
@@ -30,7 +30,7 @@ const ACTIONS = [
     accent: "#F97316", // Bus orange
   },
   {
-    href: "/services/education",
+    href: "/services/education/request",
     label: "Educational Payment",
     desc: "Pay tuition & fees",
     illustrationKey: "education",
@@ -38,7 +38,7 @@ const ACTIONS = [
     accent: "#94A3B8", // Education slate
   },
   {
-    href: "/services/tickets?type=train",
+    href: "/services/tickets/request?type=train",
     label: "Train Ticket Booking",
     desc: "Book railway tickets easily",
     illustrationKey: "ticket_booking",
@@ -46,7 +46,7 @@ const ACTIONS = [
     accent: "#06B6D4", // Train cyan
   },
   {
-    href: "/services/global-payments",
+    href: "/services/global-payments/request",
     label: "Global Payments",
     desc: "Send money globally",
     illustrationKey: "global_payments",
@@ -54,7 +54,7 @@ const ACTIONS = [
     accent: "#10B981", // Global emerald
   },
   {
-    href: "/services/exchange",
+    href: "/services/exchange/request",
     label: "Currency Exchange",
     desc: "Exchange currencies",
     illustrationKey: "exchange",
@@ -62,7 +62,7 @@ const ACTIONS = [
     accent: "#E11D48", // Currency pink
   },
   {
-    href: "/services/medical",
+    href: "/services/medical/request",
     label: "Medical Appointment Booking",
     desc: "Book doctor appointments",
     illustrationKey: "medical",

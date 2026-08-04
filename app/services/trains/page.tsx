@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { ServiceLandingLayout } from '@/modules/service-engine/components/ServiceLandingLayout';
 import { ServiceRegistry } from '@/modules/service-engine/configs';
 
-const SERVICE_ID = 'medical';
+const SERVICE_ID = 'trains';
 
 export function generateMetadata(): Metadata {
   const config = ServiceRegistry.get(SERVICE_ID);

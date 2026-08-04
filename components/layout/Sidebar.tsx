@@ -96,6 +96,22 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         </div>
         {mobile && <LiveFooter compact />}
       </div>
+
+      {mobile && (
+        <div className="mt-6 flex flex-col gap-4 border-t-2 border-foreground pt-6">
+          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Company & Legal</span>
+          <nav className="flex flex-col gap-4 text-xs font-bold uppercase tracking-widest">
+            <Link href="/about" className="text-foreground hover:text-primary transition-colors">About Us</Link>
+            <Link href="/faq" className="text-foreground hover:text-primary transition-colors">FAQs</Link>
+            <Link href="/privacy" className="text-foreground hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-foreground hover:text-primary transition-colors">Terms</Link>
+            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">Contact</Link>
+            <Link href="/blog" className="text-foreground hover:text-primary transition-colors">Blog</Link>
+            <Link href="/careers" className="text-foreground hover:text-primary transition-colors">Careers</Link>
+            <Link href="/changelog" className="text-foreground hover:text-primary transition-colors opacity-60">Version 1.0</Link>
+          </nav>
+        </div>
+      )}
     </div>
   );
 
