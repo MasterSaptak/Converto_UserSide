@@ -143,6 +143,74 @@ function TicketBookingForm() {
   const handleNext = () => setStep(s => s + 1)
   const handlePrev = () => setStep(s => s - 1)
 
+  // DateInput: single text field formatted as DD/MM/YYYY
+  // Internally stores YYYY-MM-DD (ISO) in formData for compatibility
+  const isoToDisplay = (iso: string) => {
+    if (!iso) return ''
+    const [y, m, d] = iso.split('-')
+    if (!y || !m || !d) return iso // return as-is if not ISO
+    return `${d}/${m}/${y}`
+  }
+  const displayToIso = (display: string) => {
+    const parts = display.replace(/\D/g, '')
+    if (parts.length < 8) return ''
+    return `${parts.slice(4, 8)}-${parts.slice(2, 4)}-${parts.slice(0, 2)}`
+  }
+  const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>, onChange: (v: string) => void) => {
+    // Strip non-digits, then reformat with slashes
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 8)
+    let formatted = raw
+    if (raw.length > 4) formatted = `${raw.slice(0, 2)}/${raw.slice(2, 4)}/${raw.slice(4)}`
+    else if (raw.length > 2) formatted = `${raw.slice(0, 2)}/${raw.slice(2)}`
+    e.target.value = formatted
+    onChange(displayToIso(formatted))
+  }
+
+  const DateInput = ({ value, onChange, label, placeholder = 'DD/MM/YYYY' }: {
+    value: string; onChange: (v: string) => void; label?: string; placeholder?: string
+  }) => {
+    const hiddenDateRef = useRef<HTMLInputElement>(null)
+    return (
+      <div className="space-y-1">
+        {label && <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">{label}</span>}
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder={placeholder}
+            defaultValue={isoToDisplay(value)}
+            key={value}
+            onChange={(e) => handleDateInput(e, onChange)}
+            className="w-full p-4 pr-12 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+            maxLength={10}
+          />
+          {/* Calendar icon — opens native date picker */}
+          <button
+            type="button"
+            onClick={() => hiddenDateRef.current?.showPicker?.()}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 opacity-40 hover:opacity-100 transition-opacity"
+            aria-label="Open date picker"
+          >
+            <CalendarDays className="w-5 h-5" />
+          </button>
+          {/* Hidden native date input for calendar popup */}
+          <input
+            ref={hiddenDateRef}
+            type="date"
+            className="absolute inset-0 opacity-0 pointer-events-none"
+            tabIndex={-1}
+            value={value || ''}
+            onChange={(e) => {
+              const isoVal = e.target.value // YYYY-MM-DD
+              if (isoVal) onChange(isoVal)
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -458,48 +526,16 @@ function TicketBookingForm() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure Date Range</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">From</span>
-                      <input
-                        type="date"
-                        value={formData.travelStartDate}
-                        onChange={(e) => updateForm('travelStartDate', e.target.value)}
-                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">To</span>
-                      <input
-                        type="date"
-                        value={formData.travelStartDateTo}
-                        onChange={(e) => updateForm('travelStartDateTo', e.target.value)}
-                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                      />
-                    </div>
+                    <DateInput label="From" value={formData.travelStartDate} onChange={(v) => updateForm('travelStartDate', v)} />
+                    <DateInput label="To" value={formData.travelStartDateTo} onChange={(v) => updateForm('travelStartDateTo', v)} />
                   </div>
                 </div>
                 {/* Return Range */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return Date Range (Optional)</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">From</span>
-                      <input
-                        type="date"
-                        value={formData.travelEndDate}
-                        onChange={(e) => updateForm('travelEndDate', e.target.value)}
-                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">To</span>
-                      <input
-                        type="date"
-                        value={formData.travelEndDateTo}
-                        onChange={(e) => updateForm('travelEndDateTo', e.target.value)}
-                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                      />
-                    </div>
+                    <DateInput label="From" value={formData.travelEndDate} onChange={(v) => updateForm('travelEndDate', v)} />
+                    <DateInput label="To" value={formData.travelEndDateTo} onChange={(v) => updateForm('travelEndDateTo', v)} />
                   </div>
                 </div>
               </div>
@@ -507,21 +543,11 @@ function TicketBookingForm() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure / Check-in</label>
-                  <input 
-                    type="date"
-                    value={formData.travelStartDate}
-                    onChange={(e) => updateForm('travelStartDate', e.target.value)}
-                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                  />
+                  <DateInput value={formData.travelStartDate} onChange={(v) => updateForm('travelStartDate', v)} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return / Check-out (Optional)</label>
-                  <input 
-                    type="date"
-                    value={formData.travelEndDate}
-                    onChange={(e) => updateForm('travelEndDate', e.target.value)}
-                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                  />
+                  <DateInput value={formData.travelEndDate} onChange={(v) => updateForm('travelEndDate', v)} />
                 </div>
               </div>
             )}
@@ -759,8 +785,9 @@ function TicketBookingForm() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <button 
-              type="submit" 
+              type="button" 
               disabled={loading}
+              onClick={(e) => handleSubmit(e)}
               className="flex-1 brutal-button bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
