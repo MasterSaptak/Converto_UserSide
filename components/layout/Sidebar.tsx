@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
 import { useRewards } from "@/hooks/useRewards";
 import { LiveFooter } from "./LiveFooter";
+import { AiAssistantWidget } from "@/components/dashboard/AiAssistantWidget";
 
 const DESKTOP_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -86,6 +87,10 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         <Link href="/services/exchange" className="w-full bg-primary text-primary-foreground border-2 border-foreground py-3 text-center text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors shadow-[4px_4px_0px_var(--color-foreground)] hover:shadow-none hover:translate-y-1 hover:translate-x-1">
           New Transfer
         </Link>
+      </div>
+
+      <div className="mt-4">
+        <AiAssistantWidget />
       </div>
 
       <div className="mt-auto pt-4">
