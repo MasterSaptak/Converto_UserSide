@@ -1,0 +1,109 @@
+/* Converto AI — animated intelligence orb */
+@keyframes nova-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-4px) rotate(1deg); }
+}
+
+@keyframes nova-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nova-breathe {
+  0%, 100% { opacity: 0.52; transform: scale(0.94); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+
+@keyframes nova-blink {
+  0%, 43%, 47%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.12); }
+}
+
+@keyframes nova-think {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+.nova-avatar {
+  animation: nova-float 4.5s ease-in-out infinite;
+  isolation: isolate;
+}
+
+.nova-avatar-aura {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.34) 0%, rgba(139, 92, 246, 0.14) 44%, transparent 72%);
+  filter: blur(5px);
+  animation: nova-breathe 3.2s ease-in-out infinite;
+}
+
+.nova-avatar-orbit {
+  animation: nova-orbit 9s linear infinite;
+}
+
+.nova-avatar-core {
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255,255,255,0.96) 0%, rgba(196,181,253,0.82) 13%, transparent 28%),
+    radial-gradient(circle at 68% 78%, rgba(244,63,94,0.48) 0%, transparent 38%),
+    linear-gradient(145deg, #818cf8 0%, #5b5ce2 42%, #6d28d9 72%, #312e81 100%);
+  transition: filter 300ms ease, transform 300ms ease, box-shadow 300ms ease;
+}
+
+.nova-avatar-eye {
+  transform-origin: center;
+  animation: nova-blink 5.2s ease-in-out infinite;
+}
+
+.nova-avatar[data-state="thinking"] .nova-avatar-orbit {
+  animation-duration: 2.4s;
+}
+
+.nova-avatar[data-state="thinking"] .nova-avatar-core {
+  filter: saturate(1.2) brightness(1.07);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.82), 0 0 34px rgba(99,102,241,0.48);
+}
+
+.nova-avatar[data-state="speaking"] .nova-avatar-aura {
+  animation-duration: 1.45s;
+}
+
+.nova-avatar[data-state="speaking"] .nova-avatar-core {
+  filter: saturate(1.1) brightness(1.04);
+}
+
+.nova-ambient {
+  background:
+    radial-gradient(circle at 16% 8%, rgba(99,102,241,0.11), transparent 30%),
+    radial-gradient(circle at 86% 12%, rgba(244,63,94,0.07), transparent 27%),
+    linear-gradient(180deg, rgba(255,255,255,0.2), transparent 42%);
+}
+
+.nova-chat-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 58%);
+}
+
+.nova-thinking-dot {
+  display: inline-block;
+  animation: nova-think 1s ease-in-out infinite;
+}
+
+.dark .nova-ambient {
+  background:
+    radial-gradient(circle at 16% 8%, rgba(99,102,241,0.2), transparent 32%),
+    radial-gradient(circle at 86% 12%, rgba(244,63,94,0.12), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 42%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-avatar,
+  .nova-avatar-aura,
+  .nova-avatar-orbit,
+  .nova-avatar-eye,
+  .nova-thinking-dot {
+    animation: none !important;
+  }
+}

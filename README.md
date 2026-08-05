@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Converto AI
+
+The authenticated assistant is available at `/ai`. It uses current customer rewards, recent service requests, and published Converto currency rates as read-only context.
+
+Copy `.env.example` to `.env.local` and configure:
+
+```bash
+OPENAI_API_KEY=your_server_side_key
+OPENAI_MODEL=gpt-5.6-sol
+```
+
+Keep `OPENAI_API_KEY` server-side and never prefix it with `NEXT_PUBLIC_`. Without a key, the chat automatically runs in guided demo mode so the interface and Converto routing remain testable.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
