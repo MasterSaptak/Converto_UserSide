@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft, Download, Ticket } from "lucide-react";
 import { useServiceRequests } from '@/hooks/useServiceRequests';
 import { useAuth } from '@/hooks/useAuth';
 import type { ServiceRequest } from '@/types/database';
@@ -188,7 +188,9 @@ export default function TrackOrderPage() {
                       </span>
                       <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
                     </div>                    {/* Dynamic Step based on pipeline status */}
-                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'quote_sent' ? (
+                    {(['quote_sent', 'reviewing_quote', 'awaiting_payment'].includes(
+                      (selectedRequest as unknown as ExtendedRequest).status_obj?.code ?? ''
+                    )) ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -212,6 +214,32 @@ export default function TrackOrderPage() {
                           {new Date(selectedRequest.updated_at).toLocaleString()}
                         </span>
                         <p className="text-xs uppercase font-bold opacity-80">Service request fulfilled successfully.</p>
+
+                        {/* Ticket issued — show PNR and download link */}
+                        {((selectedRequest.metadata as any)?.ticketPnr || (selectedRequest.metadata as any)?.ticketFileUrl) && (
+                          <div className="mt-4 border-2 border-emerald-500 bg-emerald-50 p-4 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Ticket className="w-5 h-5 text-emerald-600" />
+                              <span className="font-black uppercase tracking-widest text-xs text-emerald-800">Your Ticket is Ready!</span>
+                            </div>
+                            {(selectedRequest.metadata as any)?.ticketPnr && (
+                              <div className="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">PNR / Booking Ref</span>
+                                <span className="font-mono font-black text-sm">{(selectedRequest.metadata as any).ticketPnr}</span>
+                              </div>
+                            )}
+                            {(selectedRequest.metadata as any)?.ticketFileUrl && (
+                              <a
+                                href={(selectedRequest.metadata as any).ticketFileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full border-2 border-foreground bg-foreground text-background font-bold uppercase tracking-widest text-xs py-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all"
+                              >
+                                <Download className="w-4 h-4" /> Download E-Ticket
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ) : (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'closed' ? (
                       <div className="relative pl-8">

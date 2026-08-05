@@ -20,12 +20,13 @@ export default function CheckoutPage() {
       try {
         const { data: orderData, error: orderError } = await supabase
           .from('service_requests')
-          .select('*, services(name)')
+          .select('*, services(name), status_obj:pipeline_statuses(code, name)')
           .eq('id', params.id)
           .single()
 
         if (orderError) throw orderError
-        if (orderData.status_code !== 'awaiting_payment' && orderData.status_code !== 'quote_sent') {
+        const statusCode = (orderData as any).status_obj?.code ?? orderData.status_code
+        if (!['awaiting_payment', 'quote_sent', 'reviewing_quote'].includes(statusCode)) {
           router.push('/dashboard')
           return
         }
