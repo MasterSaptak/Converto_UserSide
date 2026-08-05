@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users, Train } from 'lucide-react'
+import { Ticket, ArrowRight, ArrowLeft, Loader2, Plane, Hotel, Bus, CalendarDays, Users, Train, Info } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { submitServiceRequest } from '@/hooks/useServiceRequests'
 import { searchStations } from 'indian-railway-station-codes'
@@ -60,11 +60,14 @@ function TicketBookingForm() {
     departureCity: '',
     destinationCity: '',
     travelStartDate: '',
+    travelStartDateTo: '',
     travelEndDate: '',
+    travelEndDateTo: '',
     eventName: '',
     coachClass: '',
     seatPreference: '',
     trainChoice: '',
+    budget: '',
     specialRequests: '',
     passengers: [
       { firstName: '', lastName: '', passportOrIdNumber: '', dob: '', nationality: 'Indian', nidOrAadhar: '', mealPreference: false, mealType: '' }
@@ -442,26 +445,86 @@ function TicketBookingForm() {
               </div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure / Check-in</label>
-                <input 
-                  type="date"
-                  value={formData.travelStartDate}
-                  onChange={(e) => updateForm('travelStartDate', e.target.value)}
-                  className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                />
+            {formData.ticketType === 'train' ? (
+              <div className="space-y-4">
+                {/* Info tooltip */}
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border-2 border-blue-300">
+                  <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-800 leading-relaxed">
+                    Train tickets on your preferred date may be waitlisted. Providing a flexible date range helps us book the earliest confirmed ticket for you.
+                  </p>
+                </div>
+                {/* Departure Range */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure Date Range</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">From</span>
+                      <input
+                        type="date"
+                        value={formData.travelStartDate}
+                        onChange={(e) => updateForm('travelStartDate', e.target.value)}
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">To</span>
+                      <input
+                        type="date"
+                        value={formData.travelStartDateTo}
+                        onChange={(e) => updateForm('travelStartDateTo', e.target.value)}
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* Return Range */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return Date Range (Optional)</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">From</span>
+                      <input
+                        type="date"
+                        value={formData.travelEndDate}
+                        onChange={(e) => updateForm('travelEndDate', e.target.value)}
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">To</span>
+                      <input
+                        type="date"
+                        value={formData.travelEndDateTo}
+                        onChange={(e) => updateForm('travelEndDateTo', e.target.value)}
+                        className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return / Check-out (Optional)</label>
-                <input 
-                  type="date"
-                  value={formData.travelEndDate}
-                  onChange={(e) => updateForm('travelEndDate', e.target.value)}
-                  className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
-                />
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Departure / Check-in</label>
+                  <input 
+                    type="date"
+                    value={formData.travelStartDate}
+                    onChange={(e) => updateForm('travelStartDate', e.target.value)}
+                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Return / Check-out (Optional)</label>
+                  <input 
+                    type="date"
+                    value={formData.travelEndDate}
+                    onChange={(e) => updateForm('travelEndDate', e.target.value)}
+                    className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+                  />
+                </div>
               </div>
-            </div>
+            )}
             
             <button 
               type="button"
@@ -662,6 +725,16 @@ function TicketBookingForm() {
           <h2 className="text-2xl font-black uppercase tracking-tight mb-6">3. Special Requests</h2>
           
           <div className="space-y-4 mb-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Intended Budget</label>
+              <input 
+                type="text"
+                value={formData.budget}
+                onChange={(e) => updateForm('budget', e.target.value)}
+                placeholder="E.g., ₹5000, $200, or Flexible"
+                className="w-full p-4 border-2 border-black font-bold focus:ring-2 ring-primary outline-none"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Any preferences or special instructions?</label>
               <textarea 
