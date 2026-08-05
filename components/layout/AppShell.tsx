@@ -10,7 +10,6 @@ import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { Loader2 } from 'lucide-react';
 import { ContentPopup } from '@/components/content/ContentPopup';
 
-import { NeedHelpCTA } from '@/components/layout/NeedHelpCTA';
 import { ResponsiveFooter } from '@/components/layout/ResponsiveFooter';
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
@@ -66,8 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 px-4 py-5 md:p-12 md:pt-24 shrink-0">
             {children}
           </div>
-          <div className="shrink-0 flex flex-col w-full">
-            <NeedHelpCTA />
+          <div className="shrink-0 flex flex-col w-full mt-auto">
             <ResponsiveFooter />
           </div>
         </main>

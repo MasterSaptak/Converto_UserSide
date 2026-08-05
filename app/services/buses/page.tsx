@@ -14,13 +14,13 @@ export function generateMetadata(): Metadata {
     openGraph: {
       title: config.seoTitle || config.title,
       description: config.seoDescription || config.shortDescription,
-      url: 'https://converto.com/services/' + config.slug,
+      url: 'https://converto.saptech.online/services/' + config.slug,
       siteName: 'Converto',
       images: [{ url: config.media?.socialPreview || '/default-og.png', width: 1200, height: 630, alt: config.title }],
       type: 'website',
     },
     twitter: { card: 'summary_large_image', title: config.seoTitle || config.title, description: config.seoDescription || config.shortDescription, images: [config.media?.socialPreview || '/default-og.png'] },
-    alternates: { canonical: 'https://converto.com/services/' + config.slug }
+    alternates: { canonical: 'https://converto.saptech.online/services/' + config.slug }
   };
 }
 

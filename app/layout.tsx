@@ -6,6 +6,8 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { Toaster } from "sonner";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { UnregisterSW } from "@/components/layout/UnregisterSW";
 
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
 const oswald = Oswald({ subsets: ["latin"], variable: "--font-heading" });
@@ -57,14 +59,6 @@ export const metadata: Metadata = {
     description: "Send money globally, shop with Buy For Me, pay tuition abroad, book medical tourism, and exchange currencies at the best rates. Trusted by thousands worldwide.",
     url: SITE_URL,
     siteName: "Converto",
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Converto — Your Global Financial & Shopping Platform",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -72,7 +66,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Converto — International Payments, Shopping & Financial Services",
     description: "Send money globally, shop with Buy For Me, pay tuition abroad, book medical tourism, and exchange currencies at the best rates.",
-    images: ["/opengraph-image.png"],
     creator: "@converto",
   },
   alternates: {
@@ -93,6 +86,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const orgSchema = {
+    type: 'Organization' as const,
+    name: 'Converto',
+    url: SITE_URL,
+    logo: `${SITE_URL}/Logo.png`,
+    sameAs: []
+  };
+
+  const webSchema = {
+    type: 'WebSite' as const,
+    name: 'Converto',
+    url: SITE_URL,
+  };
+
   return (
     <html lang="en" className={cn("font-mono antialiased", spaceMono.variable, oswald.variable)} suppressHydrationWarning>
       <head>
@@ -100,6 +107,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background text-foreground">
+        <UnregisterSW />
+        <JsonLd data={[orgSchema, webSchema]} />
         <QueryProvider>
           <AuthProvider>
           <AppShell>

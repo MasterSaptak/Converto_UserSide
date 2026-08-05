@@ -14,6 +14,7 @@ export interface UserProfile {
   preferred_currency: string;
   avatar_url: string | null;
   updated_at: string | null;
+  role?: string | null;
 }
 
 interface AuthContextType {
