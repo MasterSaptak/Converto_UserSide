@@ -1,60 +1,99 @@
 'use client';
 
-import React from 'react';
+/* eslint-disable @next/next/no-img-element */
+
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { IllustrationRegistry } from '@/components/illustrations';
+import { supabase } from '@/lib/supabase';
 
-const RECOMMENDATIONS = [
-  {
-    id: 'amazon',
-    title: 'Amazon US',
-    category: 'Buy For Me',
-    image: '/amazon-logo.png', // Fallback or assume it exists, or just use illustration
-    illustration: 'buy_for_me',
-    accent: '#F97316',
-    href: '/services/buy-for-me/request?store=amazon'
-  },
-  {
-    id: 'apple',
-    title: 'Apple Store',
-    category: 'Buy For Me',
-    illustration: 'buy_for_me',
-    accent: '#000000',
-    href: '/services/buy-for-me/request?store=apple'
-  },
-  {
-    id: 'harvard',
-    title: 'Education Discounts',
-    category: 'Education',
-    illustration: 'education',
-    accent: '#94A3B8',
-    href: '/services/education/request'
-  },
-  {
-    id: 'steam',
-    title: 'Steam Wallet',
-    category: 'Gift Cards',
-    illustration: 'ticket_booking',
-    accent: '#06B6D4',
-    href: '/services/buy-for-me/request?type=giftcard'
-  }
-];
+interface CatalogSubscription {
+  id: string;
+  name: string;
+  category: string;
+  accent_color: string;
+  logo_url: string | null;
+}
+
+interface Recommendation {
+  id: string;
+  title: string;
+  category: string;
+  illustration: keyof typeof IllustrationRegistry;
+  accent: string;
+  logoUrl?: string | null;
+  href: string;
+}
+
+const SUBSCRIPTIONS_FALLBACK: Recommendation = {
+  id: 'app-subscriptions',
+  title: 'App Subscriptions',
+  category: 'Digital Services',
+  illustration: 'digital_content',
+  accent: '#EC4899',
+  href: '/services/subscriptions'
+};
+
+function safeAccent(value: string) {
+  return /^#[0-9A-Fa-f]{6}$/.test(value) ? value : '#EC4899';
+}
 
 export const RecommendedServices = React.memo(function RecommendedServices() {
+  const [subscriptions, setSubscriptions] = useState<CatalogSubscription[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSubscriptions() {
+      const { data, error } = await supabase
+        .from('app_subscriptions')
+        .select('id, name, category, accent_color, logo_url')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true })
+        .limit(8);
+
+      if (active && !error) {
+        setSubscriptions((data ?? []) as CatalogSubscription[]);
+      }
+    }
+
+    void loadSubscriptions();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const recommendations = useMemo<Recommendation[]>(() => {
+    const subscriptionRecommendations = subscriptions.map((subscription) => ({
+      id: `subscription-${subscription.id}`,
+      title: subscription.name,
+      category: subscription.category,
+      illustration: 'digital_content' as const,
+      accent: safeAccent(subscription.accent_color),
+      logoUrl: subscription.logo_url,
+      href: `/services/buy-for-me/request?type=subscription&app=${encodeURIComponent(subscription.id)}`
+    }));
+
+    return subscriptionRecommendations.length > 0
+      ? subscriptionRecommendations
+      : [SUBSCRIPTIONS_FALLBACK];
+  }, [subscriptions]);
+
   return (
     <section>
       <div className="font-bold uppercase text-[10px] tracking-[0.2em] mb-4 flex items-center gap-2 opacity-80">
         <Sparkles className="w-3 h-3 text-yellow-500" />
-        Recommended For You
+        Recommended Subscriptions
       </div>
       <div className="text-sm font-bold opacity-60 uppercase mb-4 tracking-widest">
-        Because you used Buy For Me
+        Popular apps and digital subscriptions
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {RECOMMENDATIONS.map((rec) => {
-          const Illustration = IllustrationRegistry[rec.illustration as keyof typeof IllustrationRegistry];
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
+        {recommendations.map((rec) => {
+          const Illustration = IllustrationRegistry[rec.illustration];
           
           return (
             <Link key={rec.id} href={rec.href} className="block group">
@@ -63,9 +102,16 @@ export const RecommendedServices = React.memo(function RecommendedServices() {
                    {Illustration && (
                      <Illustration size={32} accent={rec.accent} animated={false} />
                    )}
+                   {rec.logoUrl && (
+                     <img
+                       src={rec.logoUrl}
+                       alt={`${rec.title} logo`}
+                       className="absolute inset-0 w-full h-full object-contain p-2 bg-white"
+                     />
+                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold uppercase text-xs md:text-sm truncate">
+                  <div className="font-bold uppercase text-xs md:text-sm leading-tight">
                     {rec.title}
                   </div>
                   <div className="text-[9px] font-bold opacity-60 uppercase tracking-widest mt-1">
