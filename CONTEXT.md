@@ -195,3 +195,18 @@ The customer portal has a database-driven subscription catalog. It is not a hard
 - **Responsive navigation:** `Sidebar.tsx` has a shared, complete navigation list for desktop and mobile, including **App Subscriptions**. The desktop sidebar begins at `lg`; `MobileSidebar.tsx` is controlled and closes when the pathname changes so it cannot cover the destination page after navigation.
 - **Current live catalog (2026-08-06):** Netflix Premium, Spotify Premium, ChatGPT Plus, Xbox Game Pass, YouTube Premium, Disney+ Premium, Prime Video, Apple Music, Canva Pro, Adobe Creative Cloud, Discord Nitro, and PlayStation Plus. Eight appear on the dashboard; all active rows appear in the catalog.
 - **Verification completed:** UserSide TypeScript passed; browser checks confirmed 12 catalog cards and logo images, eight dashboard recommendations, direct subscription request routing, and no horizontal overflow at phone and desktop widths.
+
+
+# 33. Core Dashboard and Layout Architecture (2026-08)
+A comprehensive redesign of the customer dashboard and layout architecture introduced in early August 2026.
+- **Layout Architecture**: Centralized around `AppShell`, `Sidebar`, `MobileSidebar`, `ResponsiveFooter`, and `BottomNav`.
+- **Dashboard Widgets**: New modules include `HeroDashboard`, `FinancialOverview`, `LiveExchangeRates`, `QuickActions`, `RecentTransactions`, `RecommendedServices`, `RequestStatusTracker`, and `RewardsProgress`.
+- **Static Pages**: Robust "About Us" structure containing sections for `BrandEntity`, `HowItWorks`, `Differentiators`, `MissionVision`, and more.
+- **AI Assistant**: A `AiAssistantWidget` placeholder added to signal the upcoming "Converto AI" feature.
+
+# 34. SEO Framework and Dynamic Landing Pages (2026-08)
+A comprehensive SEO framework implemented to support static and dynamic routing.
+- **Dynamic Services and Offers**: Added dedicated routes under `/offers/[slug]`, `/payments/[slug]`, `/payments/corridors/[slug]`, and `/shopping/[slug]`.
+- **SEO Infrastructure**: Added `app/sitemap.ts`, `app/robots.ts`, and a scalable structured data component (`JsonLd.tsx`).
+- **Landing Page Layouts**: Implemented `ServiceLandingLayout` which dynamically renders SEO metadata, hero sections, and features per service category. Configuration schemas live in `modules/service-engine/configs`.
+- **Content Dictionaries**: Hardcoded taxonomy structures added in `lib/seo/` for `countries.ts`, `currencies.ts`, `faq.ts`, `services.ts`, etc., acting as the backbone for static generation and internal linking.
