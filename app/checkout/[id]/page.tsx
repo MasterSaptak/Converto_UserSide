@@ -77,8 +77,8 @@ export default function CheckoutPage() {
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Send mock webhook to ServerApp
-      const res = await fetch('http://localhost:3000/api/webhooks/mock-payment', {
+      // Process payment via local proxy (avoids cross-origin issues)
+      const res = await fetch('/api/payments/mock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +93,7 @@ export default function CheckoutPage() {
 
       setPaymentSuccess(true)
       setTimeout(() => {
-        router.push('/dashboard?payment=success')
+        router.push('/track?payment=success')
         router.refresh()
       }, 3000)
     } catch (err: any) {
