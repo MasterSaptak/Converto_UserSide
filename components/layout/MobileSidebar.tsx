@@ -1,12 +1,21 @@
 'use client'
 
+import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 import { Sidebar } from "./Sidebar"
 
 export function MobileSidebar() {
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger className="flex flex-col items-center justify-center gap-0.5 w-[60px] h-full text-[9px] font-bold uppercase transition-colors text-foreground opacity-60 hover:opacity-100 bg-transparent border-none p-0 focus:outline-none">
         <Menu className="w-5 h-5 stroke-2" />
         <span>Menu</span>

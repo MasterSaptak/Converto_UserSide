@@ -8,8 +8,9 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { DesktopHeader } from '@/components/layout/DesktopHeader';
 import { Loader2 } from 'lucide-react';
-import { LiveFooter } from '@/components/layout/LiveFooter';
 import { ContentPopup } from '@/components/content/ContentPopup';
+
+import { ResponsiveFooter } from '@/components/layout/ResponsiveFooter';
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
@@ -60,12 +61,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-h-screen min-w-0 relative">
         <DesktopHeader />
         <MobileHeader />
-        <main className="flex-1 flex flex-col px-4 py-5 md:p-12 md:pt-24 overflow-y-auto pb-24 md:pb-12">
-          {children}
+        <main className="flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 min-w-0 px-4 py-5 pb-24 sm:px-5 md:px-6 md:py-8 md:pb-24 lg:p-8 lg:pt-24 xl:p-12 xl:pt-24 shrink-0">
+            {children}
+          </div>
+          <div className="shrink-0 flex flex-col w-full mt-auto">
+            <ResponsiveFooter />
+          </div>
         </main>
-        <div className="hidden md:block px-4 md:px-12 bg-background">
-          <LiveFooter />
-        </div>
         <BottomNav />
       </div>
       {/* Inside the authenticated branch on purpose — a marketing modal must

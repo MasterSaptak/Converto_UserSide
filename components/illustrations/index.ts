@@ -24,6 +24,7 @@ export { TicketBookingIllustration } from "./TicketBooking";
 export { EducationIllustration } from "./Education";
 export { MoneyTransferIllustration } from "./MoneyTransfer";
 export { TrackingIllustration } from "./Tracking";
+export { DigitalContentIllustration } from "./DigitalContent";
 
 // ─── Future-proof registry ─────────────────────────────────
 
@@ -36,6 +37,7 @@ import { TicketBookingIllustration } from "./TicketBooking";
 import { EducationIllustration } from "./Education";
 import { MoneyTransferIllustration } from "./MoneyTransfer";
 import { TrackingIllustration } from "./Tracking";
+import { DigitalContentIllustration } from "./DigitalContent";
 
 /**
  * Registry mapping service keys → illustration components.
@@ -50,4 +52,5 @@ export const IllustrationRegistry: Record<string, ComponentType<IllustrationProp
   education: EducationIllustration,
   global_payments: MoneyTransferIllustration,
   track: TrackingIllustration,
+  digital_content: DigitalContentIllustration,
 };

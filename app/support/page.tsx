@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, Mail, FileText, ArrowRight, ShieldCheck, Clock, UserCheck, Send, X, ChevronDown, Sparkles, Loader2, User, Bot } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { staggerContainer, fadeUp, fadeUpItem } from "@/lib/animations";
 import { supabase } from "@/lib/supabase";
@@ -549,7 +550,7 @@ export default function SupportPage() {
                       >
                         <div className={`w-8 h-8 shrink-0 rounded-full border-2 border-foreground flex items-center justify-center shadow-[2px_2px_0px_var(--color-foreground)] overflow-hidden ${isUser ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-900'}`}>
                           {msg.avatarUrl ? (
-                            <img src={msg.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            <Image src={msg.avatarUrl} alt="Avatar" width={32} height={32} className="w-full h-full object-cover" unoptimized />
                           ) : (
                             isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />
                           )}

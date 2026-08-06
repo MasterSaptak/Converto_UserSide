@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
@@ -258,26 +259,39 @@ function TicketBookingForm() {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 animate-in fade-in duration-500 [&_button]:cursor-pointer">
-      
-      <div className="mb-10 text-center">
-        <div className="inline-flex w-16 h-16 border-2 border-foreground bg-primary items-center justify-center mb-6 shadow-[4px_4px_0px_var(--color-foreground)]">
-          <Ticket className="w-8 h-8 text-primary-foreground" />
-        </div>
-        <h1 className="text-4xl font-black uppercase tracking-tighter">
-          {formData.ticketType} Booking
-        </h1>
-        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-2">
-          {formData.ticketType === 'train' ? 'Railway Tickets' : 
-           formData.ticketType === 'flight' ? 'Domestic & International Flights' : 
-           formData.ticketType === 'bus' ? 'Intercity Bus Travel' : 
-           formData.ticketType === 'hotel' ? 'Book your perfect stay' : 
-           formData.ticketType === 'event' ? 'Secure passes to major events' : 'Flights, Hotels, Events & More'}
-        </p>
-      </div>
 
-      <div className="flex gap-2 mb-8">
-        {[1, 2, 3].map(i => (
-          <div key={i} className={`h-2 flex-1 border-2 border-foreground ${step >= i ? 'bg-primary' : 'bg-transparent'}`} />
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { Plane, Building2, Train, Bus, Ticket } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Travel & Booking Portal | Converto',
+  description: 'Book flights, hotels, trains, buses, and events globally.',
+};
+
+export default function TicketsPortalPage() {
+  const options = [
+    { name: 'Flights', icon: Plane, href: '/services/flights' },
+    { name: 'Hotels', icon: Building2, href: '/services/hotels' },
+    { name: 'Trains', icon: Train, href: '/services/trains' },
+    { name: 'Buses', icon: Bus, href: '/services/buses' },
+    { name: 'Events', icon: Ticket, href: '/services/events' },
+  ];
+
+  return (
+    <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 font-mono">
+      <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4 text-center">Where do you want to go?</h1>
+      <p className="text-muted-foreground mb-12 text-center uppercase tracking-widest">Select a booking service to continue</p>
+
+      
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-6xl mx-auto w-full">
+        {options.map((opt) => (
+          <Link key={opt.name} href={opt.href} className="group relative w-full aspect-square border-2 border-foreground bg-white shadow-[6px_6px_0px_var(--color-foreground)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_var(--color-foreground)] transition-all flex flex-col items-center justify-center gap-4">
+            <div className="p-4 bg-primary/10 rounded-full group-hover:scale-110 transition-transform">
+              <opt.icon className="w-8 h-8 text-primary" />
+            </div>
+            <span className="font-bold uppercase tracking-widest">{opt.name}</span>
+          </Link>
         ))}
       </div>
 
@@ -801,13 +815,5 @@ function TicketBookingForm() {
 
       </form>
     </div>
-  )
-}
-
-export default function TicketBookingPage() {
-  return (
-    <Suspense fallback={<div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
-      <TicketBookingForm />
-    </Suspense>
-  )
+  );
 }

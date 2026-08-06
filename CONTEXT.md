@@ -183,3 +183,15 @@ Run it after any change to case RLS or the submission path.
 # 30. AI Continuation Notes
 - **TypeScript Compliance**: Never use `any` types or strict generics on `SupabaseClient` that trigger `never` table inference in Vercel builds.
 - **Realtime Listeners**: Ensure unmount cleanups are always handled (`supabase.removeChannel`).
+
+# 32. Digital App Subscriptions Catalog - v32 (2026-08)
+
+The customer portal has a database-driven subscription catalog. It is not a hardcoded services list.
+
+- **Catalog route:** `/services/subscriptions` (`app/services/subscriptions/page.tsx`) reads active `app_subscriptions` rows, offers category filters, and sends customers to `/services/buy-for-me/request?type=subscription&app=<uuid>`.
+- **Request route:** `app/services/buy-for-me/request/page.tsx` selects `SubscriptionRequestForm` for `type=subscription`; `actions.ts` re-checks that the supplied UUID is active before creating the `buy_for_me` request. Keep the UUID validation server-side; never trust the label or category passed by the browser.
+- **Dashboard recommendations:** `components/dashboard/RecommendedServices.tsx` reads the first eight active rows ordered by `sort_order`, then `name`. It renders `logo_url` when supplied and falls back to the digital-content illustration if the catalog is unavailable. Do not reintroduce unrelated Buy For Me, education, or gift-card recommendations into this block.
+- **Brand presentation:** Subscription logos are data (`logo_url`), not bundled assets. Current seed rows use verified brand glyph/favicons and display with `object-contain`; staff may replace any URL in the admin portal without a UserSide deployment.
+- **Responsive navigation:** `Sidebar.tsx` has a shared, complete navigation list for desktop and mobile, including **App Subscriptions**. The desktop sidebar begins at `lg`; `MobileSidebar.tsx` is controlled and closes when the pathname changes so it cannot cover the destination page after navigation.
+- **Current live catalog (2026-08-06):** Netflix Premium, Spotify Premium, ChatGPT Plus, Xbox Game Pass, YouTube Premium, Disney+ Premium, Prime Video, Apple Music, Canva Pro, Adobe Creative Cloud, Discord Nitro, and PlayStation Plus. Eight appear on the dashboard; all active rows appear in the catalog.
+- **Verification completed:** UserSide TypeScript passed; browser checks confirmed 12 catalog cards and logo images, eight dashboard recommendations, direct subscription request routing, and no horizontal overflow at phone and desktop widths.

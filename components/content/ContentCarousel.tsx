@@ -78,7 +78,7 @@ export const ContentCarousel = React.memo(function ContentCarousel({
       aria-label="Offers and announcements"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      className="relative border-2 border-foreground bg-card w-full overflow-hidden shadow-[6px_6px_0px_var(--color-foreground)] mb-6"
+      className="relative border-2 border-foreground bg-card w-full overflow-hidden rounded-xl shadow-brutal hover-lift mb-6"
     >
       {/* Accent rail: a solid theme-coloured bar so the unit reads as a promo
           block at a glance, even before the copy is read. */}
@@ -97,7 +97,7 @@ export const ContentCarousel = React.memo(function ContentCarousel({
       {/* Controls */}
       {items.length > 1 && (
         <>
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 border-t-2 border-foreground bg-card px-4 py-2.5 z-20">
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 border-t-2 border-foreground bg-card px-4 py-3 z-20">
             {/* Counter — makes it obvious there is more than one thing here. */}
             <span className="font-mono text-[11px] font-bold tracking-widest tabular-nums shrink-0">
               {String(currentIndex + 1).padStart(2, '0')}
@@ -112,7 +112,7 @@ export const ContentCarousel = React.memo(function ContentCarousel({
                   aria-label={`Go to slide ${idx + 1}: ${item.title}`}
                   aria-current={idx === currentIndex}
                   className={cn(
-                    'h-2 border-2 border-foreground transition-all duration-300',
+                    'h-2 border-2 border-foreground transition-all duration-300 rounded-full',
                     idx === currentIndex ? 'w-8 bg-foreground' : 'w-2 bg-transparent hover:bg-foreground/20'
                   )}
                 />
@@ -123,14 +123,14 @@ export const ContentCarousel = React.memo(function ContentCarousel({
               <button
                 onClick={() => go((currentIndex - 1 + items.length) % items.length)}
                 aria-label="Previous"
-                className="border-2 border-foreground p-1 hover:bg-foreground hover:text-background transition-colors"
+                className="border-2 border-foreground p-1.5 hover:bg-foreground hover:text-background transition-colors rounded-lg"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => go((currentIndex + 1) % items.length)}
                 aria-label="Next"
-                className="border-2 border-foreground p-1 hover:bg-foreground hover:text-background transition-colors"
+                className="border-2 border-foreground p-1.5 hover:bg-foreground hover:text-background transition-colors rounded-lg"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -179,7 +179,7 @@ function Slide({
       ref={setRefs}
       aria-hidden={!isActive}
       aria-roledescription="slide"
-      className="w-full shrink-0 grow-0 relative min-h-[260px] md:min-h-[300px] flex items-stretch"
+      className="w-full shrink-0 grow-0 relative min-h-[180px] md:min-h-[300px] flex items-stretch"
     >
       {/* Visual background (always full width) */}
       <div className={cn(
@@ -223,11 +223,11 @@ function Slide({
         <div className="flex-1 flex flex-col justify-center p-6 md:p-10 pb-20 md:pb-16 relative z-10 pointer-events-none">
           <div className="flex flex-col items-start gap-4 pointer-events-auto max-w-2xl">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 border-2 border-foreground shrink-0 shadow-[3px_3px_0px_var(--color-foreground)] bg-card">
+              <div className="p-2.5 border-2 border-foreground shrink-0 shadow-brutal bg-card rounded-xl">
                 <Icon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               {item.tag && (
-                <span className={cn('border-2 border-foreground px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest shadow-[2px_2px_0px_var(--color-foreground)]', theme.chip)}>
+                <span className={cn('border-2 border-foreground px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest shadow-brutal rounded-lg', theme.chip)}>
                   {item.tag}
                 </span>
               )}
@@ -248,7 +248,7 @@ function Slide({
               href={href}
               tabIndex={isActive ? 0 : -1}
               onClick={() => logClick(item.id, placement, href)}
-              className="group/cta inline-flex items-center gap-2.5 border-2 border-foreground bg-foreground text-background px-6 py-3.5 font-bold uppercase text-xs md:text-sm tracking-widest shadow-[5px_5px_0px_var(--color-foreground)] hover:shadow-none hover:translate-x-[5px] hover:translate-y-[5px] transition-all self-start mt-1"
+              className="group/cta inline-flex items-center gap-2.5 border-2 border-foreground bg-foreground text-background px-6 py-3.5 font-bold uppercase text-xs md:text-sm tracking-widest shadow-brutal rounded-xl hover-lift transition-all self-start mt-1"
             >
               {label}
               <ArrowRight className="w-4 h-4 group-hover/cta:translate-x-1 transition-transform" />

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Globe, Shield, ChevronDown, TrendingUp, Loader2 } from 'lucide-react';
+import { ChevronDown, TrendingUp, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 
@@ -68,7 +69,7 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
         .from('currency_rates')
         .select('target_currency, custom_rate')
         .eq('base_currency', baseCurrency);
-        
+
       if (!error && data) {
         const ratesMap: Record<string, number> = {};
         data.forEach((r: { target_currency: string, custom_rate: number }) => {
@@ -100,138 +101,160 @@ export const LiveExchangeRates = React.memo(function LiveExchangeRates() {
   const targetLiveCurrencies = FIXED_CURRENCIES.filter(c => c !== baseCurrency);
 
   return (
-    <section className="bg-[#f4f4f0] border-2 border-black p-3 sm:p-4 relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full overflow-hidden mb-4">
+    <section className="mb-6">
+      <div className="font-bold uppercase text-[10px] tracking-[0.2em] mb-3 flex items-center gap-2 opacity-80">
+        <div className="w-1.5 h-1.5 bg-primary" />
+        Live Exchange
+      </div>
 
       <div className="relative z-10 flex flex-col gap-3">
-
         {/* Header Row */}
-        <div className="flex flex-row justify-between items-center gap-3">
+        <div className="flex flex-row justify-between items-center gap-3 border-b-2 border-foreground pb-3 mb-2">
           <div className="flex items-center gap-2">
-            <div className="bg-[#FF90E8] border-2 border-black p-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              <TrendingUp className="w-4 h-4 text-black" strokeWidth={3} />
+            <div className="bg-primary border-2 border-foreground p-1.5 rounded-lg shadow-brutal text-primary-foreground">
+              <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
             </div>
-            <div className="font-black text-base sm:text-lg font-heading tracking-tight uppercase">
-              Exchange Rates
+            <div>
+              <div className="font-bold text-sm md:text-xl font-heading tracking-tight uppercase leading-none">
+                Exchange Rates
+              </div>
+              <div className="text-[9px] font-bold opacity-60 uppercase mt-0.5 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Market
+                <span className="md:hidden text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-black tracking-widest border border-primary/20">SWIPE ← →</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-50 p-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] shrink-0">
-            <span className="text-[9px] font-black uppercase tracking-widest pl-1.5 hidden sm:inline">Base:</span>
-            <div className="relative">
-              <select
-                value={baseCurrency}
-                onChange={(e) => setBaseCurrency(e.target.value)}
-                className="appearance-none bg-white border-2 border-black text-[11px] uppercase font-black py-1 pl-2 pr-6 cursor-pointer outline-none hover:bg-slate-100 transition-colors"
-              >
-                {availableBases.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[3]" />
-            </div>
+          <div className="relative">
+            <select
+              value={baseCurrency}
+              onChange={(e) => setBaseCurrency(e.target.value)}
+              className="appearance-none bg-secondary border-2 border-foreground rounded-lg text-xs uppercase font-bold py-1.5 pl-2.5 pr-7 cursor-pointer outline-none hover:bg-muted transition-colors shadow-brutal"
+            >
+              {availableBases.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[3]" />
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-6 gap-2 border-2 border-dashed border-black/20 bg-slate-50">
-            <Loader2 className="w-4 h-4 animate-spin text-black" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Fetching Rates...</span>
+          <div className="flex items-center justify-center py-8 gap-3 border-2 border-dashed border-foreground/20 bg-muted/20 rounded-xl">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-80">Fetching Live Rates...</span>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <>
+            {/* Mobile: horizontal scroll cards with peek effect */}
+            <div className="flex md:hidden overflow-x-auto gap-2.5 pb-2 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {targetLiveCurrencies.map(currency => {
+                const googleRate = marketRates[currency] || 0;
+                const convertoRate = convertoRates[currency] || googleRate;
+                const diffPercent = googleRate > 0
+                  ? ((convertoRate - googleRate) / googleRate) * 100
+                  : 0;
+                const isBetter = diffPercent > 0;
+                const flagUrl = getCurrencyFlagUrl(currency);
 
-            {/* Section 1: Google Live Rates */}
-            <div>
-              <div className="flex items-center gap-1.5 mb-2 border-b-2 border-black pb-1">
-                <Globe className="w-3 h-3 stroke-[3]" />
-                <h3 className="font-black uppercase tracking-widest text-[10px]">Google Live Rates</h3>
-              </div>
-
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-                {targetLiveCurrencies.map(currency => {
-                  const rate = marketRates[currency];
-                  const flagUrl = getCurrencyFlagUrl(currency);
-                  return (
-                    <div 
-                      key={`live_${currency}`} 
-                      className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[52px] overflow-hidden"
-                    >
-                      {/* Flag Left Section */}
-                      <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
-                        <img 
-                          src={flagUrl} 
-                          alt={`${currency} flag`}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
+                return (
+                  <div
+                    key={currency}
+                    className="border-2 border-foreground rounded-xl shadow-brutal bg-card p-3 flex flex-col min-w-[160px] w-[160px] snap-start shrink-0"
+                  >
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 border-2 border-foreground rounded-full overflow-hidden relative shrink-0">
+                          <Image src={flagUrl} alt={`${currency} flag`} fill sizes="32px" unoptimized className="object-cover" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-base font-heading leading-none">{currency}</div>
+                          <div className="text-[9px] font-bold opacity-50 uppercase">{getCurrencySymbol(currency)}</div>
+                        </div>
                       </div>
-                      {/* Details Right Section */}
-                      <div className="flex-1 px-2 py-1 flex flex-col justify-center bg-white relative">
-                        <div className="text-[9px] uppercase tracking-widest font-black flex items-center justify-between opacity-80 mb-0.5">
-                          <span className="flex items-center gap-1">
-                            <span className="text-[11px] font-sans leading-none">{getCurrencySymbol(currency)}</span>
-                            <span className="leading-none">{currency}</span>
-                          </span>
+                      {isBetter && (
+                        <div className="bg-emerald-100 text-emerald-700 border border-emerald-300 px-1.5 py-0.5 rounded text-[8px] font-bold flex items-center gap-0.5">
+                          <TrendingUp className="w-2.5 h-2.5" />
+                          +{diffPercent.toFixed(1)}%
                         </div>
-                        <div className="font-black font-mono text-sm leading-none">
-                          {rate ? rate.toFixed(4) : '—'}
-                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="bg-secondary/50 p-2 rounded-lg">
+                        <div className="text-[8px] font-bold uppercase tracking-wider opacity-50 mb-0.5">Google</div>
+                        <div className="font-mono font-bold text-xs">{googleRate > 0 ? googleRate.toFixed(4) : '—'}</div>
+                      </div>
+                      <div className="bg-primary/5 p-2 rounded-lg border border-primary/20">
+                        <div className="text-[8px] font-bold uppercase tracking-wider text-primary mb-0.5">Converto</div>
+                        <div className="font-mono font-bold text-xs text-primary">{convertoRate > 0 ? convertoRate.toFixed(4) : '—'}</div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Section 2: Converto Rates */}
-            <div>
-              <div className="flex items-center gap-1.5 mb-2 border-b-2 border-black pb-1">
-                <Shield className="w-3 h-3 stroke-[3]" />
-                <h3 className="font-black uppercase tracking-widest text-[10px]">Converto Rates</h3>
-              </div>
+            {/* Desktop: grid layout */}
+            <div className="hidden md:grid grid-cols-2 xl:grid-cols-4 gap-4">
+              {targetLiveCurrencies.map(currency => {
+                const googleRate = marketRates[currency] || 0;
+                const convertoRate = convertoRates[currency] || googleRate;
+                const diffPercent = googleRate > 0
+                  ? ((convertoRate - googleRate) / googleRate) * 100
+                  : 0;
+                const isBetter = diffPercent > 0;
+                const flagUrl = getCurrencyFlagUrl(currency);
 
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-                {targetLiveCurrencies.map((currency) => {
-                  const customRate = convertoRates[currency] || marketRates[currency];
-                  const flagUrl = getCurrencyFlagUrl(currency);
-                  return (
-                    <div
-                      key={`converto_${currency}`}
-                      className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white flex h-[52px] overflow-hidden"
-                    >
-                      {/* Flag Left Section */}
-                      <div className="w-[52px] shrink-0 border-r-2 border-black relative bg-zinc-100">
-                        <img 
-                          src={flagUrl} 
-                          alt={`${currency} flag`}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
+                return (
+                  <div
+                    key={currency}
+                    className="border-2 border-foreground rounded-xl shadow-brutal hover-lift bg-card p-4 flex flex-col"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 border-2 border-foreground rounded-full overflow-hidden relative">
+                          <Image
+                            src={flagUrl}
+                            alt={`${currency} flag`}
+                            fill
+                            sizes="40px"
+                            unoptimized
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-bold text-lg font-heading">{currency}</div>
+                          <div className="text-[10px] font-bold opacity-60 uppercase">{getCurrencySymbol(currency)} Target</div>
+                        </div>
                       </div>
-                      {/* Details Right Section */}
-                      <div className="flex-1 px-2 py-1 flex flex-col justify-center bg-white relative">
-                        <div className="text-[9px] uppercase tracking-widest font-black flex justify-between items-center w-full mb-0.5">
-                          <span className="flex items-center gap-1 opacity-80">
-                            <span className="text-[11px] font-sans leading-none">{getCurrencySymbol(currency)}</span>
-                            <span className="leading-none">{currency}</span>
-                          </span>
-                          <span className="text-[7px] border border-black px-1 bg-yellow-400 font-black leading-none">
-                            CUSTOM
-                          </span>
+                      {isBetter && (
+                        <div className="bg-emerald-100 text-emerald-700 border-2 border-foreground px-2 py-1 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          +{diffPercent.toFixed(1)}%
                         </div>
-                        <div className="font-black font-mono text-sm leading-none">
-                          {customRate ? Number(customRate).toFixed(4) : '—'}
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-auto">
+                      <div className="bg-secondary/50 p-2 rounded-lg border border-foreground/10">
+                        <div className="text-[9px] font-bold uppercase tracking-widest opacity-60 mb-1">Google</div>
+                        <div className="font-mono font-bold text-sm">{googleRate > 0 ? googleRate.toFixed(4) : '—'}</div>
+                      </div>
+                      <div className="bg-primary/5 p-2 rounded-lg border-2 border-primary/20">
+                        <div className="text-[9px] font-bold uppercase tracking-widest text-primary flex justify-between items-center mb-1">
+                          Converto
                         </div>
+                        <div className="font-mono font-bold text-sm text-primary">{convertoRate > 0 ? convertoRate.toFixed(4) : '—'}</div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-
-          </div>
+          </>
         )}
       </div>
     </section>
   );
 });
-
-
