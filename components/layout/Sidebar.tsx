@@ -4,27 +4,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
+import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User, MonitorPlay } from "lucide-react";
 import { LiveFooter } from "./LiveFooter";
 import { RewardsProgress } from "@/components/dashboard/RewardsProgress";
 import { AiAssistantWidget } from "@/components/dashboard/AiAssistantWidget";
 
-const DESKTOP_NAV_ITEMS = [
+const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/services", label: "Services", icon: Grid },
+  { href: "/services/subscriptions", label: "App Subscriptions", icon: MonitorPlay },
   { href: "/track", label: "Track Order", icon: MapPin },
   { href: "/history", label: "History", icon: Clock },
   { href: "/support", label: "Support", icon: HeadphonesIcon },
   { href: "/profile", label: "Profile", icon: User },
 ];
 
-const MOBILE_NAV_ITEMS = [
-  { href: "/history", label: "Transaction History", icon: Clock },
-  { href: "/profile", label: "My Profile", icon: User },
-];
-
 export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
+  const activeHref = NAV_ITEMS
+    .filter((item) => pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/')))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   const content = (
     <div className={cn(
@@ -45,8 +44,8 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
       {/* ── Navigation ── */}
       <nav className="flex flex-col gap-1 px-3 py-4 shrink-0">
         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground px-3 mb-2">Menu</span>
-        {(mobile ? MOBILE_NAV_ITEMS : DESKTOP_NAV_ITEMS).map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'));
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.href === activeHref;
           return (
             <Link
               key={item.href}
@@ -107,7 +106,7 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   if (mobile) return content;
 
   return (
-    <aside className="hidden md:block w-[240px] lg:w-[280px] border-r-2 border-foreground bg-secondary shrink-0">
+    <aside className="hidden lg:block w-[240px] xl:w-[280px] border-r-2 border-foreground bg-secondary shrink-0">
       {content}
     </aside>
   );

@@ -2,12 +2,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ShoppingBag, ArrowRight, ArrowLeft, Loader2, Link as LinkIcon, Info, MapPin, ChevronDown, Globe } from 'lucide-react'
 import { submitServiceRequest } from '@/hooks/useServiceRequests'
 import { useForm } from 'react-hook-form'
 import { RewardsWidget } from '@/components/dashboard/RewardsWidget'
+import { SubscriptionRequestForm } from './SubscriptionRequestForm'
 
 interface FormData {
   website: string;
@@ -31,26 +32,62 @@ interface FormData {
 }
 
 export default function BuyForMePage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center font-black uppercase tracking-widest">Loading request...</div>}>
+      <BuyForMeRequestRouter />
+    </Suspense>
+  )
+}
+
+const BUY_FOR_ME_WEBSITES = [
+  { name: 'Amazon', domain: 'amazon.com' },
+  { name: 'Apple', domain: 'apple.com' },
+  { name: 'Steam', domain: 'steampowered.com' },
+  { name: 'eBay', domain: 'ebay.com' },
+  { name: 'AliExpress', domain: 'aliexpress.com' },
+  { name: 'BestBuy', domain: 'bestbuy.com' },
+  { name: 'Flipkart', domain: 'flipkart.com' },
+  { name: 'Other', domain: '' },
+]
+
+function BuyForMeRequestRouter() {
+  const searchParams = useSearchParams()
+  if (searchParams.get('type') === 'subscription') {
+    return <SubscriptionRequestForm appId={searchParams.get('app') ?? ''} />
+  }
+  return (
+    <StandardBuyForMePage
+      initialWebsite={searchParams.get('store') ?? ''}
+      initialProductName={searchParams.get('product') ?? ''}
+      initialProductUrl={searchParams.get('url') ?? ''}
+    />
+  )
+}
+
+function StandardBuyForMePage({
+  initialWebsite,
+  initialProductName,
+  initialProductUrl,
+}: {
+  initialWebsite: string
+  initialProductName: string
+  initialProductUrl: string
+}) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [websiteDropdownOpen, setWebsiteDropdownOpen] = useState(false)
 
-  const websites = [
-    { name: 'Amazon', domain: 'amazon.com' },
-    { name: 'eBay', domain: 'ebay.com' },
-    { name: 'AliExpress', domain: 'aliexpress.com' },
-    { name: 'BestBuy', domain: 'bestbuy.com' },
-    { name: 'Flipkart', domain: 'flipkart.com' },
-    { name: 'Other', domain: '' },
-  ]
+  const selectedWebsite = BUY_FOR_ME_WEBSITES.find(
+    (website) => website.name.toLowerCase() === initialWebsite.toLowerCase(),
+  )?.name ?? (initialWebsite ? 'Other' : '')
 
   const { register, handleSubmit, watch, setValue } = useForm<FormData>({
     defaultValues: {
-      website: '',
-      productName: '',
-      productUrl: '',
+      website: selectedWebsite,
+      productName: initialProductName,
+      productUrl: initialProductUrl,
       productImage: '',
       quantity: '1',
       variant: '',
@@ -158,8 +195,8 @@ export default function BuyForMePage() {
                 >
                   <div className="flex items-center gap-3">
                     {watchAllFields.website ? (
-                       websites.find(w => w.name === watchAllFields.website)?.domain ? (
-                         <img src={`https://www.google.com/s2/favicons?sz=64&domain=${websites.find(w => w.name === watchAllFields.website)?.domain}`} alt="" className="w-6 h-6 object-contain" />
+                       BUY_FOR_ME_WEBSITES.find(w => w.name === watchAllFields.website)?.domain ? (
+                         <img src={`https://www.google.com/s2/favicons?sz=64&domain=${BUY_FOR_ME_WEBSITES.find(w => w.name === watchAllFields.website)?.domain}`} alt="" className="w-6 h-6 object-contain" />
                        ) : <Globe className="w-6 h-6 opacity-60" />
                     ) : null}
                     <span>{watchAllFields.website || 'Select Website...'}</span>
@@ -169,7 +206,7 @@ export default function BuyForMePage() {
                 {websiteDropdownOpen && (
                   <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] z-50">
                     <div className="max-h-[240px] overflow-y-auto">
-                      {websites.map(site => (
+                      {BUY_FOR_ME_WEBSITES.map(site => (
                         <div 
                           key={site.name}
                           className="p-4 flex items-center gap-3 hover:bg-black hover:text-white cursor-pointer border-b-2 border-black last:border-b-0 transition-colors"

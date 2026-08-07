@@ -36,12 +36,12 @@ export function HeroDashboard() {
 
   return (
     <div className="w-full mb-6">
-      <div className="border-2 border-foreground rounded-xl shadow-brutal overflow-hidden flex flex-col md:flex-row bg-card">
+      <div className="border-2 border-foreground rounded-xl shadow-brutal overflow-hidden flex flex-col xl:flex-row bg-card min-w-0">
 
         {/* Left Section: Greeting & Action */}
-        <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between w-full md:w-[60%] lg:w-[55%] bg-card text-foreground border-b-2 md:border-b-0 md:border-r-2 border-foreground gap-4">
+        <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between w-full xl:w-[60%] bg-card text-foreground border-b-2 xl:border-b-0 xl:border-r-2 border-foreground gap-4 min-w-0">
 
-          <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+          <div className="flex flex-1 items-center gap-3 md:gap-4 min-w-0">
             {/* Square Profile Photo */}
             <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 bg-background border-2 border-foreground rounded-md shadow-[3px_3px_0px_var(--color-foreground)] overflow-hidden flex items-center justify-center">
               <img
@@ -101,8 +101,8 @@ export function HeroDashboard() {
         </div>
 
         {/* Right Section: Mini Data Dashboard */}
-        <div className="flex-1 bg-foreground p-4 md:p-6 flex flex-col justify-center text-background overflow-hidden">
-          <div className="w-full grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="flex-1 bg-foreground p-4 md:p-6 flex flex-col justify-center text-background overflow-hidden min-w-0">
+          <div className="w-full grid grid-cols-2 2xl:grid-cols-3 gap-4 2xl:gap-6">
 
             {/* Stat 1 */}
             <div className="flex flex-col gap-1">
@@ -133,7 +133,7 @@ export function HeroDashboard() {
             </div>
 
             {/* Stat 3 */}
-            <div className="hidden lg:flex flex-col gap-1">
+            <div className="hidden 2xl:flex flex-col gap-1">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest opacity-60 truncate">Pending Actions</span>

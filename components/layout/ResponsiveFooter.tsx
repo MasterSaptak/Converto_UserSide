@@ -74,13 +74,13 @@ const TRUST_ITEMS = [
    ═════════════════════════════════════════════ */
 export function ResponsiveFooter() {
   return (
-    <footer className="w-full flex flex-col relative z-10 mt-8 md:mt-16 select-none">
+    <footer className="w-full flex flex-col relative z-10 mt-8 lg:mt-16 select-none">
 
       {/* ════════════════════════════════════════
           MOBILE FOOTER — Compact app-style
-          Only visible on screens < md
+          Only visible on screens < lg
           ════════════════════════════════════════ */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         {/* Accent line */}
         <div className="h-1 bg-primary" />
 
@@ -131,9 +131,9 @@ export function ResponsiveFooter() {
 
       {/* ════════════════════════════════════════
           DESKTOP FOOTER — Full editorial layout
-          Only visible on screens >= md
+          Only visible on screens >= lg
           ════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-col">
+      <div className="hidden lg:flex flex-col">
 
         {/* 1. CTA BANNER */}
         <section className="relative bg-foreground text-background overflow-hidden">
