@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { REWARD_TIERS } from "@/lib/currencies";
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 const TIER_STYLES: Record<string, { icon: LucideIcon, bg: string, text: string }> = {
   'Wood': { icon: TreePine, bg: 'bg-[#8B5A2B]', text: 'text-white' },
