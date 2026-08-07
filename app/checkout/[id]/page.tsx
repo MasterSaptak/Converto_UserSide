@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, ShieldCheck, CreditCard, Lock } from 'lucide-react'
+import { Loader2, ShieldCheck, CreditCard, Lock, QrCode, Building2, Globe } from 'lucide-react'
 
 export default function CheckoutPage() {
   const params = useParams()
@@ -14,19 +14,22 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState<any>(null)
   const [intent, setIntent] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState('card')
 
   useEffect(() => {
     async function initCheckout() {
       try {
         const { data: orderData, error: orderError } = await supabase
           .from('service_requests')
-          .select('*, services(name)')
+          .select('*, services(name), status_obj:pipeline_statuses(*), quotes:quotes!quotes_request_id_fkey(*)')
           .eq('id', params.id)
           .single()
 
         if (orderError) throw orderError
-        if (orderData.status_code !== 'awaiting_payment' && orderData.status_code !== 'quote_sent') {
-          router.push('/dashboard')
+        
+        const hasQuote = orderData.quotes && orderData.quotes.length > 0
+        if (!hasQuote && orderData.status_obj?.code !== 'awaiting_payment' && orderData.status_obj?.code !== 'quote_sent' && orderData.status_obj?.code !== 'reviewing_quote') {
+          router.push('/track')
           return
         }
 
@@ -81,7 +84,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error('Payment processing failed')
 
       // Redirect to success
-      router.push('/dashboard?payment=success')
+      router.push('/track?payment=success')
       router.refresh()
     } catch (err: any) {
       setError(err.message)
@@ -137,10 +140,8 @@ export default function CheckoutPage() {
               
               <div className="pt-4 border-t-2 border-foreground/10 mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="font-black uppercase tracking-widest text-xs">Total Due</span>
-                  <span className="text-2xl font-black font-mono">
-                    ${(order?.metadata?.total_fee || 100).toFixed(2)}
-                  </span>
+                  <span className="text-sm font-black uppercase tracking-widest">Total Due</span>
+                  <span className="text-2xl font-black">${(order?.quotes?.[0]?.amount || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -154,57 +155,120 @@ export default function CheckoutPage() {
 
         {/* Payment Form (Mock) */}
         <div className="md:col-span-3">
-          <form onSubmit={handleSimulatedPayment} className="brutal-card bg-white p-6 md:p-8 space-y-6">
+          <div className="brutal-card bg-white p-6 md:p-8 space-y-6">
             
             <div className="bg-yellow-100 border-2 border-yellow-500 text-yellow-800 p-4 text-xs font-bold flex gap-3">
-              <CreditCard className="w-5 h-5 shrink-0" />
+              <ShieldCheck className="w-5 h-5 shrink-0" />
               This is a test environment using the Mock Payment Engine. No real charges will be processed.
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Card Number (Mock)</label>
-              <input 
-                type="text"
-                disabled
-                className="brutal-input w-full bg-slate-100 opacity-70"
-                value="4242 4242 4242 4242"
-              />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border-b-2 border-foreground/10 pb-4">
+              <button 
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'card' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
+              >
+                <CreditCard className="w-5 h-5" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-center">Card</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setPaymentMethod('qr')}
+                className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'qr' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
+              >
+                <QrCode className="w-5 h-5" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-center">QR / UPI</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setPaymentMethod('bank')}
+                className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'bank' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
+              >
+                <Building2 className="w-5 h-5" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-center">Bank Transfer</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setPaymentMethod('international')}
+                className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'international' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
+              >
+                <Globe className="w-5 h-5" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-center">International (Paypal/Swift)</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Expiry</label>
-                <input 
-                  type="text"
-                  disabled
-                  className="brutal-input w-full bg-slate-100 opacity-70"
-                  value="12/28"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">CVC</label>
-                <input 
-                  type="text"
-                  disabled
-                  className="brutal-input w-full bg-slate-100 opacity-70"
-                  value="123"
-                />
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={processing}
-              className="w-full bg-foreground text-background font-black uppercase tracking-widest py-4 border-2 border-transparent hover:border-foreground hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {processing ? (
-                <>Processing Payment <Loader2 className="w-5 h-5 animate-spin" /></>
-              ) : (
-                `Pay $${(order?.metadata?.total_fee || 100).toFixed(2)}`
+            <form onSubmit={handleSimulatedPayment} className="space-y-6">
+              {paymentMethod === 'card' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Card Number (Mock)</label>
+                    <input 
+                      type="text"
+                      disabled
+                      className="brutal-input w-full bg-slate-100 opacity-70"
+                      value="4242 4242 4242 4242"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Expiry</label>
+                      <input type="text" disabled className="brutal-input w-full bg-slate-100 opacity-70" value="12/28" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-60">CVC</label>
+                      <input type="text" disabled className="brutal-input w-full bg-slate-100 opacity-70" value="123" />
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
-            
-          </form>
+
+              {paymentMethod === 'qr' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 text-center py-6 border-2 border-dashed border-foreground/20">
+                  <div className="inline-flex p-4 bg-white border-4 border-foreground mb-4">
+                    <QrCode className="w-32 h-32 text-foreground" />
+                  </div>
+                  <p className="text-xs font-bold uppercase tracking-widest">Scan with WeChat or UPI</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50">Approve on your device to continue</p>
+                </div>
+              )}
+
+              {paymentMethod === 'bank' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="bg-slate-50 p-4 border-l-4 border-primary">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Wire Instructions</h4>
+                    <div className="space-y-2 text-xs font-mono font-bold">
+                      <div className="flex justify-between"><span className="opacity-50">Bank:</span><span>Global Reserve</span></div>
+                      <div className="flex justify-between"><span className="opacity-50">Account:</span><span>1234 5678 9012</span></div>
+                      <div className="flex justify-between"><span className="opacity-50">Routing:</span><span>12230044</span></div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 text-center">Click 'Confirm Transfer' once you have initiated the wire.</p>
+                </div>
+              )}
+
+              {paymentMethod === 'international' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                   <div className="bg-blue-50 p-6 border-2 border-blue-200 text-center flex flex-col items-center justify-center gap-4">
+                      <Globe className="w-10 h-10 text-blue-500" />
+                      <p className="text-xs font-bold uppercase tracking-widest text-blue-900">Checkout with Paypal or Stripe International</p>
+                   </div>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={processing}
+                className="w-full bg-foreground text-background font-black uppercase tracking-widest py-4 border-2 border-transparent hover:border-foreground hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {processing ? (
+                  <>Processing <Loader2 className="w-5 h-5 animate-spin" /></>
+                ) : (
+                  paymentMethod === 'bank' ? 'Confirm Transfer Initiated' : `Pay $${(order?.quotes?.[0]?.amount || 0).toFixed(2)}`
+                )}
+              </button>
+              
+            </form>
+          </div>
         </div>
 
       </div>

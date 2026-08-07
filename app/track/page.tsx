@@ -15,6 +15,7 @@ type ExtendedRequest = ServiceRequest & {
     code?: string;
     requires_customer_action?: boolean;
   };
+  quotes?: any[];
 };
 
 export default function TrackOrderPage() {
@@ -177,6 +178,35 @@ export default function TrackOrderPage() {
                   <h3 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-foreground pb-2">Status Timeline</h3>
                   <div className="relative border-l-2 border-foreground ml-3 space-y-8">
                     
+                    {/* Issued Ticket Details */}
+                    {(selectedRequest as any)?.draft_data?.issuedTicket && (
+                      <div className="bg-emerald-50 border-2 border-emerald-300 p-4 mb-8">
+                        <h4 className="text-sm font-black uppercase tracking-widest text-emerald-800 border-b-2 border-emerald-300 pb-2 mb-3">Your Ticket Details</h4>
+                        <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                          <div>
+                            <span className="opacity-60 block">PNR / Reference</span>
+                            <span className="font-bold">{(selectedRequest as any).draft_data.issuedTicket.pnr || '—'}</span>
+                          </div>
+                          <div>
+                            <span className="opacity-60 block">Coach</span>
+                            <span className="font-bold">{(selectedRequest as any).draft_data.issuedTicket.coach || '—'}</span>
+                          </div>
+                          <div>
+                            <span className="opacity-60 block">Seat / Berth</span>
+                            <span className="font-bold">{(selectedRequest as any).draft_data.issuedTicket.seat || '—'}</span>
+                          </div>
+                          <div>
+                            <span className="opacity-60 block">Ticket URL</span>
+                            {(selectedRequest as any).draft_data.issuedTicket.ticket_url ? (
+                              <a href={(selectedRequest as any).draft_data.issuedTicket.ticket_url} target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">Download / View</a>
+                            ) : (
+                              <span className="font-bold">—</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Step 1 - Created */}
                     <div className="relative pl-8">
                       <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
@@ -188,7 +218,7 @@ export default function TrackOrderPage() {
                       </span>
                       <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
                     </div>                    {/* Dynamic Step based on pipeline status */}
-                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'quote_sent' ? (
+                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'quote_sent' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'awaiting_payment' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'reviewing_quote' || ((selectedRequest as unknown as ExtendedRequest).quotes && (selectedRequest as unknown as ExtendedRequest).quotes!.length > 0 && (selectedRequest as unknown as ExtendedRequest).stage?.code !== 'completed' && (selectedRequest as unknown as ExtendedRequest).status_obj?.code !== 'closed') ? (
                        <div className="relative pl-8">
                         <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
                           <CheckCircle2 className="w-3 h-3 text-white" />
@@ -198,9 +228,34 @@ export default function TrackOrderPage() {
                           {new Date(selectedRequest.updated_at).toLocaleString()}
                         </span>
                         <p className="text-xs uppercase font-bold opacity-80 mb-3">Your custom quote has been generated and is ready for payment.</p>
-                        <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2">
-                          Review & Pay <ArrowRight className="w-4 h-4" />
-                        </a>
+                        
+                        {(selectedRequest as unknown as ExtendedRequest).quotes && (selectedRequest as unknown as ExtendedRequest).quotes!.length > 0 && (
+                          <div className="bg-purple-50 border-2 border-purple-200 p-4 mb-4">
+                            <h5 className="text-[10px] font-black uppercase tracking-widest text-purple-800 border-b-2 border-purple-200 pb-2 mb-2">Cost Breakdown</h5>
+                            <div className="space-y-1">
+                              {(selectedRequest as unknown as ExtendedRequest).quotes![0].breakdown?.line_items?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex justify-between text-xs font-mono">
+                                  <span className="opacity-80">{item.label} <span className="opacity-50">x{item.quantity}</span></span>
+                                  <span className="font-bold">{item.amount > 0 ? '' : '-'}${Math.abs(item.amount).toFixed(2)}</span>
+                                </div>
+                              ))}
+                              <div className="flex justify-between text-sm font-black border-t-2 border-purple-200 pt-2 mt-2">
+                                <span>TOTAL</span>
+                                <span>${((selectedRequest as unknown as ExtendedRequest).quotes![0].amount || 0).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'payment_confirmed' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'in_progress' || (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
+                          <div className="inline-flex brutal-button bg-emerald-500 text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 cursor-default">
+                            Payment Done <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        ) : (
+                          <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 hover:bg-gray-800">
+                            Review & Pay <ArrowRight className="w-4 h-4" />
+                          </a>
+                        )}
                       </div>
                     ) : (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
                        <div className="relative pl-8">
@@ -263,6 +318,30 @@ export default function TrackOrderPage() {
                       const formattedKey = key.replace(/_/g, ' ');
                       
                       // Format value based on type
+                      if (Array.isArray(value)) {
+                        return (
+                          <div key={key} className="flex flex-col gap-1 border-b-2 border-dashed border-foreground/20 pb-2">
+                            <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">{formattedKey}</span>
+                            <div className="flex flex-col gap-2 mt-1">
+                              {value.map((item, idx) => (
+                                <div key={idx} className="bg-slate-50 p-2 text-xs font-mono border-l-2 border-foreground">
+                                  {typeof item === 'object' ? (
+                                    Object.entries(item).map(([k, v]) => (
+                                      <div key={k} className="flex justify-between">
+                                        <span className="opacity-60 capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                        <span className="font-bold">{String(v)}</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    String(item)
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
                       let formattedValue = '';
                       if (typeof value === 'object') {
                         formattedValue = JSON.stringify(value);

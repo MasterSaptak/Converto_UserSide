@@ -64,7 +64,7 @@ export default function MyRequestsPage() {
   return (
     <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full animate-in fade-in duration-500 py-10 px-4">
       <header className="mb-6 border-b-2 border-foreground pb-6">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:underline mb-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:underline mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
         <h1 className="text-4xl md:text-5xl font-black font-heading uppercase leading-[0.9] tracking-tight">My Requests</h1>
