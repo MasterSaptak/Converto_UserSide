@@ -8,6 +8,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Toaster } from "sonner";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { UnregisterSW } from "@/components/layout/UnregisterSW";
+import { Analytics } from '@vercel/analytics/next';
 
 const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono" });
 const oswald = Oswald({ subsets: ["latin"], variable: "--font-heading" });
@@ -117,6 +118,7 @@ export default function RootLayout({
         </AuthProvider>
         </QueryProvider>
         <Toaster position="top-center" toastOptions={{ className: 'font-mono rounded-none border-2 border-foreground shadow-[4px_4px_0px_var(--color-foreground)]' }} />
+        <Analytics />
       </body>
     </html>
   );
