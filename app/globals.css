@@ -20,11 +20,30 @@
   --color-border: #18181A;
   --color-input: #18181A;
   --color-ring: #E11D48;
-  --radius: 0;
+  --radius: 12px;
   
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
+}
+
+@utility shadow-brutal {
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+}
+@utility shadow-brutal-hover {
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+}
+@utility shadow-brutal-lg {
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+}
+@layer components {
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  }
 }
 
 @layer base {
@@ -73,6 +92,26 @@
   }
   100% {
     transform: translateX(120%) rotate(25deg);
+  }
+}
+
+/* Promo carousel rotation timer. The element is keyed on the slide cycle so this
+   restarts from zero on every advance, manual or automatic. Width rather than
+   scaleX so the bar does not blur at small heights. */
+@keyframes carousel-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Respect a reduced-motion preference: hold the bar full rather than sweeping it. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[carousel-progress_6s_linear_forwards\] {
+    animation: none;
+    width: 100%;
   }
 }
 

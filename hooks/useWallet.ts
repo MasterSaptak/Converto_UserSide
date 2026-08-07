@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 export interface WalletAccount {
   id: string
@@ -13,43 +14,32 @@ export interface WalletAccount {
 
 export function useWallet() {
   const { user } = useAuth()
-  
-  const [accounts, setAccounts] = useState<WalletAccount[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+
+  const { data: accounts = [], isLoading, error } = useQuery({
+    queryKey: ['wallet_accounts', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      const { data, error: fetchError } = await supabase
+        .from('wallet_accounts')
+        .select('*')
+        .order('currency_code', { ascending: true })
+
+      if (fetchError) throw fetchError
+      return data as WalletAccount[]
+    },
+    enabled: !!user,
+  })
 
   useEffect(() => {
-    if (!user) {
-      setAccounts([])
-      setIsLoading(false)
-      return
-    }
+    if (!user || accounts.length === 0) return
 
-    const fetchWallet = async () => {
-      try {
-        setIsLoading(true)
-        
-        // Fetch wallet accounts for the user (RLS will automatically restrict this to their wallet)
-        const { data, error: fetchError } = await supabase
-          .from('wallet_accounts')
-          .select('*')
-          .order('currency_code', { ascending: true })
+    // Since RLS restricts wallet_accounts to our wallet, 
+    // we can filter the realtime events by our wallet_id
+    const walletId = accounts[0]?.wallet_id
+    if (!walletId) return
 
-        if (fetchError) throw fetchError
-
-        setAccounts(data || [])
-      } catch (err) {
-        console.error('Error fetching wallet:', err)
-        setError(err instanceof Error ? err.message : String(err))
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchWallet()
-
-    // Subscribe to real-time changes
-    const channelName = `wallet-changes-${Math.random().toString(36).substring(7)}`
+    const channelName = `wallet-changes-${user.id}`
     const channel = supabase
       .channel(channelName)
       .on(
@@ -58,9 +48,10 @@ export function useWallet() {
           event: '*',
           schema: 'public',
           table: 'wallet_accounts',
+          filter: `wallet_id=eq.${walletId}`
         },
         () => {
-          fetchWallet()
+          queryClient.invalidateQueries({ queryKey: ['wallet_accounts', user.id] })
         }
       )
       .subscribe()
@@ -68,7 +59,11 @@ export function useWallet() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user])
+  }, [user, accounts.length > 0 ? accounts[0].wallet_id : null, queryClient])
 
-  return { accounts, isLoading, error }
+  return { 
+    accounts, 
+    isLoading, 
+    error: error instanceof Error ? error.message : error ? String(error) : null 
+  }
 }

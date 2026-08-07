@@ -38,12 +38,12 @@ export function ProfileDropdown() {
     try {
       // Sign out first to clear Supabase cookies/session properly
       await signOut();
-      
+
       // Clear all local storage
       localStorage.clear();
       // Clear all session storage
       sessionStorage.clear();
-      
+
       // Clear all service worker caches
       if ('caches' in window) {
         const cacheNames = await caches.keys();
@@ -66,7 +66,7 @@ export function ProfileDropdown() {
         const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
         document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
       }
-      
+
       // Redirect to login which will also trigger a full page load
       window.location.href = '/login';
     } catch (error) {
@@ -82,7 +82,7 @@ export function ProfileDropdown() {
   return (
     <>
       <div className="relative" ref={dropdownRef}>
-        <button 
+        <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn("relative border-2 border-foreground bg-card hover:bg-secondary transition-colors focus:outline-none flex items-center justify-center overflow-hidden h-[40px] w-[40px] rounded-full", avatarUrl ? "p-0" : "p-2")}
         >
@@ -116,8 +116,8 @@ export function ProfileDropdown() {
 
             {/* Links */}
             <div className="flex flex-col p-2">
-              <Link 
-                href="/profile" 
+              <Link
+                href="/profile"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest"
               >
@@ -128,7 +128,7 @@ export function ProfileDropdown() {
 
 
               {/* Dark/Light Mode Toggle */}
-              <button 
+              <button
                 onClick={toggleTheme}
                 className="flex items-center justify-between p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest w-full text-left"
               >
@@ -142,7 +142,7 @@ export function ProfileDropdown() {
               </button>
 
               {/* Update App Button */}
-              <button 
+              <button
                 onClick={handleUpdateApp}
                 className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest w-full text-left"
               >
@@ -152,7 +152,7 @@ export function ProfileDropdown() {
 
               {/* Install App Button */}
               {canInstall && (
-                <button 
+                <button
                   onClick={install}
                   className="flex items-center gap-3 p-3 hover:bg-secondary transition-colors font-bold uppercase text-xs tracking-widest w-full text-left text-primary"
                 >
@@ -226,7 +226,7 @@ export function ProfileDropdown() {
                   </div>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setShowIOSInstructions(false)}
                 className="w-full bg-primary text-primary-foreground border-2 border-foreground py-3 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors shadow-[4px_4px_0px_var(--color-foreground)] hover:shadow-none hover:translate-y-1 hover:translate-x-1 mt-2"
               >

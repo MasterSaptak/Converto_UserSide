@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 import { getTierInfo } from '@/lib/currencies'
@@ -14,72 +14,38 @@ export interface UserRewardProfile {
 
 export function useRewards() {
   const { user } = useAuth()
-  
-  const [rewards, setRewards] = useState<UserRewardProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      setRewards(null)
-      setIsLoading(false)
-      return
-    }
+  const {
+    data: rewards = null,
+    isLoading,
+    error
+  } = useQuery<UserRewardProfile | null, Error>({
+    queryKey: ['user_rewards', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error: fetchError } = await supabase
+        .from('user_rewards')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-    const fetchRewards = async () => {
-      try {
-        setIsLoading(true)
-        
-        const { data, error: fetchError } = await supabase
-          .from('user_rewards')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-
-        if (fetchError) {
-          if (fetchError.code === 'PGRST116') {
-             // Row not found (maybe trigger hasn't run yet or table is missing)
-             setRewards(null)
-          } else {
-             throw fetchError
-          }
-        } else {
-          setRewards(data)
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          return null; // Row not found
         }
-      } catch (err: any) {
-        console.error('Error fetching rewards:', err)
-        setError(err.message)
-      } finally {
-        setIsLoading(false)
+        throw fetchError;
       }
-    }
+      
+      return data;
+    },
+    enabled: !!user,
+    refetchInterval: 3000, // Poll every 3 seconds to ensure live points updates
+    staleTime: 1000,
+  });
 
-    fetchRewards()
+  // Compute calculated tier info as a fallback/bonus
+  const tierInfo = rewards ? getTierInfo(rewards.available_c_points) : getTierInfo(0);
 
-    const channelName = `rewards-changes-${Math.random().toString(36).substring(7)}`
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_rewards',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          fetchRewards()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user])
-
-  // Compute calculated tier info as a fallback/bonus (in case backend tier text is outdated or just for progress UI)
-  const tierInfo = rewards ? getTierInfo(rewards.lifetime_c_points) : getTierInfo(0);
-
-  return { rewards, tierInfo, isLoading, error }
+  return { rewards, tierInfo, isLoading, error: error?.message || null }
 }

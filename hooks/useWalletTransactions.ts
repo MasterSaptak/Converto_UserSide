@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
+import { useWallet } from './useWallet'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 export interface WalletTransaction {
   id: string
@@ -17,65 +19,59 @@ export interface WalletTransaction {
 
 export function useWalletTransactions() {
   const { user } = useAuth()
-  
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { accounts } = useWallet()
+  const queryClient = useQueryClient()
+
+  const { data: transactions = [], isLoading, error } = useQuery({
+    queryKey: ['wallet_transactions', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      const { data, error: fetchError } = await supabase
+        .from('wallet_transactions')
+        .select(`
+          *,
+          wallet_account:wallet_accounts(currency_code)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (fetchError) throw fetchError
+      return (data || []) as WalletTransaction[]
+    },
+    enabled: !!user,
+  })
 
   useEffect(() => {
-    if (!user) {
-      setTransactions([])
-      setIsLoading(false)
-      return
-    }
+    if (!user || accounts.length === 0) return
 
-    const fetchTransactions = async () => {
-      try {
-        setIsLoading(true)
-        
-        // Fetch wallet transactions for the user's wallet accounts
-        const { data, error: fetchError } = await supabase
-          .from('wallet_transactions')
-          .select(`
-            *,
-            wallet_account:wallet_accounts(currency_code)
-          `)
-          .order('created_at', { ascending: false })
+    const channelName = `wallet-transactions-${user.id}`
+    let channel = supabase.channel(channelName)
 
-        if (fetchError) throw fetchError
-
-        setTransactions(data || [])
-      } catch (err: any) {
-        console.error('Error fetching transactions:', err?.message || err)
-        setError(err?.message || (err instanceof Error ? err.message : JSON.stringify(err)))
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchTransactions()
-
-    // Subscribe to real-time changes
-    const channelName = `wallet-transactions-changes-${Math.random().toString(36).substring(7)}`
-    const channel = supabase
-      .channel(channelName)
-      .on(
+    // Add a listener for each wallet account the user owns
+    accounts.forEach(account => {
+      channel = channel.on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'wallet_transactions',
+          filter: `wallet_account_id=eq.${account.id}`
         },
         () => {
-          fetchTransactions()
+          queryClient.invalidateQueries({ queryKey: ['wallet_transactions', user.id] })
         }
       )
-      .subscribe()
+    })
+
+    channel.subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user])
+  }, [user, accounts, queryClient])
 
-  return { transactions, isLoading, error }
+  return { 
+    transactions, 
+    isLoading, 
+    error: error instanceof Error ? error.message : error ? String(error) : null 
+  }
 }
