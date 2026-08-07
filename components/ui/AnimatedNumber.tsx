@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
+import { motion, useSpring, useTransform } from 'motion/react';
 
 export function AnimatedNumber({ value }: { value: number }) {
   const [hasMounted, setHasMounted] = useState(false);
