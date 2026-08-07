@@ -284,112 +284,29 @@ export default function TrackOrderPage() {
                       </div>
                     )}
                     
-                    {(() => {
-                      const rawMeta = (selectedRequest.metadata || {}) as Record<string, unknown>;
-                      const draftMeta = (selectedRequest.draft_data || {}) as Record<string, unknown>;
-                      const meta = { ...rawMeta, ...draftMeta };
+                    {Object.entries(selectedRequest.metadata || {}).map(([key, value]) => {
+                      if (value === undefined || value === null || value === '') return null;
                       
-                      // Date fields in the required order
-                      const dateFieldOrder = ['travelStartDate', 'travelStartDateTo', 'travelEndDate', 'travelEndDateTo'];
-                      const dateLabels: Record<string, string> = {
-                        travelStartDate: 'Departure From Date',
-                        travelStartDateTo: 'Departure To Date',
-                        travelEndDate: 'Return From Date',
-                        travelEndDateTo: 'Return To Date',
-                      };
-                      // Fields to skip from the generic loop
-                      const specialKeys = new Set([...dateFieldOrder, 'passengers']);
+                      // Format key: "product_url" -> "PRODUCT URL"
+                      const formattedKey = key.replace(/_/g, ' ');
                       
-                      // Render a generic detail row
-                      const DetailRow = ({ label, value }: { label: string; value: string }) => {
-                        const isUrl = value.startsWith('http://') || value.startsWith('https://');
-                        return (
-                          <div className="flex flex-col gap-1 border-b-2 border-dashed border-foreground/20 pb-2">
-                            <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">{label}</span>
-                            {isUrl ? (
-                              <a href={value} target="_blank" rel="noreferrer" className="font-mono font-bold text-xs truncate text-primary hover:underline" title={value}>
-                                {value}
-                              </a>
-                            ) : (
-                              <span className="font-mono font-bold text-xs truncate" title={value}>{value}</span>
-                            )}
-                          </div>
-                        );
-                      };
+                      // Format value based on type
+                      let formattedValue = '';
+                      if (typeof value === 'object') {
+                        formattedValue = JSON.stringify(value);
+                      } else {
+                        formattedValue = String(value);
+                      }
 
                       return (
-                        <>
-                          {/* Date fields first, in exact order */}
-                          {dateFieldOrder.map((key) => {
-                            const val = meta[key];
-                            if (!val) return null;
-                            return <DetailRow key={key} label={dateLabels[key] || key} value={String(val)} />;
-                          })}
-
-                          {/* Other fields (excluding passengers and dates) */}
-                          {Object.entries(meta).filter(([key]) => !specialKeys.has(key)).map(([key, value]) => {
-                            if (value === undefined || value === null || value === '') return null;
-                            const formattedKey = key.replace(/_/g, ' ');
-                            const formattedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-                            return <DetailRow key={key} label={formattedKey} value={formattedValue} />;
-                          })}
-
-                          {/* Passengers — render as clean cards */}
-                          {Array.isArray(meta.passengers) && meta.passengers.length > 0 && (
-                            <div className="flex flex-col gap-3 pt-2">
-                              <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">
-                                Passengers ({meta.passengers.length})
-                              </span>
-                              {(meta.passengers as Record<string, string>[]).map((pax, i) => (
-                                <div key={i} className="border-2 border-foreground/20 p-3 space-y-2">
-                                  <span className="text-[9px] uppercase font-bold tracking-widest opacity-40">
-                                    Passenger {i + 1}
-                                  </span>
-                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                    {pax.firstName && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">First Name</span>
-                                        <span className="font-mono font-bold text-xs">{pax.firstName}</span>
-                                      </div>
-                                    )}
-                                    {pax.lastName && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">Last Name</span>
-                                        <span className="font-mono font-bold text-xs">{pax.lastName}</span>
-                                      </div>
-                                    )}
-                                    {pax.dob && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">Date of Birth</span>
-                                        <span className="font-mono font-bold text-xs">{pax.dob}</span>
-                                      </div>
-                                    )}
-                                    {pax.nationality && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">Nationality</span>
-                                        <span className="font-mono font-bold text-xs">{pax.nationality}</span>
-                                      </div>
-                                    )}
-                                    {pax.aadharNumber && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">Aadhar Number</span>
-                                        <span className="font-mono font-bold text-xs">{pax.aadharNumber}</span>
-                                      </div>
-                                    )}
-                                    {pax.mealType && (
-                                      <div>
-                                        <span className="text-[8px] uppercase font-bold tracking-widest opacity-40 block">Meal Type</span>
-                                        <span className="font-mono font-bold text-xs">{pax.mealType}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
+                        <div key={key} className="flex flex-col gap-1 border-b-2 border-dashed border-foreground/20 pb-2">
+                          <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">{formattedKey}</span>
+                          <span className="font-mono font-bold text-xs truncate" title={formattedValue}>
+                            {formattedValue}
+                          </span>
+                        </div>
                       );
-                    })()}
+                    })}
 
                     {selectedRequest.notes && (
                       <div className="flex flex-col gap-1 pt-2">

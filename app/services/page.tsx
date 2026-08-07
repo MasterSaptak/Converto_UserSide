@@ -79,11 +79,11 @@ export default async function ServicesPage() {
 
   // Manually inject the expanded ticket services
   const expandedTicketServices = [
-    { id: 'train_booking', slug: 'train_booking', name: 'Train Tickets', description: 'Book railway tickets easily', route: '/services/trains', color: '#00E5FF', sort_order: 3.1, is_active: true },
-    { id: 'bus_booking', slug: 'bus_booking', name: 'Bus Tickets', description: 'Intercity bus travel booking', route: '/services/buses', color: '#FF90E8', sort_order: 3.2, is_active: true },
-    { id: 'flight_booking', slug: 'flight_booking', name: 'Plane Tickets', description: 'Domestic & international flights', route: '/services/flights', color: '#FFC900', sort_order: 3.3, is_active: true },
-    { id: 'hotel_booking', slug: 'hotel_booking', name: 'Hotel Booking', description: 'Book your perfect stay anywhere', route: '/services/hotels', color: '#00FF66', sort_order: 3.4, is_active: true },
-    { id: 'event_booking', slug: 'event_booking', name: 'Event Booking', description: 'Secure passes to major events', route: '/services/events', color: '#FF5C00', sort_order: 3.5, is_active: true },
+    { id: 'train_booking', slug: 'train_booking', name: 'Train Tickets', description: 'Book railway tickets easily', route: '/services/tickets?type=train', color: '#00E5FF', sort_order: 3.1, is_active: true },
+    { id: 'bus_booking', slug: 'bus_booking', name: 'Bus Tickets', description: 'Intercity bus travel booking', route: '/services/tickets?type=bus', color: '#FF90E8', sort_order: 3.2, is_active: true },
+    { id: 'flight_booking', slug: 'flight_booking', name: 'Plane Tickets', description: 'Domestic & international flights', route: '/services/tickets?type=flight', color: '#FFC900', sort_order: 3.3, is_active: true },
+    { id: 'hotel_booking', slug: 'hotel_booking', name: 'Hotel Booking', description: 'Book your perfect stay anywhere', route: '/services/tickets?type=hotel', color: '#00FF66', sort_order: 3.4, is_active: true },
+    { id: 'event_booking', slug: 'event_booking', name: 'Event Booking', description: 'Secure passes to major events', route: '/services/tickets?type=event', color: '#FF5C00', sort_order: 3.5, is_active: true },
   ];
 
   const services = [...baseServices, ...expandedTicketServices].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
