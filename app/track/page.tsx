@@ -207,94 +207,146 @@ export default function TrackOrderPage() {
                       </div>
                     )}
 
-                    {/* Step 1 - Created */}
-                    <div className="relative pl-8">
-                      <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
-                        <CheckCircle2 className="w-3 h-3 text-white" />
-                      </div>
-                      <h4 className="font-bold uppercase text-sm leading-none mb-1">Request Received</h4>
-                      <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
-                        {new Date(selectedRequest.created_at).toLocaleString()}
-                      </span>
-                      <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
-                    </div>                    {/* Dynamic Step based on pipeline status */}
-                    {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'quote_sent' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'awaiting_payment' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'reviewing_quote' || ((selectedRequest as unknown as ExtendedRequest).quotes && (selectedRequest as unknown as ExtendedRequest).quotes!.length > 0 && (selectedRequest as unknown as ExtendedRequest).stage?.code !== 'completed' && (selectedRequest as unknown as ExtendedRequest).status_obj?.code !== 'closed') ? (
-                       <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
-                          <CheckCircle2 className="w-3 h-3 text-white" />
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-purple-600">Quote Ready</h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
-                          {new Date(selectedRequest.updated_at).toLocaleString()}
-                        </span>
-                        <p className="text-xs uppercase font-bold opacity-80 mb-3">Your custom quote has been generated and is ready for payment.</p>
-                        
-                        {(selectedRequest as unknown as ExtendedRequest).quotes && (selectedRequest as unknown as ExtendedRequest).quotes!.length > 0 && (
-                          <div className="bg-purple-50 border-2 border-purple-200 p-4 mb-4">
-                            <h5 className="text-[10px] font-black uppercase tracking-widest text-purple-800 border-b-2 border-purple-200 pb-2 mb-2">Cost Breakdown</h5>
-                            <div className="space-y-1">
-                              {(selectedRequest as unknown as ExtendedRequest).quotes![0].breakdown?.line_items?.map((item: any, idx: number) => (
-                                <div key={idx} className="flex justify-between text-xs font-mono">
-                                  <span className="opacity-80">{item.label} <span className="opacity-50">x{item.quantity}</span></span>
-                                  <span className="font-bold">{item.amount > 0 ? '' : '-'}${Math.abs(item.amount).toFixed(2)}</span>
-                                </div>
-                              ))}
-                              <div className="flex justify-between text-sm font-black border-t-2 border-purple-200 pt-2 mt-2">
-                                <span>TOTAL</span>
-                                <span>${((selectedRequest as unknown as ExtendedRequest).quotes![0].amount || 0).toFixed(2)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                    {(() => {
+                      const reqExt = selectedRequest as unknown as ExtendedRequest;
+                      const sSlug = selectedRequest.service?.slug;
+                      const sName = (selectedRequest.service?.name || '').toLowerCase();
+                      const isTicket = sSlug === 'tickets' || sSlug === 'ticket' || sSlug === 'train_booking' || sSlug === 'bus_booking' || sSlug === 'flight_booking' || sName.includes('ticket') || sName.includes('train') || sName.includes('bus') || sName.includes('flight');
+                      const statusCode = reqExt.status_obj?.code;
+                      const hasQuote = reqExt.quotes && reqExt.quotes.length > 0;
+                      const liveQuote = reqExt.quotes?.find((q: any) => ['sent', 'approved'].includes(q.status));
+                      const displayQuote = liveQuote || (hasQuote ? reqExt.quotes![0] : null);
+                      const isQuotePhase = hasQuote || statusCode === 'quote_sent' || statusCode === 'awaiting_payment' || statusCode === 'reviewing_quote';
+                      const isTicketGen = statusCode === 'ticket_delivered' || statusCode === 'booking_voucher_sent' || statusCode === 'completed' || !!(selectedRequest as any).draft_data?.issuedTicket;
+                      const isPaymentDone = statusCode === 'payment_confirmed' || statusCode === 'in_progress' || isTicketGen;
+                      const isComplete = statusCode === 'completed';
+                      const isClosed = statusCode === 'closed';
 
-                        {(selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'payment_confirmed' || (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'in_progress' || (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
-                          <div className="inline-flex brutal-button bg-emerald-500 text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 cursor-default">
-                            Payment Done <CheckCircle2 className="w-4 h-4" />
+                      if (isTicket) {
+                        return (
+                          <>
+                            {/* 1. Request Accepted */}
+                            <div className="relative pl-8">
+                              <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                                <CheckCircle2 className="w-3 h-3 text-white" />
+                              </div>
+                              <h4 className="font-bold uppercase text-sm leading-none mb-1">Request Accepted</h4>
+                              <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                                {new Date(selectedRequest.created_at).toLocaleString()}
+                              </span>
+                              <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
+                            </div>
+
+                            {/* 2. Quotation Send */}
+                            <div className="relative pl-8">
+                              <div className={`absolute -left-[11px] top-0 w-5 h-5 ${isPaymentDone ? 'bg-emerald-500' : isQuotePhase ? 'bg-purple-500' : 'bg-gray-200'} border-2 border-foreground rounded-full flex items-center justify-center z-10`}>
+                                {(isPaymentDone || isQuotePhase) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <h4 className={`font-bold uppercase text-sm leading-none mb-1 ${isPaymentDone ? 'text-emerald-600' : isQuotePhase ? 'text-purple-600' : 'text-gray-400'}`}>Quotation Send</h4>
+                              {(isQuotePhase || isPaymentDone) && (
+                                <p className="text-xs uppercase font-bold opacity-80 mb-3 mt-2">Your custom quote is ready.</p>
+                              )}
+                              
+                              {displayQuote && (
+                                <div className={`bg-purple-50 border-2 border-purple-200 p-4 mb-4 ${!isQuotePhase && !isPaymentDone ? 'hidden' : ''}`}>
+                                  <h5 className="text-[10px] font-black uppercase tracking-widest text-purple-800 border-b-2 border-purple-200 pb-2 mb-2">Cost Breakdown</h5>
+                                  <div className="space-y-1">
+                                    {displayQuote.breakdown?.line_items?.map((item: any, idx: number) => (
+                                      <div key={idx} className="flex justify-between text-xs font-mono">
+                                        <span className="opacity-80">{item.label} <span className="opacity-50">x{item.quantity}</span></span>
+                                        <span className="font-bold">{item.amount > 0 ? '' : '-'}${Math.abs(item.amount).toFixed(2)}</span>
+                                      </div>
+                                    ))}
+                                    <div className="flex justify-between text-sm font-black border-t-2 border-purple-200 pt-2 mt-2">
+                                      <span>TOTAL</span>
+                                      <span>${(displayQuote.amount || 0).toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                  {displayQuote.notes && (
+                                    <p className="text-xs italic text-purple-700 mt-3 pt-2 border-t border-purple-200 opacity-90">
+                                      &ldquo;{displayQuote.notes}&rdquo;
+                                    </p>
+                                  )}
+                                  {displayQuote.valid_until && (
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 mt-2 opacity-70">
+                                      Valid Until: {new Date(displayQuote.valid_until).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
+                              {isQuotePhase && !isPaymentDone && (
+                                <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 hover:bg-gray-800 mt-2">
+                                  Review & Pay <ArrowRight className="w-4 h-4" />
+                                </a>
+                              )}
+                            </div>
+
+                            {/* 3. Payment Done */}
+                            <div className="relative pl-8">
+                              <div className={`absolute -left-[11px] top-0 w-5 h-5 ${isPaymentDone ? 'bg-emerald-500' : 'bg-gray-200'} border-2 border-foreground rounded-full flex items-center justify-center z-10`}>
+                                {isPaymentDone && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <h4 className={`font-bold uppercase text-sm leading-none mb-1 ${isPaymentDone ? 'text-emerald-600' : 'text-gray-400'}`}>Payment Done</h4>
+                              {isPaymentDone && (
+                                <div className="mt-3 inline-flex brutal-button bg-emerald-500 text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 cursor-default">
+                                  Payment Done <CheckCircle2 className="w-4 h-4" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 4. Ticket Generated */}
+                            <div className="relative pl-8">
+                              <div className={`absolute -left-[11px] top-0 w-5 h-5 ${isTicketGen ? 'bg-emerald-500' : 'bg-gray-200'} border-2 border-foreground rounded-full flex items-center justify-center z-10`}>
+                                {isTicketGen && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <h4 className={`font-bold uppercase text-sm leading-none mb-1 ${isTicketGen ? 'text-emerald-600' : 'text-gray-400'}`}>Ticket Generated</h4>
+                              {isTicketGen && (
+                                <p className="text-xs uppercase font-bold opacity-80 mt-2">Your ticket has been generated successfully.</p>
+                              )}
+                            </div>
+
+                            {/* 5. Complete */}
+                            <div className="relative pl-8">
+                              <div className={`absolute -left-[11px] top-0 w-5 h-5 ${isComplete ? 'bg-emerald-500' : 'bg-gray-200'} border-2 border-foreground rounded-full flex items-center justify-center z-10`}>
+                                {isComplete && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <h4 className={`font-bold uppercase text-sm leading-none mb-1 ${isComplete ? 'text-emerald-600' : 'text-gray-400'}`}>Complete</h4>
+                              {isComplete && (
+                                <p className="text-xs uppercase font-bold opacity-80 mt-2">Service request fulfilled successfully.</p>
+                              )}
+                            </div>
+                            
+                            {isClosed && (
+                              <div className="relative pl-8">
+                                <div className="absolute -left-[11px] top-0 w-5 h-5 bg-red-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                                  <XCircle className="w-3 h-3 text-white" />
+                                </div>
+                                <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">Closed</h4>
+                                <p className="text-xs uppercase font-bold opacity-80 mt-2">This request is closed.</p>
+                              </div>
+                            )}
+                          </>
+                        );
+                      }
+
+                      // Original Timeline for other services
+                      return (
+                        <>
+                          {/* Step 1 - Created */}
+                          <div className="relative pl-8">
+                            <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                              <CheckCircle2 className="w-3 h-3 text-white" />
+                            </div>
+                            <h4 className="font-bold uppercase text-sm leading-none mb-1">Request Received</h4>
+                            <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                              {new Date(selectedRequest.created_at).toLocaleString()}
+                            </span>
+                            <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
                           </div>
-                        ) : (
-                          <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2 hover:bg-gray-800">
-                            Review & Pay <ArrowRight className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
-                    ) : (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
-                       <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
-                          <CheckCircle2 className="w-3 h-3 text-white" />
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-emerald-600">Completed</h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
-                          {new Date(selectedRequest.updated_at).toLocaleString()}
-                        </span>
-                        <p className="text-xs uppercase font-bold opacity-80">Service request fulfilled successfully.</p>
-                      </div>
-                    ) : (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'closed' ? (
-                      <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-red-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
-                          <XCircle className="w-3 h-3 text-white" />
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{(selectedRequest as unknown as ExtendedRequest).status_obj?.name}</h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
-                          {new Date(selectedRequest.updated_at).toLocaleString()}
-                        </span>
-                        <p className="text-xs uppercase font-bold opacity-80">This request is closed.</p>
-                      </div>
-                    ) : (
-                      <div className="relative pl-8">
-                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white border-2 border-primary rounded-full z-10">
-                          <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
-                        </div>
-                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">
-                          {(selectedRequest as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as unknown as ExtendedRequest).status_obj?.name || 'Submitted'}
-                        </h4>
-                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
-                        {(selectedRequest as unknown as ExtendedRequest).status_obj?.requires_customer_action && (
-                          <p className="text-xs uppercase font-bold text-orange-600 mt-2 p-2 border-2 border-orange-600 bg-orange-50">
-                            Action Required. Please check your email or contact support.
-                          </p>
-                        )}
-                      </div>
-                    )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 

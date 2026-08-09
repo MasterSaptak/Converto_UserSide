@@ -8,9 +8,10 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status } = await req.json();
+    const { orderId, requestId, status } = await req.json();
+    const targetId = orderId || requestId;
     
-    if (status === 'succeeded') {
+    if (targetId) {
       const { data: targetStatus } = await supabase
         .from('pipeline_statuses')
         .select('id')
@@ -20,8 +21,8 @@ export async function POST(req: Request) {
       if (targetStatus) {
         await supabase
           .from('service_requests')
-          .update({ status: targetStatus.id })
-          .eq('id', orderId);
+          .update({ status: targetStatus.id, pipeline_status_id: targetStatus.id })
+          .eq('id', targetId);
       } else {
         console.error("MOCK PAYMENT WEBHOOK: Could not find 'payment_confirmed' status in database. Make sure it exists and is readable.");
       }

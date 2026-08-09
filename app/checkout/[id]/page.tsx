@@ -35,10 +35,8 @@ export default function CheckoutPage() {
 
         setOrder(orderData)
 
-        // Request payment intent from Server App API
-        // For MVP, we make a call to localhost:3000 where Server App is running
-        // In production, this should be an env variable API_URL
-        const res = await fetch('http://localhost:3000/api/payments/create-intent', {
+        // Request payment intent
+        const res = await fetch('/api/payments/create-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: params.id })
@@ -70,8 +68,8 @@ export default function CheckoutPage() {
       // Simulate Stripe Processing Delay
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // Send mock webhook to ServerApp
-      const res = await fetch('http://localhost:3000/api/webhooks/mock-payment', {
+      // Send mock webhook to API
+      const res = await fetch('/api/webhooks/mock-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

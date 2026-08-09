@@ -79,7 +79,7 @@ export default async function ServicesPage() {
 
   // Manually inject the expanded ticket services
   const expandedTicketServices = [
-    { id: 'train_booking', slug: 'train_booking', name: 'Train Tickets', description: 'Book railway tickets easily', route: '/services/trains', color: '#00E5FF', sort_order: 3.1, is_active: true },
+    { id: 'train_booking', slug: 'train_booking', name: 'Train Tickets', description: 'Book railway tickets easily', route: '/services/tickets/request?type=train', color: '#00E5FF', sort_order: 3.1, is_active: true },
     { id: 'bus_booking', slug: 'bus_booking', name: 'Bus Tickets', description: 'Intercity bus travel booking', route: '/services/buses', color: '#FF90E8', sort_order: 3.2, is_active: true },
     { id: 'flight_booking', slug: 'flight_booking', name: 'Plane Tickets', description: 'Domestic & international flights', route: '/services/flights', color: '#FFC900', sort_order: 3.3, is_active: true },
     { id: 'hotel_booking', slug: 'hotel_booking', name: 'Hotel Booking', description: 'Book your perfect stay anywhere', route: '/services/hotels', color: '#00FF66', sort_order: 3.4, is_active: true },
