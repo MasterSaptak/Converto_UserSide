@@ -42,7 +42,7 @@ export function BottomNav() {
   };
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t-2 border-foreground bg-secondary z-50">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 border-t-2 border-foreground bg-secondary z-50">
       <nav className="flex justify-between items-center h-[64px] px-2 max-w-md mx-auto relative">
         <div className="flex w-full justify-around pr-8">
           <MobileSidebar />
