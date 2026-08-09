@@ -14,7 +14,7 @@ type Category = 'travel' | 'hotel' | 'event'
 
 const BrutalDatePicker = ({ value, onChange, placeholder = 'dd/mm/yy' }: { value: string, onChange: (val: string) => void, placeholder?: string }) => {
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return placeholder;
     try {
@@ -27,7 +27,7 @@ const BrutalDatePicker = ({ value, onChange, placeholder = 'dd/mm/yy' }: { value
   }
 
   return (
-    <div 
+    <div
       className="relative w-full group focus-within:ring-2 ring-primary bg-white cursor-pointer"
       onClick={() => {
         try {
@@ -545,7 +545,7 @@ function TicketBookingForm() {
               onClick={handleNext}
               className="w-full brutal-button bg-black text-white flex items-center justify-center gap-2"
             >
-              Next Step <ArrowRight className="w-5 h-5" />
+              Next Steps <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>

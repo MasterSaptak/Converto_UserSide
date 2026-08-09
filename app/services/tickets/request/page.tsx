@@ -14,7 +14,7 @@ type Category = 'travel' | 'hotel' | 'event'
 
 const BrutalDatePicker = ({ value, onChange, placeholder = 'dd/mm/yy' }: { value: string, onChange: (val: string) => void, placeholder?: string }) => {
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return placeholder;
     try {
@@ -27,7 +27,7 @@ const BrutalDatePicker = ({ value, onChange, placeholder = 'dd/mm/yy' }: { value
   }
 
   return (
-    <div 
+    <div
       className="relative w-full group focus-within:ring-2 ring-primary bg-white cursor-pointer"
       onClick={() => {
         try {
@@ -543,7 +543,7 @@ function TicketRequestForm() {
             <button
               type="button"
               onClick={handleNext}
-              className="w-full brutal-button bg-black text-white flex items-center justify-center gap-2"
+              className="w-full h-14 brutal-button bg-black text-white flex items-center justify-center gap-2"
             >
               Next Step <ArrowRight className="w-5 h-5" />
             </button>
@@ -779,7 +779,7 @@ function TicketRequestForm() {
           </div>
 
           <div className="bg-primary/10 border-2 border-primary p-4 mb-6">
-            <h4 className="font-black uppercase tracking-widest text-xs mb-2">Next Steps</h4>
+            <h4 className="font-red uppercase tracking-widest text-xs mb-2">Next Step</h4>
             <p className="text-sm font-bold opacity-80">
               Once submitted, our team will source the best options and generate a final price quote. You&apos;ll be notified when the quote is ready for your approval and payment.
             </p>
