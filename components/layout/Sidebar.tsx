@@ -4,109 +4,105 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User, MonitorPlay } from "lucide-react";
+import { LayoutDashboard, Grid, MapPin, Clock, HeadphonesIcon, User } from "lucide-react";
+import { useRewards } from "@/hooks/useRewards";
 import { LiveFooter } from "./LiveFooter";
-import { RewardsProgress } from "@/components/dashboard/RewardsProgress";
-import { AiAssistantWidget } from "@/components/dashboard/AiAssistantWidget";
 
-const NAV_ITEMS = [
+const DESKTOP_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/services", label: "Services", icon: Grid },
-  { href: "/services/subscriptions", label: "App Subscriptions", icon: MonitorPlay },
   { href: "/track", label: "Track Order", icon: MapPin },
-  { href: "/history", label: "History", icon: Clock },
+  { href: "/history", label: "Transaction History", icon: Clock },
   { href: "/support", label: "Support", icon: HeadphonesIcon },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/profile", label: "My Profile", icon: User },
+];
+
+const MOBILE_NAV_ITEMS = [
+  { href: "/history", label: "Transaction History", icon: Clock },
+  { href: "/profile", label: "My Profile", icon: User },
 ];
 
 export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
-  const activeHref = NAV_ITEMS
-    .filter((item) => pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/')))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const { rewards, tierInfo } = useRewards();
+
+  const lifetimeCPoints = rewards?.lifetime_c_points || 0;
 
   const content = (
-    <div className={cn(
-      "flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
-      mobile ? "h-full" : "h-screen sticky top-0"
-    )}>
-      {/* ── Logo Strip ── */}
-      <Link href="/" className="flex items-center gap-3 px-5 py-4 border-b-2 border-foreground bg-card group shrink-0">
-        <div className="w-11 h-11 border-2 border-foreground bg-white overflow-hidden shrink-0 shadow-[3px_3px_0px_var(--color-foreground)] group-hover:shadow-[1px_1px_0px_var(--color-foreground)] group-hover:translate-x-[2px] group-hover:translate-y-[2px] transition-all">
-          <Image src="/Logo.png" alt="Converto Logo" width={44} height={44} className="w-full h-full object-cover scale-[1.4]" priority />
+    <div className="h-full sticky top-0 flex flex-col p-6 lg:p-8 overflow-y-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <Link href="/" className="flex flex-col items-center mb-8 group -mx-6 lg:-mx-8 -mt-6 lg:-mt-8 p-5 border-b-2 border-foreground bg-card">
+        <div className="w-full max-w-[200px] h-28 border-2 border-foreground bg-white overflow-hidden flex items-center justify-center mb-3">
+          <Image src="/Logo.png" alt="Converto Logo" width={200} height={200} className="w-full h-full object-cover scale-[1.45] transition-transform duration-300 group-hover:scale-[1.55]" priority />
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-base font-black uppercase tracking-widest font-heading leading-none group-hover:text-primary transition-colors">Converto</span>
-          <span className="text-[8px] uppercase tracking-[0.15em] font-bold text-muted-foreground mt-1">Global Payment Engine</span>
-        </div>
+        <h2 className="text-2xl font-bold uppercase tracking-widest font-heading group-hover:text-primary transition-colors leading-none mt-3">Converto</h2>
+        <span className="text-[8px] uppercase tracking-widest font-bold opacity-60 mt-1">The Ultimate Payment Engine</span>
       </Link>
 
-      {/* ── Navigation ── */}
-      <nav className="flex flex-col gap-1 px-3 py-4 shrink-0">
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground px-3 mb-2">Menu</span>
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.href === activeHref;
+      <nav className="flex flex-col gap-4 mb-6">
+        {(mobile ? MOBILE_NAV_ITEMS : DESKTOP_NAV_ITEMS).map((item) => {
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'));
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 text-[11px] font-bold uppercase tracking-widest transition-all relative group/nav",
-                isActive
-                  ? "bg-foreground text-background border-2 border-foreground shadow-[3px_3px_0px_var(--color-primary)]"
-                  : "text-foreground/70 hover:text-foreground hover:bg-card border-2 border-transparent"
+                "flex items-center gap-3 text-xs font-bold uppercase border-b-2 pb-1.5 w-fit transition-colors group/nav",
+                isActive ? "border-primary text-primary" : "border-transparent text-foreground hover:border-foreground"
               )}
             >
-              <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "stroke-[2.5px]" : "stroke-2")} />
-              <span className="truncate">{item.label}</span>
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[1px] w-[3px] h-4 bg-primary" />
-              )}
+              {item.icon && <item.icon className={cn("w-4 h-4", isActive ? "stroke-[2.5px]" : "stroke-2 opacity-70 group-hover/nav:opacity-100")} />}
+              <span>{item.label}</span>
             </Link>
-          );
+          )
         })}
       </nav>
 
-      {/* ── Spacer ── */}
-      <div className="flex-1 min-h-4" />
+      {/* Converto Rewards Tier Card */}
+      <div className="flex flex-col gap-4 mt-2">
+        <Link href="/profile" className="border-2 border-foreground bg-card p-3 relative overflow-hidden group block hover:bg-secondary/50 transition-colors">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 group-hover:scale-150 transition-transform duration-500"></div>
+          <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 opacity-80">{tierInfo.current.icon || '🏆'} Converto Rewards</span>
 
-      {/* ── Widgets ── */}
-      <div className="flex flex-col gap-3 px-3 pb-3 shrink-0">
-        <RewardsProgress />
-        <AiAssistantWidget />
+          <div className="flex items-end justify-between mb-2">
+            <span className="text-xl font-heading font-bold text-primary">{lifetimeCPoints.toLocaleString()} C</span>
+            <span className="text-[10px] font-bold opacity-60 uppercase">{tierInfo.current.name} Tier</span>
+          </div>
+
+          <div className="w-full h-2 bg-secondary border-2 border-foreground overflow-hidden mb-2">
+            <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${tierInfo.progress}%` }}></div>
+          </div>
+
+          {tierInfo.next ? (
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">
+              {(tierInfo.next.minPoints - lifetimeCPoints).toLocaleString()} C until {tierInfo.next.name}
+            </span>
+          ) : (
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-60">
+              Max Tier Reached!
+            </span>
+          )}
+        </Link>
+
+        <Link href="/services/exchange" className="w-full bg-primary text-primary-foreground border-2 border-foreground py-3 text-center text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors shadow-[4px_4px_0px_var(--color-foreground)] hover:shadow-none hover:translate-y-1 hover:translate-x-1">
+          New Transfer
+        </Link>
       </div>
 
-      {/* ── System Status & Footer ── */}
-      <div className="px-5 py-3 border-t-2 border-foreground/10 flex flex-col gap-3 shrink-0">
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">System</span>
-          <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Online
-          </div>
+      <div className="mt-auto pt-4">
+        <span className="text-[10px] uppercase tracking-widest opacity-60 block mb-1">System</span>
+        <div className="font-bold text-sm flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          ONLINE
         </div>
         {mobile && <LiveFooter compact />}
       </div>
-
-      {/* ── Mobile-only Legal ── */}
-      {mobile && (
-        <div className="px-5 py-4 flex flex-col gap-3 border-t-2 border-foreground/10 shrink-0">
-          <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">Legal & Support</span>
-          <div className="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase tracking-wider">
-            <Link href="/privacy" className="text-foreground/70 hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="text-foreground/70 hover:text-primary transition-colors">Terms of Use</Link>
-            <Link href="/support" className="text-foreground/70 hover:text-primary transition-colors">Help Center</Link>
-            <Link href="/contact" className="text-foreground/70 hover:text-primary transition-colors">Contact Support</Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 
   if (mobile) return content;
 
   return (
-    <aside className="hidden lg:block w-[240px] xl:w-[280px] border-r-2 border-foreground bg-secondary shrink-0">
+    <aside className="hidden md:block w-[240px] lg:w-[280px] border-r-2 border-foreground bg-secondary shrink-0 relative">
       {content}
     </aside>
   );
