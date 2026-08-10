@@ -20,30 +20,11 @@
   --color-border: #18181A;
   --color-input: #18181A;
   --color-ring: #E11D48;
-  --radius: 12px;
+  --radius: 0;
   
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
-}
-
-@utility shadow-brutal {
-  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
-}
-@utility shadow-brutal-hover {
-  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
-}
-@utility shadow-brutal-lg {
-  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
-}
-@layer components {
-  .hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .hover-lift:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
-  }
 }
 
 @layer base {

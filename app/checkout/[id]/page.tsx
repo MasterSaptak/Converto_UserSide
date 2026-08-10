@@ -21,15 +21,13 @@ export default function CheckoutPage() {
       try {
         const { data: orderData, error: orderError } = await supabase
           .from('service_requests')
-          .select('*, services(name), status_obj:pipeline_statuses(*), quotes:quotes!quotes_request_id_fkey(*)')
+          .select('*, services(name)')
           .eq('id', params.id)
           .single()
 
         if (orderError) throw orderError
-        
-        const hasQuote = orderData.quotes && orderData.quotes.length > 0
-        if (!hasQuote && orderData.status_obj?.code !== 'awaiting_payment' && orderData.status_obj?.code !== 'quote_sent' && orderData.status_obj?.code !== 'reviewing_quote') {
-          router.push('/track')
+        if (orderData.status_code !== 'awaiting_payment' && orderData.status_code !== 'quote_sent') {
+          router.push('/dashboard')
           return
         }
 
@@ -63,16 +61,16 @@ export default function CheckoutPage() {
   const handleSimulatedPayment = async (e: React.FormEvent) => {
     e.preventDefault()
     setProcessing(true)
-    
+
     try {
       // Simulate Stripe Processing Delay
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       // Send mock webhook to API
       const res = await fetch('/api/webhooks/mock-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           orderId: params.id,
           intentId: intent.intentId,
           status: 'succeeded'
@@ -110,7 +108,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 animate-in fade-in duration-500">
-      
+
       <div className="mb-10 text-center">
         <div className="inline-flex w-16 h-16 border-2 border-foreground bg-primary items-center justify-center mb-6 shadow-[4px_4px_0px_var(--color-foreground)]">
           <Lock className="w-8 h-8 text-primary-foreground" />
@@ -120,12 +118,12 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid md:grid-cols-5 gap-8">
-        
+
         {/* Order Summary */}
         <div className="md:col-span-2 space-y-4">
           <div className="bg-slate-50 border-2 border-foreground p-6">
             <h3 className="font-black uppercase tracking-widest text-xs mb-4 pb-4 border-b-2 border-foreground/10">Order Summary</h3>
-            
+
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-sm font-bold opacity-60">Service</span>
@@ -135,7 +133,7 @@ export default function CheckoutPage() {
                 <span className="text-sm font-bold opacity-60">Order ID</span>
                 <span className="text-sm font-mono font-black">{order?.id.split('-')[0]}</span>
               </div>
-              
+
               <div className="pt-4 border-t-2 border-foreground/10 mt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-black uppercase tracking-widest">Total Due</span>
@@ -154,14 +152,14 @@ export default function CheckoutPage() {
         {/* Payment Form (Mock) */}
         <div className="md:col-span-3">
           <div className="brutal-card bg-white p-6 md:p-8 space-y-6">
-            
+
             <div className="bg-yellow-100 border-2 border-yellow-500 text-yellow-800 p-4 text-xs font-bold flex gap-3">
               <ShieldCheck className="w-5 h-5 shrink-0" />
               This is a test environment using the Mock Payment Engine. No real charges will be processed.
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border-b-2 border-foreground/10 pb-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('card')}
                 className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'card' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
@@ -169,7 +167,7 @@ export default function CheckoutPage() {
                 <CreditCard className="w-5 h-5" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-center">Card</span>
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('qr')}
                 className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'qr' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
@@ -177,7 +175,7 @@ export default function CheckoutPage() {
                 <QrCode className="w-5 h-5" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-center">QR / UPI</span>
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('bank')}
                 className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'bank' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
@@ -185,7 +183,7 @@ export default function CheckoutPage() {
                 <Building2 className="w-5 h-5" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-center">Bank Transfer</span>
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('international')}
                 className={`flex flex-col items-center justify-center p-3 gap-2 border-2 transition-all ${paymentMethod === 'international' ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_var(--color-foreground)]' : 'border-transparent hover:bg-slate-100'}`}
@@ -200,7 +198,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Card Number (Mock)</label>
-                    <input 
+                    <input
                       type="text"
                       disabled
                       className="brutal-input w-full bg-slate-100 opacity-70"
@@ -246,15 +244,15 @@ export default function CheckoutPage() {
 
               {paymentMethod === 'international' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                   <div className="bg-blue-50 p-6 border-2 border-blue-200 text-center flex flex-col items-center justify-center gap-4">
-                      <Globe className="w-10 h-10 text-blue-500" />
-                      <p className="text-xs font-bold uppercase tracking-widest text-blue-900">Checkout with Paypal or Stripe International</p>
-                   </div>
+                  <div className="bg-blue-50 p-6 border-2 border-blue-200 text-center flex flex-col items-center justify-center gap-4">
+                    <Globe className="w-10 h-10 text-blue-500" />
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-900">Checkout with Paypal or Stripe International</p>
+                  </div>
                 </div>
               )}
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={processing}
                 className="w-full bg-foreground text-background font-black uppercase tracking-widest py-4 border-2 border-transparent hover:border-foreground hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -264,7 +262,7 @@ export default function CheckoutPage() {
                   paymentMethod === 'bank' ? 'Confirm Transfer Initiated' : `Pay $${(order?.quotes?.[0]?.amount || 0).toFixed(2)}`
                 )}
               </button>
-              
+
             </form>
           </div>
         </div>

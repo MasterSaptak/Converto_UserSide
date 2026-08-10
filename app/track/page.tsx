@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft, Download, Ticket } from "lucide-react";
 import { useServiceRequests } from '@/hooks/useServiceRequests';
 import { useAuth } from '@/hooks/useAuth';
 import type { ServiceRequest } from '@/types/database';
@@ -178,6 +178,7 @@ export default function TrackOrderPage() {
                   <h3 className="font-bold uppercase tracking-widest text-sm mb-6 border-b-2 border-foreground pb-2">Status Timeline</h3>
                   <div className="relative border-l-2 border-foreground ml-3 space-y-8">
                     
+<<<<<<< HEAD
                     {/* Issued Ticket Details */}
                     {(selectedRequest as any)?.draft_data?.issuedTicket && (
                       <div className="bg-emerald-50 border-2 border-emerald-300 p-4 mb-8">
@@ -204,6 +205,97 @@ export default function TrackOrderPage() {
                             )}
                           </div>
                         </div>
+=======
+                    {/* Step 1 - Created */}
+                    <div className="relative pl-8">
+                      <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      </div>
+                      <h4 className="font-bold uppercase text-sm leading-none mb-1">Request Received</h4>
+                      <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                        {new Date(selectedRequest.created_at).toLocaleString()}
+                      </span>
+                      <p className="text-xs uppercase font-bold opacity-80">Your request has been submitted securely.</p>
+                    </div>                    {/* Dynamic Step based on pipeline status */}
+                    {(['quote_sent', 'reviewing_quote', 'awaiting_payment'].includes(
+                      (selectedRequest as unknown as ExtendedRequest).status_obj?.code ?? ''
+                    )) ? (
+                       <div className="relative pl-8">
+                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-purple-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </div>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-purple-600">Quote Ready</h4>
+                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                          {new Date(selectedRequest.updated_at).toLocaleString()}
+                        </span>
+                        <p className="text-xs uppercase font-bold opacity-80 mb-3">Your custom quote has been generated and is ready for payment.</p>
+                        <a href={`/checkout/${selectedRequest.id}`} className="inline-flex brutal-button bg-black text-white py-2 px-4 text-xs font-bold uppercase tracking-widest items-center gap-2">
+                          Review & Pay <ArrowRight className="w-4 h-4" />
+                        </a>
+                      </div>
+                    ) : (selectedRequest as unknown as ExtendedRequest).stage?.code === 'completed' ? (
+                       <div className="relative pl-8">
+                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-emerald-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </div>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-emerald-600">Completed</h4>
+                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                          {new Date(selectedRequest.updated_at).toLocaleString()}
+                        </span>
+                        <p className="text-xs uppercase font-bold opacity-80">Service request fulfilled successfully.</p>
+
+                        {/* Ticket issued — show PNR and download link */}
+                        {((selectedRequest.metadata as any)?.ticketPnr || (selectedRequest.metadata as any)?.ticketFileUrl) && (
+                          <div className="mt-4 border-2 border-emerald-500 bg-emerald-50 p-4 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Ticket className="w-5 h-5 text-emerald-600" />
+                              <span className="font-black uppercase tracking-widest text-xs text-emerald-800">Your Ticket is Ready!</span>
+                            </div>
+                            {(selectedRequest.metadata as any)?.ticketPnr && (
+                              <div className="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">PNR / Booking Ref</span>
+                                <span className="font-mono font-black text-sm">{(selectedRequest.metadata as any).ticketPnr}</span>
+                              </div>
+                            )}
+                            {(selectedRequest.metadata as any)?.ticketFileUrl && (
+                              <a
+                                href={(selectedRequest.metadata as any).ticketFileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full border-2 border-foreground bg-foreground text-background font-bold uppercase tracking-widest text-xs py-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_var(--color-foreground)] transition-all"
+                              >
+                                <Download className="w-4 h-4" /> Download E-Ticket
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (selectedRequest as unknown as ExtendedRequest).status_obj?.code === 'closed' ? (
+                      <div className="relative pl-8">
+                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-red-500 border-2 border-foreground rounded-full flex items-center justify-center z-10">
+                          <XCircle className="w-3 h-3 text-white" />
+                        </div>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-red-600">{(selectedRequest as unknown as ExtendedRequest).status_obj?.name}</h4>
+                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">
+                          {new Date(selectedRequest.updated_at).toLocaleString()}
+                        </span>
+                        <p className="text-xs uppercase font-bold opacity-80">This request is closed.</p>
+                      </div>
+                    ) : (
+                      <div className="relative pl-8">
+                        <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white border-2 border-primary rounded-full z-10">
+                          <div className="absolute inset-[2px] bg-primary rounded-full animate-pulse"></div>
+                        </div>
+                        <h4 className="font-bold uppercase text-sm leading-none mb-1 text-primary">
+                          {(selectedRequest as unknown as ExtendedRequest).status_obj?.customer_visible === false ? 'Processing' : (selectedRequest as unknown as ExtendedRequest).status_obj?.name || 'Submitted'}
+                        </h4>
+                        <span className="font-mono text-[10px] uppercase tracking-widest opacity-60 block mb-2">Current Status</span>
+                        {(selectedRequest as unknown as ExtendedRequest).status_obj?.requires_customer_action && (
+                          <p className="text-xs uppercase font-bold text-orange-600 mt-2 p-2 border-2 border-orange-600 bg-orange-50">
+                            Action Required. Please check your email or contact support.
+                          </p>
+                        )}
+>>>>>>> 564291ae9f9a455ae74e66b446ab387740c9301e
                       </div>
                     )}
 
