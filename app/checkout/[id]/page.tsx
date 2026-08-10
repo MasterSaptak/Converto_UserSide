@@ -240,7 +240,7 @@ export default function CheckoutPage() {
                       <div className="flex justify-between"><span className="opacity-50">Routing:</span><span>12230044</span></div>
                     </div>
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 text-center">Click 'Confirm Transfer' once you have initiated the wire.</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 text-center">Click &apos;Confirm Transfer&apos; once you have initiated the wire.</p>
                 </div>
               )}
 

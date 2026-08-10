@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from 'react';
 import { CheckCircle2, Search, ArrowRight, XCircle, ArrowLeft } from "lucide-react";
 import { useServiceRequests } from '@/hooks/useServiceRequests';

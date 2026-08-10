@@ -36,7 +36,7 @@ const BrutalDatePicker = ({ value, onChange, placeholder = 'dd/mm/yy' }: { value
           } else {
             inputRef.current?.focus()
           }
-        } catch (e) {
+        } catch {
           inputRef.current?.focus()
         }
       }}
