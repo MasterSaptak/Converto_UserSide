@@ -59,21 +59,21 @@ export default async function ServicesPage() {
   // Use DB services if they exist, otherwise use hardcoded fallbacks
   // Filter out the old generic ticket services so we can expand them
   // Also filter out 'track' as it's accessible via the main navigation menu
-  const baseServices = (dbServices && dbServices.length > 0) 
+  const baseServices = (dbServices && dbServices.length > 0)
     ? dbServices.filter(s => s.slug !== 'ticket' && s.slug !== 'tickets' && s.slug !== 'ticket_booking' && s.slug !== 'track' && s.slug !== 'support')
     : FALLBACK_SERVICES;
 
   // Ensure 'medical' is included even if it's not in the DB yet
   if (!baseServices.some(s => s.slug === 'medical')) {
-    baseServices.push({ 
-      id: 'medical', 
-      slug: 'medical', 
-      name: 'Medical Appointment Booking', 
-      description: 'Book doctor appointments securely', 
-      route: '/services/medical', 
-      color: '#8B5CF6', 
-      sort_order: 6, 
-      is_active: true 
+    baseServices.push({
+      id: 'medical',
+      slug: 'medical',
+      name: 'Medical Appointment Booking',
+      description: 'Book doctor appointments securely',
+      route: '/services/medical',
+      color: '#8B5CF6',
+      sort_order: 6,
+      is_active: true
     });
   }
 
@@ -94,15 +94,15 @@ export default async function ServicesPage() {
         <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-60 mb-2 block">Our Offerings</span>
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading uppercase leading-[0.9] tracking-tight">Services</h1>
       </header>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {services.map((service) => {
           const Icon = getIconForSlug(service.slug);
           const bgImage = getBgImageForSlug(service.slug);
-          
+
           return (
             <Link key={service.id} href={service.route || `/services/${service.slug}`} className="group bg-white border-2 border-foreground flex flex-col transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_var(--color-foreground)] overflow-hidden relative min-h-[220px] md:min-h-[260px]">
-              
+
               {/* Top: Image Frame */}
               <div className="relative w-full h-32 md:h-40 border-b-2 border-foreground bg-zinc-50 shrink-0">
                 <div className="absolute inset-0 overflow-hidden">
@@ -114,7 +114,7 @@ export default async function ServicesPage() {
                       className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
                     />
                   ) : (
-                    <div 
+                    <div
                       className="absolute inset-0 opacity-[0.05] group-hover:opacity-[0.15] transition-opacity duration-500"
                       style={{ backgroundColor: service.color || undefined }}
                     />
@@ -122,7 +122,7 @@ export default async function ServicesPage() {
                 </div>
 
                 {/* Icon overlapping the border */}
-                <div 
+                <div
                   className="absolute bottom-0 left-4 md:left-5 translate-y-1/2 w-10 h-10 md:w-12 md:h-12 border-2 border-foreground flex items-center justify-center transition-transform group-hover:scale-110 shadow-[2px_2px_0px_var(--color-foreground)] bg-white z-20"
                 >
                   <Icon className="w-5 h-5 md:w-6 md:h-6 text-zinc-950" />
@@ -131,22 +131,22 @@ export default async function ServicesPage() {
 
               {/* Bottom: Text Content */}
               <div className="p-4 md:p-5 pt-8 md:pt-10 flex flex-col flex-1 bg-white relative z-10">
-                <h2 
+                <h2
                   className="font-bold uppercase tracking-widest text-xs sm:text-sm leading-tight group-hover:opacity-80 transition-opacity mb-2"
                   style={{ color: service.color || '#000000' }}
                 >
                   {service.name}
                 </h2>
-                
+
                 <p className="text-[10px] sm:text-xs uppercase font-bold tracking-wider text-zinc-600 mb-4 line-clamp-2">
                   {service.description || "Core platform module"}
                 </p>
-                
+
                 <div className="mt-auto flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black">
                   <span className="group-hover:underline">
                     Select Service
                   </span>
-                  <div 
+                  <div
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: service.color || '#E2E8F0' }}
                   />
